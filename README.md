@@ -8,15 +8,19 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
 
-## v0.2.0 draft
+## v0.3.0 draft
 
-The local **v0.2.0 test build** adds infinite consumables/bullets, player damage
-and enemy Echoes reward multipliers, remote workshop menus, generated chalice altar
-travel, and the remaining three boss entrance presets. James confirmed the
-multipliers and workshop menus working. Chalice travel and the three additional
-boss entrances still await live confirmation; see [the checklist](TODO.md).
-The download link points to the latest published release; this draft stays private
-until reviewed and published.
+**v0.3.0** adds a 38–120° vertical FOV slider without an external patch, saved
+practice presets, a local SQLite library and searchable warp bookmarks. The process
+picker shows all enumerable processes, ranks likely Bloodborne runtimes first and
+filters by name or PID. Navigation now separates Player, Combat, Items, Travel,
+Camera, Workshop and Settings.
+
+FOV, presets and process selection/filtering are tested and confirmed. Database
+migration, location search and remaining edge cases retain separate pending checks
+in [the checklist](TODO.md). Chalice travel and three additional boss entrances also
+remain pending. The download link points to the latest published release; this draft
+remains private until reviewed and published.
 
 The app also includes its emblem, Windows icon, **Made with 🖤 By James Cicada**
 footer, GitHub shortcut and manual **Check for updates**.
@@ -110,21 +114,21 @@ transitions may behave differently from ordinary combat.
   dispatcher is still installed. Close/disconnect BB Tools normally when possible.
 
 Settings live in `%LOCALAPPDATA%\BBTools\settings.json`; named locations live in
-`%LOCALAPPDATA%\BBTools\locations.json`. Save-backup ZIPs go to the destination you select.
+`%LOCALAPPDATA%\BBTools\library.db` alongside presets. Existing `locations.json` bookmarks migrate automatically, retaining the original file. Save-backup ZIPs go to the destination you select.
 
-## What is next?
+## Additional practice features
 
-The v0.2.0 additions below have individual test statuses in the checklist and are **not in
-the public v0.1.0 download**. Results are tracked in [TODO.md](TODO.md).
+The features below have individual implementation and confirmation statuses in
+[TODO.md](TODO.md). The latest published download may differ from the current source.
 
-- **Practice → Player multipliers:** enter 0.1–100 for outgoing damage and enemy
+- **Combat → Player multipliers:** enter 0.1–100 for outgoing damage and enemy
   Echoes rewards, then Apply. Set both to 1 or Turn off practice toggles to restore.
   Loading screens retain the desired values. Spending and bloodstain retrieval
   are not treated as rewards. Avoid other mods that use SpEffect 9999.
-- **Items & travel → Workshop menus:** level up, fortify, repair, storage, blood
+- **Workshop → Workshop menus:** level up, fortify, repair, storage, blood
   gems and Caryll runes. Close other game menus first. The native game handles
   normal prices, materials and closing; finish in the game.
-- **Items & travel → Chalice dungeon travel:** refresh the six altars, choose an
+- **Travel → Chalice dungeon travel:** refresh the six altars, choose an
   existing completed dungeon and one of the nine named seal/layer/heart lamps.
   Start from **Hunter's Dream**, then select **Travel to chalice lamp**. Locked
   lamps are rejected. This uses the character's generated dungeon; it does not
@@ -135,7 +139,7 @@ the public v0.1.0 download**. Results are tracked in [TODO.md](TODO.md).
   not reset defeated bosses or advance their story flags.
 
 The checklist separates implementation, automated checks, and maintainer live-game
-confirmations. v0.1.0's implemented gameplay features are marked user tested there;
+confirmations. v0.1.0's implemented gameplay features are marked tested and confirmed there;
 this is not a claim that every destination, item ID or runtime fork has been tested.
 
 ## Help build BB Tools
@@ -213,3 +217,35 @@ matches; dispatcher allocations remain valid until the game exits.
 
 BB Tools is independently implemented and released under the [MIT license](LICENSE).
 It is a community project and is not affiliated with FromSoftware or Sony.
+
+### Saved library and practice presets (v0.3.0)
+
+The current source adds separate Player, Combat, Items, Travel, Camera, Workshop and Settings
+pages. Combat includes named presets for toggles, health refill, stamina and applied
+multipliers. Save current settings, then select a preset and apply it explicitly while
+connected. Saving under the same name replaces that entry; presets do not edit stats
+or the current Echoes balance.
+
+Presets and saved warp locations use `%LOCALAPPDATA%\BBTools\library.db` (SQLite).
+Existing `locations.json` bookmarks migrate once in a transaction; the original file
+is retained. Keep that JSON when resolving a migration error. Location search matches
+names and map labels, and restoring still requires the same loaded map. Database
+migration and location search have automated coverage and await live confirmation. Item favorites, profiles and
+library import/export remain planned.
+
+The Camera page provides a live vertical FOV slider with an explicit override toggle
+and original-value reset, ranging from 38 to 120 degrees. Above the game's normal
+48-degree cap, BB Tools applies a verified four-byte clamp change in process memory;
+no separate patch or edited game file is required. It restores that change when the
+override is disabled or the app disconnects, while preserving an uncap patch that
+was already present. It restores each camera row's captured value, preserves edits
+made by other tools, and reapplies the selection after loading.
+FOV and saved presets are tested and confirmed. Additional aiming, lock-on and
+load/disconnect regression checks remain tracked in the checklist.
+
+The process picker lists all enumerable processes and marks likely Bloodborne
+runtimes with ★, with bb-probe.exe first. Filter by name, decimal PID, or a
+0x-prefixed hexadecimal PID, then refresh when processes start or exit. Entries
+marked restricted have unavailable creation-time identity and cannot be connected
+until that identity is accessible. Any manually selected process must still pass
+the supported game-image validation. Auto-connect considers only likely runtimes.

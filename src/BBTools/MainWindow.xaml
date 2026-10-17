@@ -25,13 +25,16 @@
  </Window.Resources>
  <Grid Background="#101216">
   <Grid.ColumnDefinitions><ColumnDefinition Width="182"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-  <Border Background="#15181D" BorderBrush="#2B3038" BorderThickness="0,0,1,0" Padding="22,30">
+  <Border Background="#15181D" BorderBrush="#2B3038" BorderThickness="0,0,1,0" Padding="22,20">
    <DockPanel LastChildFill="False">
-    <StackPanel DockPanel.Dock="Top"><Image Source="Assets/BBTools.png" Width="110" Height="110" Stretch="Uniform" Margin="0,-12,0,12" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="BB Tools emblem"/><TextBlock Text="BB TOOLS" Foreground="#D0B179" FontSize="21" FontWeight="Bold"/><TextBlock Text="HUNTER'S WORKSHOP" FontSize="10" Foreground="#8F949F" Margin="0,8,0,24"/>
-     <TextBlock Text="PRACTICE" Style="{StaticResource Caption}"/>
+    <StackPanel DockPanel.Dock="Top"><Image Source="Assets/BBTools.png" Width="90" Height="90" Stretch="Uniform" Margin="0,-12,0,12" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="BB Tools emblem"/><TextBlock Text="BB TOOLS" Foreground="#D0B179" FontSize="21" FontWeight="Bold"/><TextBlock Text="HUNTER'S WORKSHOP" FontSize="10" Foreground="#8F949F" Margin="0,8,0,24"/>
+     <TextBlock Text="WORKSPACE" Style="{StaticResource Caption}"/>
      <Button x:Name="NavPlayer" Content="Player" Tag="Player" Click="Navigate" Background="#3B352A" Margin="0,5,0,8"/>
-     <Button x:Name="NavPractice" Content="Practice" Tag="Practice" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavItems" Content="Items &amp; travel" Tag="Items" Click="Navigate" Margin="0,0,0,8"/>
+     <Button x:Name="NavPractice" Content="Combat" Tag="Practice" Click="Navigate" Margin="0,0,0,8"/>
+     <Button x:Name="NavItems" Content="Items" Tag="Items" Click="Navigate" Margin="0,0,0,8"/>
+     <Button x:Name="NavTravel" Content="Travel" Tag="Travel" Click="Navigate" Margin="0,0,0,8"/>
+     <Button x:Name="NavCamera" Content="Camera" Tag="Camera" Click="Navigate" Margin="0,0,0,8"/>
+     <Button x:Name="NavWorkshop" Content="Workshop" Tag="Workshop" Click="Navigate" Margin="0,0,0,8"/>
      <Button x:Name="NavSettings" Content="Settings" Tag="Settings" Click="Navigate"/>
      <TextBlock Text="Bloodborne PC" Margin="12,22,0,6" FontSize="12"/><TextBlock Text="CUSA03173 · 1.09" Margin="12,0,0,0" Foreground="#888F9B" FontSize="11"/>
     </StackPanel>
@@ -45,6 +48,8 @@
     <StackPanel Margin="0,0,8,0">
      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
       <TextBlock Text="GAME CONNECTION" Style="{StaticResource Caption}"/>
+      <TextBox x:Name="ProcessSearch" TextChanged="FilterProcesses" AutomationProperties.Name="Filter processes by name or PID" ToolTip="Filter by name, decimal PID or 0x-prefixed hexadecimal PID" FontSize="13" Padding="10,7" Margin="0,0,0,10"/>
+      <TextBlock Text="All processes · filter by name or PID · ★ likely Bloodborne" Style="{StaticResource Caption}"/>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
        <ComboBox x:Name="Candidates" DisplayMemberPath="Label" MinHeight="40" Margin="0,0,10,0" VerticalContentAlignment="Center" FontSize="13"/>
        <Button Grid.Column="1" x:Name="RefreshButton" Content="Refresh" Click="Refresh" Margin="0,0,10,0"/>
@@ -69,6 +74,13 @@
      </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="PracticePage" Visibility="Collapsed">
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><Expander Header="Saved practice presets" Foreground="#E8E5DF"><StackPanel Margin="0,16,0,0">
+       <TextBox x:Name="PresetName" Text="My practice setup" MaxLength="80" AutomationProperties.Name="Preset name"/>
+       <Button Content="Save current settings" Click="SavePreset" HorizontalAlignment="Left" Margin="0,10,0,16"/>
+       <ComboBox x:Name="PresetPicker" MinHeight="40" AutomationProperties.Name="Saved practice preset"/>
+       <WrapPanel Margin="0,12,0,0"><Button Content="Apply selected preset" Click="ApplyPreset" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete preset" Click="DeletePreset"/></WrapPanel>
+       <TextBlock Text="Stores combat toggles, health refill, stamina and applied multipliers locally. Apply explicitly after connecting. Matching names replace saved presets; character stats and Echoes balances are excluded." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+      </StackPanel></Expander></Border>
       <Border Style="{StaticResource Card}"><StackPanel x:Name="PracticeControls" IsEnabled="False">
        <TextBlock Text="COMBAT &amp; STEALTH" Style="{StaticResource Caption}"/>
        <CheckBox x:Name="GodMode" Content="God mode" Tag="GodMode" Checked="FlagChanged" Unchecked="FlagChanged"/>
@@ -110,12 +122,16 @@
        </Grid><Button Content="Spawn item" Click="SpawnItem" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
        <TextBlock Text="Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel></StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,18,0,18"><StackPanel x:Name="MenuControls" IsEnabled="False">
+     </StackPanel>
+     <StackPanel x:Name="WorkshopPage" Visibility="Collapsed">
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel x:Name="MenuControls" IsEnabled="False">
        <TextBlock Text="WORKSHOP MENUS" Style="{StaticResource Caption}"/>
        <ComboBox x:Name="MenuPicker" DisplayMemberPath="Label" MinHeight="40"/>
        <Button Content="Open selected menu" Click="OpenRemoteMenu" HorizontalAlignment="Left" Margin="0,12,0,0"/>
        <TextBlock Text="Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Normal Echoes and material costs apply. Close normally in the game." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
       </StackPanel></Border>
+     </StackPanel>
+     <StackPanel x:Name="TravelPage" Visibility="Collapsed">
       <Border Style="{StaticResource Card}"><StackPanel x:Name="WarpControls" IsEnabled="False"><TextBlock Text="WARP TO LAMP" Style="{StaticResource Caption}"/>
        <TextBox x:Name="LampSearch" TextChanged="FilterLamps" ToolTip="Filter lamps by name or DLC" AutomationProperties.Name="Search lamps" Margin="0,8,0,0"/>
        <ComboBox x:Name="LampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,16"/>
@@ -139,9 +155,23 @@
        <TextBlock Text="SAVED LOCATIONS" Style="{StaticResource Caption}"/>
        <TextBox x:Name="LocationName" Text="Practice spot" MaxLength="80" AutomationProperties.Name="Location name"/>
        <Button Content="Save current location" Click="SaveLocation" HorizontalAlignment="Left" Margin="0,10,0,16"/>
+       <TextBlock Text="Search saved locations" Style="{StaticResource Caption}"/>
+       <TextBox x:Name="LocationSearch" TextChanged="SearchLocations" AutomationProperties.Name="Search saved locations" ToolTip="Search by name or map" Margin="0,0,0,10"/>
        <ComboBox x:Name="LocationPicker" DisplayMemberPath="Label" MinHeight="40"/>
        <WrapPanel Margin="0,12,0,0"><Button Content="Restore location" Click="RestoreLocation" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete selected" Click="DeleteLocation"/></WrapPanel>
-       <TextBlock Text="Keeps up to 100 named positions between app sessions. Restore within the same loaded map; travel to its lamp first when elsewhere." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+       <TextBlock Text="Stores named positions in the local library between app sessions. Search by name or map. Restore within the same loaded map; travel to its lamp first when elsewhere." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+      </StackPanel></Border>
+     </StackPanel>
+     <StackPanel x:Name="CameraPage" Visibility="Collapsed">
+      <Border Style="{StaticResource Card}"><StackPanel>
+       <TextBlock Text="FIELD OF VIEW" Style="{StaticResource Caption}"/>
+       <TextBlock Text="Vertical FOV" FontSize="20"/>
+       <TextBlock x:Name="FovValue" Text="43°" Foreground="#D0B179" FontSize="26" Margin="0,12,0,8"/>
+       <Slider x:Name="FovSlider" Minimum="38" Maximum="120" Value="43" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FovChanged" AutomationProperties.Name="Vertical field of view"/>
+       <CheckBox x:Name="FovEnabled" Content="Override camera FOV" Checked="FovToggled" Unchecked="FovToggled"/>
+       <Button Content="Restore original FOV" Click="ResetFov" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+       <TextBlock x:Name="FovHint" Text="Connect to a loaded character. 38–120° vertical. Wide angles automatically remove the camera clamp in memory; no external patch is required. Disabling restores the clamp if this app changed it." Style="{StaticResource Caption}" Margin="0,16,0,0"/>
+       <TextBlock Text="Uses camera parameter rows and preserves their individual original values. Changes ease in through the game camera and resume after loads. Disable or disconnect to restore. Camera angles are vertical, not horizontal." Style="{StaticResource Caption}"/>
       </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="SettingsPage" Visibility="Collapsed">

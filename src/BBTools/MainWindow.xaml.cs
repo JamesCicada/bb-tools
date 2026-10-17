@@ -17,13 +17,17 @@ public partial class MainWindow : Window
     private PlayerSession? session;
     private GameActions? actions;
     private bool actionBusy;
+    private ProcessCandidate[] processSnapshot = [];
     private float desiredDamage = 1, desiredEchoes = 1;
     private ulong multiplierFailedActor;
     private CharacterState? statDraft;
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private bool updating, closing, connecting, discovering, autoPaused;
     private AppSettings settings = AppSettings.Load();
-    private LocationBook locationBook = LocationBook.Load();
+    private UserLibrary? library;
+    private string? libraryIssue;
+    private CameraFov? cameraFov;
+    private bool fovPaused;
     private readonly DispatcherTimer autoTimer = new() { Interval = TimeSpan.FromSeconds(3) };
     private int connectedPid;
     private ulong lastActor, lastComponent;
@@ -44,23 +48,36 @@ public partial class MainWindow : Window
         ItemPicker.SelectedIndex = 0;
         LampPicker.ItemsSource = GameActions.Lamps;
         LampPicker.SelectedIndex = 0;
-        LocationPicker.ItemsSource = locationBook.Locations;
-        LocationPicker.SelectedIndex = 0;
+        try { library = new UserLibrary(); RefreshLibrary(); }
+        catch (Exception ex) when (IsExpected(ex) || ex is JsonException)
+        { library = null; libraryIssue = $"Saved library unavailable: {ex.Message} Original files were retained."; Status.Text = libraryIssue; }
         BossPicker.ItemsSource = BossDestinations.All; BossPicker.SelectedIndex = 0;
         timer.Tick += Poll;
         Closing += OnClosing;
         Refresh(this, new RoutedEventArgs());
         updating = true; AutoConnect.IsChecked = settings.AutoConnect; updating = false;
         autoTimer.Tick += async (_, _) => await TryAutoConnect();
-        Loaded += async (_, _) => { autoTimer.Start(); await TryAutoConnect(); };
+        Loaded += async (_, _) => { autoTimer.Start(); await TryAutoConnect(); if (libraryIssue != null) Status.Text = libraryIssue; };
     }
     private void Refresh(object sender, RoutedEventArgs e)
     {
-        var selected = (Candidates.SelectedItem as ProcessCandidate)?.Id;
-        var found = ProcessDiscovery.List();
-        Candidates.ItemsSource = found.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase).ThenBy(x => x.Id).ToArray();
-        Candidates.SelectedItem = found.FirstOrDefault(x => x.Id == selected) ?? found.FirstOrDefault(x => x.Name.Contains("probe", StringComparison.OrdinalIgnoreCase)) ?? found.FirstOrDefault();
-        Status.Text = found.Length == 0 ? "No matching processes. Start Bloodborne PC, load a character, then refresh." : $"Found {found.Length} matching process(es). Select the game engine and connect.";
+        var selected = Candidates.SelectedItem as ProcessCandidate;
+        processSnapshot = ProcessDiscovery.List();
+        UpdateProcessPicker(selected);
+        Status.Text = $"Found {processSnapshot.Length} processes. Likely Bloodborne processes are starred and listed first.";
+    }
+    private void UpdateProcessPicker(ProcessCandidate? selected = null)
+    {
+        var visible = ProcessDiscovery.Filter(processSnapshot, ProcessSearch.Text);
+        Candidates.ItemsSource = visible;
+        Candidates.SelectedItem = visible.FirstOrDefault(x => x.Id == selected?.Id && x.Started == selected.Started) ?? visible.FirstOrDefault();
+        if (visible.Length == 0) ConnectionHint.Text = "No processes match this filter. Clear it or refresh the list.";
+        else if (session == null) ConnectionHint.Text = $"Showing {visible.Length} of {processSnapshot.Length} processes. Select the game engine, then connect.";
+    }
+    private void FilterProcesses(object sender, TextChangedEventArgs e)
+    {
+        if (Candidates == null) return;
+        UpdateProcessPicker(Candidates.SelectedItem as ProcessCandidate);
     }
     private async void Connect(object sender, RoutedEventArgs e)
     {
@@ -72,9 +89,10 @@ public partial class MainWindow : Window
     private async Task ConnectCandidate(ProcessCandidate candidate)
     {
         if (connecting || closing || session != null) return;
+        if (candidate.Started == 0) { Status.Text = "This process identity is restricted or unavailable. Refresh and select an accessible game process."; return; }
         connecting = true;
         if (candidate.Name.Contains("shadps4", StringComparison.OrdinalIgnoreCase)) { connecting = false; Status.Text = "Live controls currently target Bloodborne PC 1.09. The shadPS4 adapter is not implemented yet."; return; }
-        ConnectButton.IsEnabled = RefreshButton.IsEnabled = Candidates.IsEnabled = false;
+        ConnectButton.IsEnabled = RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = false;
         Status.Text = "Checking the loaded game image and player structures…";
         ProcessMemory? pending = null;
         try
@@ -104,7 +122,7 @@ public partial class MainWindow : Window
         {
             connecting = false;
             ConnectButton.IsEnabled = true;
-            RefreshButton.IsEnabled = Candidates.IsEnabled = session == null;
+            RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = session == null;
         }
     }
     private async Task TryAutoConnect()
@@ -116,8 +134,9 @@ public partial class MainWindow : Window
             var candidates = ProcessDiscovery.List();
             var best = await Task.Run(() => ProcessDiscovery.FindBest(candidates, () => closing));
             if (best == null || closing || !settings.AutoConnect || autoPaused || session != null || connecting) return;
-            Candidates.ItemsSource = candidates;
-            Candidates.SelectedItem = best;
+            processSnapshot = candidates;
+            ProcessSearch.Text = "";
+            UpdateProcessPicker(best);
             await ConnectCandidate(best);
         }
         finally { discovering = false; }
@@ -131,7 +150,7 @@ public partial class MainWindow : Window
         catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"Setting changed for this window, but could not be saved: {ex.Message}"; }
         await TryAutoConnect();
     }
-    private static bool IsExpected(Exception ex) => ex is IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException or OperationCanceledException;
+    private static bool IsExpected(Exception ex) => ex is JsonException or Microsoft.Data.Sqlite.SqliteException or IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException or OperationCanceledException;
     private void Poll(object? sender, EventArgs e)
     {
         if (session == null || memory == null) return;
@@ -150,6 +169,17 @@ public partial class MainWindow : Window
             StaminaValue.Text = $"{state.Stamina:N0} / {state.MaxStamina:N0}";
             HealthBar.Maximum = state.MaxHealth; HealthBar.Value = state.Health;
             StaminaBar.Maximum = state.MaxStamina; StaminaBar.Value = state.Stamina;
+            cameraFov ??= new CameraFov(memory, session);
+            if (!fovPaused)
+            {
+                try
+                {
+                    FovSlider.Maximum = cameraFov.Maximum;
+                    if (FovEnabled.IsChecked == true) cameraFov.Apply((float)FovSlider.Value);
+                    else cameraFov.Restore();
+                }
+                catch (Exception ex) when (IsExpected(ex)) { fovPaused=true; Status.Text=$"FOV paused: {ex.Message} Toggle the override to retry."; }
+            }
             PlayerControls.IsEnabled = true;
             PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
@@ -190,7 +220,9 @@ public partial class MainWindow : Window
         updating = false;
         desiredDamage = desiredEchoes = 1; multiplierFailedActor = 0;
         DamageMultiplier.Text = EchoesMultiplier.Text = "1";
+        FovEnabled.IsChecked = false;
         var errors = new List<string>();
+        try { cameraFov?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         try { actions?.ResetMultipliers(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         try { session?.RestoreStamina(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         try { session?.RestorePracticeFlags(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
@@ -201,12 +233,13 @@ public partial class MainWindow : Window
         timer.Stop(); var cleanupIssue = StopFeatures();
         try { actions?.Dispose(); } catch (Exception ex) when (IsExpected(ex)) { cleanupIssue = $"Request dispatcher cleanup: {ex.Message}"; }
         actions = null;
+        cameraFov = null; fovPaused = false;
         memory?.Dispose(); memory = null; session = null; statDraft = null; connectedPid = 0;
         lastActor = lastComponent = 0;
         ReleaseOwner();
         PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
         PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
-        RefreshButton.IsEnabled = Candidates.IsEnabled = true;
+        RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = true;
         ConnectButton.Content = "Connect"; ConnectionBadge.Text = "DISCONNECTED";
         ConnectionHint.Text = "Start Bloodborne PC and load a character, then connect.";
         HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—"; LevelValue.Text = "Blood Level —";
@@ -305,10 +338,14 @@ public partial class MainWindow : Window
         PlayerPage.Visibility = page == "Player" ? Visibility.Visible : Visibility.Collapsed;
         PracticePage.Visibility = page == "Practice" ? Visibility.Visible : Visibility.Collapsed;
         ItemsPage.Visibility = page == "Items" ? Visibility.Visible : Visibility.Collapsed;
+        TravelPage.Visibility = page == "Travel" ? Visibility.Visible : Visibility.Collapsed;
+        WorkshopPage.Visibility = page == "Workshop" ? Visibility.Visible : Visibility.Collapsed;
+        CameraPage.Visibility = page == "Camera" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
-        PageTitle.Text = page switch { "Practice" => "Practice controls", "Items" => "Items & travel", "Settings" => "Settings", _ => "The hunter" };
-        foreach (var nav in new[] {NavPlayer, NavPractice, NavItems, NavSettings})
+        PageTitle.Text = page switch { "Practice" => "Combat & rewards", "Items" => "Item spawning", "Travel" => "Travel & locations", "Workshop" => "Workshop menus", "Camera" => "Camera settings", "Settings" => "Settings", _ => "The hunter" };
+        foreach (var nav in new[] {NavPlayer, NavPractice, NavItems, NavTravel, NavCamera, NavWorkshop, NavSettings})
             nav.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString((string)nav.Tag == page ? "#3B352A" : "#2B313B"));
+        PageScroll.ScrollToTop();
     }
     private void ItemSelected(object sender, SelectionChangedEventArgs e)
     {
@@ -388,9 +425,7 @@ public partial class MainWindow : Window
     private void SaveLocation(object sender, RoutedEventArgs e) => Run(() =>
     {
         var location = session!.ReadLocation(LocationName.Text);
-        var next = new LocationBook([.. locationBook.Locations.Where(x => !x.Name.Equals(location.Name, StringComparison.OrdinalIgnoreCase)), location]);
-        next.Save(); locationBook = next;
-        LocationPicker.ItemsSource = locationBook.Locations; LocationPicker.SelectedItem = location;
+        Library.Save(location); RefreshLibrary(); LocationPicker.SelectedItem = location;
     }, "Location saved. Saving with the same name replaces that bookmark.");
     private async void TravelBossArea(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
@@ -412,11 +447,80 @@ public partial class MainWindow : Window
         try
         {
             if (LocationPicker.SelectedItem is not SavedLocation location) throw new ArgumentException("Select a saved location first.");
-            var next = new LocationBook(locationBook.Locations.Where(x => x != location).ToArray());
-            next.Save(); locationBook = next; LocationPicker.ItemsSource = next.Locations; LocationPicker.SelectedIndex = 0;
+            Library.Delete("location", location.Name); RefreshLibrary();
             Status.Text = "Location deleted.";
         }
         catch (Exception ex) when (IsExpected(ex)) { Status.Text = ex.Message; }
+    }
+    private void FovChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (FovValue != null) FovValue.Text = $"{e.NewValue:0}°";
+        fovPaused = false;
+    }
+    private void FovToggled(object sender, RoutedEventArgs e)
+    {
+        fovPaused = false;
+        if (FovEnabled.IsChecked == true) return;
+        try { cameraFov?.Restore(); }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"FOV restoration pending: {ex.Message}"; }
+    }
+    private void ResetFov(object sender, RoutedEventArgs e)
+    {
+        FovEnabled.IsChecked = false;
+        try { cameraFov?.Restore(); Status.Text = "Original camera parameter values restored."; }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"FOV restoration pending: {ex.Message}"; }
+    }
+    private UserLibrary Library => library ?? throw new IOException("Saved library is unavailable. Check the status message and restart after resolving the file error.");
+    private void RefreshLibrary()
+    {
+        var selected = LocationPicker.SelectedItem as SavedLocation;
+        LocationPicker.ItemsSource = Library.Locations().Where(x => x.Label.Contains(LocationSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();
+        LocationPicker.SelectedItem = selected;
+        if (LocationPicker.SelectedIndex < 0) LocationPicker.SelectedIndex = 0;
+        var preset = PresetPicker.SelectedItem as PracticePreset;
+        PresetPicker.ItemsSource = Library.Presets(); PresetPicker.SelectedItem = preset;
+        if (PresetPicker.SelectedIndex < 0) PresetPicker.SelectedIndex = 0;
+    }
+    private void SearchLocations(object sender, TextChangedEventArgs e)
+    {
+        if (library == null) return;
+        try { RefreshLibrary(); } catch (Exception ex) when (IsExpected(ex) || ex is JsonException) { Status.Text = ex.Message; }
+    }
+    private void SavePreset(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var preset = new PracticePreset(PresetName.Text.Trim(), KeepHealth.IsChecked == true, InfiniteStamina.IsChecked == true,
+                FlagControls.Where(x => x.IsChecked == true).Select(x => (string)x.Tag).ToArray(), desiredDamage, desiredEchoes);
+            Library.Save(preset); RefreshLibrary(); PresetPicker.SelectedItem = preset;
+            Status.Text = "Current active settings saved. A matching name replaces the existing preset; unapplied multiplier edits are excluded.";
+        }
+        catch (Exception ex) when (IsExpected(ex) || ex is JsonException) { Status.Text = ex.Message; }
+    }
+    private async void ApplyPreset(object sender, RoutedEventArgs e) => await RunGameAction(async engine =>
+    {
+        if (PresetPicker.SelectedItem is not PracticePreset preset) throw new ArgumentException("Choose a saved preset.");
+        preset.Validate(); session!.ReadPlayer();
+        await engine.SetMultipliersAsync(preset.Damage, preset.Echoes);
+        desiredDamage = preset.Damage; desiredEchoes = preset.Echoes; multiplierFailedActor = 0;
+        updating = true;
+        try
+        {
+            KeepHealth.IsChecked = preset.KeepHealth; InfiniteStamina.IsChecked = preset.Stamina;
+            foreach (var control in FlagControls) control.IsChecked = preset.Flags.Contains((string)control.Tag);
+            DamageMultiplier.Text = preset.Damage.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            EchoesMultiplier.Text = preset.Echoes.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+        finally { updating = false; }
+    }, "Preset selected. Combat settings resume while the player is valid.");
+    private void DeletePreset(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (PresetPicker.SelectedItem is not PracticePreset preset) throw new ArgumentException("Choose a saved preset.");
+            Library.Delete("preset",preset.Name); RefreshLibrary(); Status.Text = "Preset deleted; active combat settings are unchanged.";
+        }
+        catch (Exception ex) when (IsExpected(ex) || ex is JsonException) { Status.Text = ex.Message; }
     }
     private TextBox[] AttributeInputs => [Vitality, Endurance, Strength, Skill, Bloodtinge, Arcane];
     private void PopulateStats(CharacterState character)

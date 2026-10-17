@@ -5,7 +5,7 @@ namespace BBTools.Memory;
 public sealed record PlayerState(ulong Actor, ulong Component, int Health, int MaxHealth, int Stamina, int MaxStamina);
 public sealed record CharacterState(ulong Address, int Level, CharacterValues Values);
 
-// Bloodborne 1.09 layout facts: see docs/memory-research.md. No executable patches.
+// Bloodborne 1.09 layout facts: see docs/memory-research.md. Player operations use data writes; the camera owns a separate reversible FOV clamp update.
 public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
 {
     public const ulong WorldPointer = 0x553E878;

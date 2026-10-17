@@ -79,7 +79,7 @@ Publishing a request pauses the game briefly, fills descriptors/payload, then ma
 
 Normal disconnect cancels pending requests and restores the actor's original vtable when identity still matches. Allocated code/data remain valid for the rest of the process lifetime: freeing them could invalidate a cached virtual call or a return address on a suspended game thread. An unloaded actor is not mutated through a stale address. Forced termination of BB Tools cannot restore its vtable; restart the engine before reconnecting if its getter is still intercepted.
 
-The synthetic fixture now executes the real generated dispatcher, including an unauthorized getter call site, native SysV argument passing, item-batch payload forwarding, three-function ordering, recursion and detach. It is not an execution of the game's actual inventory/warp routines; see TODO.md for the maintainer's separate live confirmations.
+The synthetic fixture now executes the real generated dispatcher, including an unauthorized getter call site, native SysV argument passing, item-batch payload forwarding, three-function ordering, recursion and detach. It is not an execution of the game's actual inventory/warp routines; see TODO.md for separate tested-and-confirmed results.
 
 Additional research: [bbhost native class layouts](https://github.com/droogie/bbhost/tree/main/include/bbhost/engine/sprj) and its [world/return-point implementation](https://github.com/droogie/bbhost/blob/main/src/engine/world_chr.cpp). Addresses and structure facts were checked independently against the local game image. No bbhost implementation code is included.
 
@@ -110,7 +110,7 @@ the private MSBs, checked against the research location leads in
 [bbhost boss-rush data](https://github.com/droogie/bbhost/blob/main/plugins/boss_rush/boss_rush.cpp).
 The standpoints are independently computed one metre behind each object's heading
 and 0.15 metres above its floor position. No boss/door/quest flag manipulation is
-included. The maintainer's live confirmations are recorded separately in TODO.md; automated checks do not establish every waypoint's behavior on every runtime fork.
+included. Tested-and-confirmed results are recorded separately in TODO.md; automated checks do not establish every waypoint's behavior on every runtime fork.
 
 The debug binding at `0x1921374` identifies All No Update AI at image +0x553E895,
 bit 0. The fall path at `0x1A35B75` tests resource component +0x200 mask 0x08.
@@ -178,3 +178,32 @@ as the existing catalog. Story prerequisites remain native.
 
 These additions have synthetic execution and private-image checks. The live
 gameplay checklist remains separate and must be completed before publication.
+
+## Camera FOV override (unreleased)
+
+The camera implementation in the inspected bbhost source documents the game's
+`ChrExFollowCam::Update`; its preferred guest addresses include a 0x400000 slide.
+The installed 1.09 image independently matches FOV reads at RVAs 0x143AF1E and
+0x143AF5E. The clamp at RVA 0x143AF4E is `48 0F 46 C6`; the recognized external
+uncap variant is `48 89 F0 90`. The slider now supports 38–120 degrees of vertical
+FOV. Above 48 degrees, BB Tools changes only this four-byte instruction to the
+known uncap variant while target threads are suspended. It validates surrounding
+instructions and the expected old bytes, temporarily changes page protection,
+flushes the instruction cache and restores protection. Generic memory writes still
+reject executable pages. No game file is edited. This is not a horizontal-FOV setting.
+
+The override tracks whether it installed the uncap. Disable/disconnect restores
+an owned change, including when parameter restoration is waiting for a loaded
+player. An existing uncap is left intact; unknown code is never overwritten.
+Synthetic-process checks exercise real read-execute page protection transitions,
+100/120-degree parameter edits, reset, ownership and preexisting-patch preservation.
+
+SoloParamRepository is reached at RVA 0x5540340, with LockCamParam at slot 0x21
+(`+0x70 + slot*0x48`). A unique resource cap must have the UTF-16 name LockCamParam.
+The cap's `*(*(cap+0x70)+0x70)` is validated as LOCK_CAM_PARAM_ST, including row
+records, unique IDs, finite original angles and 0x20-byte row strides. Only each
+row's camFovY at +0x14 is changed. Multirow changes run while game threads are
+paused. Restoration is limited to the current table and values still owned by
+this override; loading invalidates captured addresses. Synthetic-process tests
+cover limits, individual defaults, foreign changes and rejected layouts. Live
+camera behavior remains pending confirmation.

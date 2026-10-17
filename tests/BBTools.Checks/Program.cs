@@ -30,7 +30,7 @@ internal static class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -46,6 +46,92 @@ internal static class Program
     private sealed class FakeReleaseHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => respond(request, token);
+    }
+    private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
+    {
+        foreach(var f in CameraFov.Fingerprints) memory.Write(root+f.Offset,f.Bytes);
+        memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
+        var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
+        var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
+        void Ptr(ulong at,ulong value)=>memory.Write(at,BitConverter.GetBytes(value));
+        Ptr(root+0x5540340,repo); var slot=repo+0x70+0x21*0x48;
+        memory.SetInt32(slot,1); Ptr(slot+8,cap); Ptr(cap+0x18,name); Ptr(cap+0x70,handle); Ptr(handle+0x70,file);
+        memory.Write(name,System.Text.Encoding.Unicode.GetBytes("LockCamParam\0"));
+        var header=new byte[0x40]; BitConverter.GetBytes((ushort)2).CopyTo(header,10);
+        System.Text.Encoding.ASCII.GetBytes("LOCK_CAM_PARAM_ST\0").CopyTo(header,12); header[0x2D]=0x85;header[0x2E]=2;
+        memory.Write(file,header);
+        memory.SetInt32(file+0x40,0);Ptr(file+0x48,0x70);memory.SetInt32(file+0x58,1);Ptr(file+0x60,0x90);
+        memory.Write(file+0x84,BitConverter.GetBytes(43f));memory.Write(file+0xA4,BitConverter.GetBytes(48f));
+        var executableImage = new byte[(int)CameraFov.ClampOffset+256];
+        foreach(var fingerprint in CameraFov.Fingerprints) fingerprint.Bytes.CopyTo(executableImage,(int)fingerprint.Offset);
+        CameraFov.StandardClamp.CopyTo(executableImage,(int)CameraFov.ClampOffset);
+        var executableBase=memory.AllocateCode(executableImage);
+        Reject<IOException>(()=>memory.Write(executableBase+CameraFov.ClampOffset,CameraFov.UncappedClamp),"generic memory writes still reject executable pages");
+        memory.Suspended(()=>memory.WriteCameraFovClamp(executableBase,true));
+        Check(memory.Read(executableBase+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.UncappedClamp),"narrow camera clamp primitive updates a read-execute page");
+        Reject<IOException>(()=>memory.Write(executableBase+CameraFov.ClampOffset,CameraFov.StandardClamp),"camera clamp update restores original read-execute protection");
+        memory.Suspended(()=>memory.WriteCameraFovClamp(executableBase,false));
+        Check(memory.Read(executableBase+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.StandardClamp),"read-execute camera clamp restores exactly");
+        var fov=new CameraFov(memory,session);
+        Check(fov.Maximum==120,"standard camera supports the 120-degree vertical slider");
+        Reject<ArgumentException>(()=>fov.Apply(121),"FOV beyond the supported 120-degree range is rejected");
+        fov.Apply(100);
+        Check(memory.Read(root+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.UncappedClamp) && BitConverter.ToSingle(memory.Read(file+0x84,4))==100,"100-degree FOV automatically removes the standard clamp");
+        fov.Apply(120);Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==120,"120-degree FOV applies to camera parameters");
+        fov.Restore();Check(memory.Read(root+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.StandardClamp),"reset restores the clamp installed by this app");
+        fov.Apply(46);Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==46 && BitConverter.ToSingle(memory.Read(file+0xA4,4))==46,"FOV override updates all validated camera rows");
+        fov.Apply(47);fov.Restore();Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==43 && BitConverter.ToSingle(memory.Read(file+0xA4,4))==48,"FOV reset restores each individual original value after slider changes");
+        memory.Write(root+CameraFov.ClampOffset,CameraFov.UncappedClamp); fov.Apply(90);
+        Check(fov.Maximum==120 && BitConverter.ToSingle(memory.Read(file+0x84,4))==90,"verified runtime uncap enables wider angles without patching instructions");
+        memory.Write(file+0x84,BitConverter.GetBytes(60f));
+        Reject<IOException>(()=>fov.Apply(80),"foreign FOV edits pause ownership instead of overwriting another mod");
+        fov.Restore();Check(memory.Read(root+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.UncappedClamp),"preexisting external uncap patch survives reset");
+        Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==60 && BitConverter.ToSingle(memory.Read(file+0xA4,4))==48,"restore preserves foreign edits and restores owned rows");
+        memory.Write(root+CameraFov.ClampOffset,[0,0,0,0]);Reject<IOException>(()=>fov.Apply(45),"unknown FOV camera patch is rejected");
+        memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
+        Reject<ArgumentException>(()=>fov.Apply(float.NaN),"nonfinite FOV is rejected before writes");
+        fov.Apply(45);
+        var replacement=memory.AllocateData(0x200);memory.Write(replacement,memory.Read(file,0x200));
+        memory.Write(replacement+0x84,BitConverter.GetBytes(41f));memory.Write(replacement+0xA4,BitConverter.GetBytes(47f));
+        Ptr(handle+0x70,replacement);fov.Apply(46);
+        Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==45 && BitConverter.ToSingle(memory.Read(replacement+0x84,4))==46,"new camera table resumes FOV without writing through old allocations");
+        fov.Restore();Check(BitConverter.ToSingle(memory.Read(replacement+0x84,4))==41 && BitConverter.ToSingle(memory.Read(replacement+0xA4,4))==47,"post-load restoration uses the replacement table's original values");
+        memory.Write(replacement+12,[0]);Reject<IOException>(()=>fov.Apply(45),"wrong camera parameter type blocks FOV writes");
+    }
+    private static void LibraryChecks()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "BBTools-library-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var legacy = Path.Combine(folder,"locations.json"); var path = Path.Combine(folder,"library.db");
+            var spot = new SavedLocation("Test warp",0x15000000,1,2,3,4);
+            new LocationBook([spot]).Save(legacy);
+            var library = new UserLibrary(path,legacy);
+            Check(library.Locations().SequenceEqual(new[] { spot }) && File.Exists(legacy), "SQLite migration preserves bookmark and original JSON");
+            var changed = spot with { Name="TEST WARP", X=99 }; library.Save(changed);
+            Check(new UserLibrary(path,legacy).Locations().Single() == changed, "SQLite reopen does not repeat migration or overwrite newer bookmarks");
+            library.Delete("location",changed.Name);
+            Check(new UserLibrary(path,legacy).Locations().Length == 0,"deleted migrated bookmarks are not resurrected");
+            var preset = new PracticePreset("Boss practice",true,true,["GodMode","InfiniteItems"],2,.5f);
+            library.Save(preset);
+            var loaded = new UserLibrary(path,legacy).Presets().Single();
+            Check(loaded.Name == preset.Name && loaded.Flags.SequenceEqual(preset.Flags) && loaded.Damage == 2 && loaded.Echoes == .5f && loaded.KeepHealth && loaded.Stamina,"preset roundtrip retains combat options and multipliers");
+            library.Save(preset with { Name="BOSS PRACTICE", Damage=3 });
+            Check(library.Presets().Single().Damage == 3,"preset names replace case-insensitively");
+            Reject<ArgumentException>(() => library.Save(preset with { Damage=float.NaN }),"nonfinite multiplier rejected before database write");
+            Reject<ArgumentException>(() => library.Save(preset with { Flags=["NotAFlag"] }),"unknown preset flag rejected");
+            Reject<ArgumentException>(() => library.Save(preset with { Name=" " }),"empty preset name rejected");
+            Check(library.Presets().Single().Damage == 3,"invalid preset writes preserve existing data");
+            var quoted = spot with { Name="Hunter's ; DROP TABLE entries; --" }; library.Save(quoted);
+            Check(library.Locations().Single() == quoted,"parameterized SQL preserves punctuation in bookmark names");
+            library.Delete("preset",preset.Name); Check(library.Presets().Length == 0,"preset deletion persists");
+            File.WriteAllText(legacy,"invalid JSON");
+            Reject<JsonException>(() => new UserLibrary(Path.Combine(folder,"bad.db"),legacy),"malformed legacy file is reported without marking migration complete");
+            new LocationBook([spot]).Save(legacy);
+            Check(new UserLibrary(Path.Combine(folder,"bad.db"),legacy).Locations().Single() == spot,"failed migration can retry successfully after repair");
+        }
+        finally { Directory.Delete(folder,true); }
     }
     private static void UpdateChecks()
     {
@@ -169,6 +255,7 @@ internal static class Program
             var session = new PlayerSession(memory, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
+            CameraChecks(memory,session,root);
             session.SetHealth(450); Check(session.ReadPlayer().Health == 450, "set health through WriteProcessMemory");
             Reject<ArgumentException>(() => session.SetHealth(601), "reject health beyond maximum");
             Reject<ArgumentException>(() => session.SetHealth(0), "reject zero health input");
@@ -368,6 +455,18 @@ internal static class Program
             }
             Check(memory.Pointer(player.Actor) == originalTable, "dispatcher detaches and restores original actor vtable");
             Reject<ArgumentException>(() => GameActions.ItemBatch(1, 0, 20), "equipment quantity restricted to one");
+            var processList = new[] { new ProcessCandidate(55,"notepad",10), new ProcessCandidate(40,"shadPS4",10),
+                new ProcessCandidate(30,"Bloodborne",10), new ProcessCandidate(20,"bbport_launcher",10),
+                new ProcessCandidate(10,"bb-probe",10), new ProcessCandidate(0,"Idle",0),new ProcessCandidate(56,"Notepad",20) };
+            var ranked = ProcessDiscovery.Filter(processList);
+            Check(ranked.Length==processList.Length && ranked.Take(4).Select(x=>x.Id).SequenceEqual(new[] {10,30,20,40}),"all processes remain visible with native engine and likely game runtimes ranked first");
+            Check(ranked.Where(x=>x.Name.Equals("notepad",StringComparison.OrdinalIgnoreCase)).Select(x=>x.Id).SequenceEqual(new[] {55,56}),"duplicate process names stay distinct and sort by PID");
+            Check(ProcessDiscovery.Filter(processList,"NOTEpad").Length==2,"process filter is case-insensitive and searches unrelated apps");
+            Check(ProcessDiscovery.Filter(processList,"bb probe").Single().Id==10,"multiple process search terms narrow the same process");
+            Check(ProcessDiscovery.Filter(processList,"55").Single().Id==55 && ProcessDiscovery.Filter(processList,"0x37").Single().Id==55,"process filter supports decimal and hexadecimal PIDs");
+            Check(ProcessDiscovery.Filter(processList,"no-such-process").Length==0 && ranked.Single(x=>x.Id==0).Started==0,"empty search results and restricted identities are retained correctly");
+            Check(ProcessDiscovery.List().Any(x=>x.Id==Environment.ProcessId),"process discovery includes ordinary non-game processes");
+            Check(ProcessDiscovery.FindBest([new(int.MaxValue,"notepad",1),new(int.MaxValue,"bb-probe",0)],()=>false)==null,"auto-connect skips unrelated apps and identities without creation time");
             var newer = new ProcessCandidate(1, "Bloodborne", 200);
             var engine = new ProcessCandidate(2, "bb-probe", 100);
             Check(ProcessDiscovery.Best([new(newer, false), new(engine, true)]) == engine, "auto-connect prefers a validated loaded character");
@@ -450,7 +549,7 @@ internal static class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

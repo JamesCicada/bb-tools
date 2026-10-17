@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 - 2026-10-17 (draft)
+
+- Show all enumerable processes with likely Bloodborne runtimes ranked first; add name, decimal PID and hexadecimal PID filtering. Preserve restricted entries in the list while requiring a verified process identity to connect. Auto-connect still scans only likely game candidates.
+
+- Split navigation into Player, Combat, Items, Travel, Camera, Workshop and Settings; reset scroll on navigation.
+- Add a local SQLite library for saved practice presets and warp bookmarks, with schema versioning and transactional migration from locations.json. The original JSON is retained.
+- Save, replace, apply and delete named combat presets. Presets include toggles, health refill, stamina and applied damage/Echoes multipliers; applying requires a game connection.
+- Search saved locations by name or map.
+- Extend the live vertical FOV slider to 38–120° without an external patch. A verified, reversible four-byte runtime clamp update enables wide angles; reset restores owned changes and preserves preexisting uncap patches. Camera defaults restore individually and the override resumes after loading.
+- Prioritize the roadmap and use neutral tested-and-confirmed wording throughout the documentation.
+- FOV, saved practice presets and process selection/filtering are tested and confirmed. Database migration, location search, navigation and remaining edge cases retain separate pending checks.
+- Validation: 128 automated app checks, six release-automation checks, installed 1.09 instruction validation and self-contained startup/shutdown.
+
 ## 0.2.0 - 2026-10-17 (draft)
 
 - Infinite consumables and Quicksilver Bullets, retained through loading screens.
@@ -15,7 +28,7 @@
 - CI creates an annotated tag and a draft release on main-branch version bumps;
   no automatic public publishing. Retry support preserves published releases.
 
-James confirmed the multipliers and remote workshop menus working. Chalice travel
+The multipliers and remote workshop menus are tested and confirmed. Chalice travel
 and the three additional boss entrances remain pending live confirmation in TODO.md.
 Validation: 87 app checks in Debug/Release, six release-automation checks, private
 1.09 instruction checks, and self-contained package startup/shutdown.
@@ -56,7 +69,7 @@ First public release for Windows x64 and native Bloodborne PC
 
 Validation: 57 automated synthetic-process checks and 25 instruction signatures
 checked against the private supported 1.09 image. The release checklist records
-the maintainer's live-game confirmations separately.
+tested-and-confirmed results separately.
 
 ### Known limits
 

@@ -43,7 +43,7 @@ evidence, pointer/identity validation, and lifecycle/cleanup handling.
 - Keep game assets, proprietary code and research dumps out of the repository.
 - Contribute your own implementation compatible with this project's MIT license.
 - Keep implementation completion separate from live-game confirmation in `TODO.md`.
-  Mark user-tested only when someone has actually reported that feature working.
+  Mark tested and confirmed only when someone has actually reported that feature working.
 
 Current release support is native Bloodborne PC, CUSA03173 1.09. A shadPS4 adapter,
 reward/damage multipliers and remote workshop menus are useful future contributions.

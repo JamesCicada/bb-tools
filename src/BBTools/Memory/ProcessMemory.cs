@@ -79,6 +79,35 @@ public sealed class ProcessMemory : IMemory, IDisposable
             throw new IOException("Could not finalize the game-thread dispatcher.");
         return address;
     }
+    // Narrow exception to data-only writes: one verified FOV clamp instruction.
+    // Called only while the target threads are suspended by CameraFov.
+    internal void WriteCameraFovClamp(ulong imageBase, bool enable)
+    {
+        foreach (var fingerprint in CameraFov.Fingerprints)
+            if (!Read(imageBase + fingerprint.Offset, fingerprint.Bytes.Length).SequenceEqual(fingerprint.Bytes))
+                throw new IOException("Camera FOV instructions changed; the clamp was not modified.");
+        var address = imageBase + CameraFov.ClampOffset;
+        var expected = enable ? CameraFov.StandardClamp : CameraFov.UncappedClamp;
+        var replacement = enable ? CameraFov.UncappedClamp : CameraFov.StandardClamp;
+        if (!Read(address,4).SequenceEqual(expected)) throw new IOException("Camera FOV clamp changed before the update.");
+        if (!VirtualQueryEx(handle,(nuint)address,out var region,(nuint)Marshal.SizeOf<MemoryInfo>()).Equals((nuint)Marshal.SizeOf<MemoryInfo>()) ||
+            region.State != 0x1000 || (region.Protect & 0x100) != 0 || address+4 > (ulong)region.BaseAddress+(ulong)region.RegionSize)
+            throw new IOException("Camera clamp is not in a valid committed memory region.");
+        if (!VirtualProtectEx(handle,(nuint)address,4,0x40,out var oldProtection))
+            throw new IOException("Could not temporarily update camera clamp protection.");
+        try
+        {
+            if (!WriteProcessMemory(handle,(nuint)address,replacement,4,out var written) || written != 4)
+                throw new IOException("Camera clamp write failed.");
+        }
+        finally
+        {
+            var flushed=FlushInstructionCache(handle,(nuint)address,4);
+            var restored=VirtualProtectEx(handle,(nuint)address,4,oldProtection,out _);
+            if (!flushed || !restored) throw new IOException("Camera clamp cache/protection restoration failed.");
+        }
+        if (!Read(address,4).SequenceEqual(replacement)) throw new IOException("Camera clamp update could not be verified.");
+    }
     public void Suspended(Action operation)
     {
         if (!IsAlive || NtSuspendProcess(handle) != 0) throw new IOException("Could not pause game threads for the request update.");
