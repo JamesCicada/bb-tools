@@ -80,6 +80,15 @@
        <CheckBox x:Name="NoAi" Content="Disable enemy AI" Tag="NoAi" Checked="FlagChanged" Unchecked="FlagChanged"/>
        <TextBlock Text="Stops the engine's character AI updates. Enemies can still be affected by physics and scripted events." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
        <CheckBox x:Name="NoFallDamage" Content="No fall damage" Tag="NoFallDamage" Checked="FlagChanged" Unchecked="FlagChanged"/>
+       <CheckBox x:Name="InfiniteItems" Content="Infinite consumables &amp; bullets" Tag="InfiniteItems" Checked="FlagChanged" Unchecked="FlagChanged"/>
+       <Separator Margin="0,16"/>
+       <TextBlock Text="PLAYER MULTIPLIERS" Style="{StaticResource Caption}"/>
+       <UniformGrid Columns="2" Margin="0,8,0,12">
+        <StackPanel Margin="0,0,12,0"><TextBlock Text="Outgoing damage" Style="{StaticResource Caption}"/><TextBox x:Name="DamageMultiplier" Text="1" AutomationProperties.Name="Damage multiplier"/></StackPanel>
+        <StackPanel><TextBlock Text="Echoes from enemies" Style="{StaticResource Caption}"/><TextBox x:Name="EchoesMultiplier" Text="1" AutomationProperties.Name="Echoes reward multiplier"/></StackPanel>
+       </UniformGrid>
+       <Button Content="Apply multipliers" Click="ApplyMultipliers" HorizontalAlignment="Left"/>
+       <TextBlock Text="0.1–100×. Set both to 1 to restore. Uses a player-only effect; does not scale spending or bloodstain recovery. Selections resume after loading." Style="{StaticResource Caption}" Margin="0,12,0,12"/>
        <TextBlock Text="Selections stay on through loading screens and warps. They resume when the player validates. Disconnecting clears selections; turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16"/>
        <Button Content="Turn off practice toggles" Click="TurnOffFeatures" HorizontalAlignment="Left"/>
       </StackPanel></Border>
@@ -101,17 +110,30 @@
        </Grid><Button Content="Spawn item" Click="SpawnItem" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
        <TextBlock Text="Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel></StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,18,0,18"><StackPanel x:Name="MenuControls" IsEnabled="False">
+       <TextBlock Text="WORKSHOP MENUS" Style="{StaticResource Caption}"/>
+       <ComboBox x:Name="MenuPicker" DisplayMemberPath="Label" MinHeight="40"/>
+       <Button Content="Open selected menu" Click="OpenRemoteMenu" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+       <TextBlock Text="Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Normal Echoes and material costs apply. Close normally in the game." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+      </StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel x:Name="WarpControls" IsEnabled="False"><TextBlock Text="WARP TO LAMP" Style="{StaticResource Caption}"/>
        <TextBox x:Name="LampSearch" TextChanged="FilterLamps" ToolTip="Filter lamps by name or DLC" AutomationProperties.Name="Search lamps" Margin="0,8,0,0"/>
        <ComboBox x:Name="LampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,16"/>
        <Button Content="Warp to selected lamp" Click="Warp" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
-       <TextBlock Text="All 45 named base-game and DLC destinations. Boss-arena lamps do not reset bosses or unlock quest flags. Chalice dungeon travel is tracked separately. Warp while idle." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+       <TextBlock Text="All 45 named base-game and DLC destinations. Boss-arena lamps do not reset bosses or unlock quest flags. Use the chalice altar controls below for generated dungeons. Warp while idle." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="ChaliceControls" IsEnabled="False">
+       <TextBlock Text="CHALICE DUNGEON TRAVEL" Style="{StaticResource Caption}"/>
+       <ComboBox x:Name="ChalicePicker" DisplayMemberPath="Label" MinHeight="40"/>
+       <ComboBox x:Name="ChaliceLampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,0"/>
+       <WrapPanel Margin="0,12,0,0"><Button Content="Refresh altars" Click="RefreshChalices" Margin="0,0,10,0"/><Button Content="Travel to chalice lamp" Click="OpenChaliceTravel" Style="{StaticResource Primary}"/></WrapPanel>
+       <TextBlock Text="Start from Hunter's Dream. Choose an existing altar and one of its unlocked layer lamps. Uses that character's generated dungeon and progress. Empty rituals and locked lamps are rejected; this does not create dungeons or unlock lamps." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
       </StackPanel></Border>
       <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="BossControls" IsEnabled="False">
        <TextBlock Text="BOSS ENTRANCES" Style="{StaticResource Caption}"/>
        <ComboBox x:Name="BossPicker" DisplayMemberPath="Label" MinHeight="40"/>
        <WrapPanel Margin="0,12,0,0"><Button Content="1 · Travel to area" Click="TravelBossArea" Margin="0,0,10,0"/><Button Content="2 · Go to entrance" Click="GoToBoss" Style="{StaticResource Primary}"/></WrapPanel>
-       <TextBlock Text="19 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. This places you outside the fog; it does not revive bosses, open doors or change quest flags." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+       <TextBlock Text="22 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. This places you outside the fog; it does not revive bosses, open doors or change quest flags." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel></Border>
       <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="LocationControls" IsEnabled="False">
        <TextBlock Text="SAVED LOCATIONS" Style="{StaticResource Caption}"/>

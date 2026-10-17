@@ -94,7 +94,8 @@ registrations and the matching English lamp-name IDs (`70000000 + area*100 +
 block*10 + index`). There are 45 named non-chalice destinations including the Dream
 and ten Old Hunters lamps. This corrects the old Moonside Lake row: `3202952`, not
 `3202951` (Lecture Building). Extra unnamed/debug return-point rows are excluded.
-Chalice destinations need generated-dungeon context and remain on the checklist.
+Chalice destinations require the character's generated-dungeon context; v0.2.0
+uses native altar selection rather than extending this fixed return-point list.
 
 Position reads follow actor +0x3B0 -> modules +0x68 -> transform; yaw is +0x1D4,
 XYZ is +0x1E0, and the current packed map/block is actor +0x3F8. Relocation calls
@@ -124,3 +125,56 @@ without ambiguity. The reference remains a link to the
 not a copied catalog. IDs must exist in the installed game's parameter tables.
 
 Implementation and user validation are tracked separately in [TODO.md](../TODO.md).
+
+## v0.2.0 native effects, menus and chalices
+
+Consumable use at RVA `0x18F9814` tests resource word +0x200 bit 9; the normal
+bullet path at `0x18F9F31` tests byte +0x201 mask 2. They share a player-owned
+toggle. Restoration preserves unrelated bits and the selection survives loads.
+
+Multipliers clone neutral SpEffectParam row 9999 into a private data allocation.
+The original parameter table is not edited. Its full neutral-row SHA-256 is
+validated before activation, rejecting altered rows from other data mods. Damage fields +0x38..+0x44 and enemy
+reward soulRate +0xE0 change; duration becomes -1 and saveCategory stays -1.
+Native row lookup `0x1F28AA0`, insertion `0x17E3130` and node update `0x17EA980`
+run through the player update dispatcher. The container is actor +0x1C8,
+its owner is +0x18, head +8; nodes have ID +0x40, row +0x48 and next +0x58.
+Only native insertion allocates the node. An existing ID 9999 is rejected.
+Disconnect restores the original row and expires the owned node through its
+normal engine update; no VirtualAlloc page is passed to the game's heap free.
+
+Remote menu constructors are LevelUp `0x1BB7F60`, Item/Reinforce `0x1BB9D00`,
+Item/Repair `0x1BB9780`, Depository `0x1BBA4F0`, GemEquip/Weapon `0x1BBAA90`,
+and GemEquip/Body `0x1BBB050`. Their names, factory dispatch call sites and ABIs
+were checked in the private image. The menu root is image +0x5562870; constructor
+context is root +0x48. Native attachment `0x1BB27A0` takes a step reference and an
+empty completion functor. Temporary references are released on the game thread;
+MenuMan owns the active wrapper (+0xA88) and the normal close lifecycle. Requests
+reject an existing menu and a replaced manager. The old MenuMan at +0x5562878
+and Util_RequestLevelUp are not used as workshop menu openers.
+
+Chalice owner image +0x553E9E8 has seven native gates, array +8, each 0x6A8 bytes
+with bank +0x100 and helper +0x108. Ordinary banks are 1..6. Helper +0xE0 holds
+the generated map UID, +0x25C status, +0x260/+0x264 pending/current commands.
+Native SelectDungeonAltar `0x13B89B0(EventFlagMan, bank)` selects/remaps the bank;
+RequestResume `0x1AA40E0(helper)` resumes a suspended altar. Completed statuses
+4/5 permit travel. The travel UI has nine named destinations from ReturnPointParam
+2902950..2902958 and English messages 70002900..70002908. Unlock flags match
+TalkESD t210060 (12907830 then increments of 20; the Seal has no unlock condition).
+Native GetEventFlagValue `0x13CFD80` verifies the selected bank's map UID at
+`94000000 + bank*100000`, its seven-bit selector, and the requested lamp's unlock.
+A final game-thread helper rechecks bank/UID, sets the return point/use-return
+latch, requests the ordinary respawn-point warp and sets destination bit
+`9001 + lampSlot`, matching m21 event 12107200. This is available only from
+Hunter's Dream so remapping a different dungeon's progress cannot affect a
+currently loaded dungeon. Native Channel/Top alone is not used for travel:
+its normal flow depends on the altar's local TalkESD script. No ritual is
+created and no lamp progress is unlocked.
+Generated-map coordinate bookmarks are rejected without instance identity.
+
+Additional standpoints use m26 o260900 (Micolash) and m21 o000300_0000
+(Gehrman/Moon Presence shared gate), using the same one-metre/0.15-metre offsets
+as the existing catalog. Story prerequisites remain native.
+
+These additions have synthetic execution and private-image checks. The live
+gameplay checklist remains separate and must be completed before publication.

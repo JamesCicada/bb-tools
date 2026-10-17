@@ -13,7 +13,7 @@ public sealed record LampChoice(string Name, int Entity)
     public override string ToString() => Label;
 }
 
-public sealed class GameActions(ProcessMemory memory, PlayerSession session) : IDisposable
+public sealed partial class GameActions(ProcessMemory memory, PlayerSession session) : IDisposable
 {
     private GameThreadQueue? queue;
     public static readonly (ulong Offset, byte[] Bytes)[] Fingerprints =
@@ -103,5 +103,5 @@ public sealed class GameActions(ProcessMemory memory, PlayerSession session) : I
         var world = memory.Pointer(session.ImageBase + 0x553B148);
         return dispatcher.ExecuteAsync([new(session.ImageBase + 0x154B110, world, dispatcher.Payload, dispatcher.Payload + 16, dispatcher.Payload + 32)], payload);
     }
-    public void Dispose() { queue?.Dispose(); queue = null; }
+    public void Dispose() { try { ResetMultipliers(); } finally { queue?.Dispose(); queue = null; } }
 }

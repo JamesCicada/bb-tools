@@ -106,6 +106,19 @@ internal static class Program
             // Model a goods handle constructor and a temporary-handle release.
             Write(root + 0x5780300, Convert.FromHexString("8B0281E0FFFFFF0081C8000000B08907C3"));
             Write(root + 0x5780400, Convert.FromHexString("C70700000000C3"));
+            // Native-owned effect stand-ins: insert a preallocated node, then activate it.
+            Write(root + 0x17E3130, Convert.FromHexString("488B0748894708C740400F270000C3"));
+            Write(root + 0x17EA980, Convert.FromHexString("C7471C0400000031C0C3"));
+            VirtualProtect((nint)(root + 0x17E3000), 4096, 0x20, out _);
+            VirtualProtect((nint)(root + 0x17EA000), 4096, 0x20, out _);
+            Write(root + 0x5780500, Convert.FromHexString("488B06488907F083400801C3"));
+            Write(root + 0x1BB27A0, Convert.FromHexString("488B02488986880A0000F08340080148C70700000000C3"));
+            VirtualProtect((nint)(root + 0x1BB2000), 4096, 0x20, out _);
+            Write(root + 0x13CFD80, Convert.FromHexString("81FE3C23000075048B4704C38B07C3"));
+            Write(root + 0x156D110, [0xC3]); Write(root + 0x156D0E0, [0xC3]);
+            Write(root + 0x132E050, Convert.FromHexString("48B8").Concat(BitConverter.GetBytes(root + 0x57F0100)).Concat(Convert.FromHexString("8930C3")).ToArray());
+            Write(root + 0x13D0060, Convert.FromHexString("897708C3"));
+            foreach (var page in new ulong[] { 0x13CF000, 0x156D000, 0x132E000, 0x13D0000 }) VirtualProtect((nint)(root + page), 4096, 0x20, out _);
             // Windows ABI wrapper -> SysV getter, including Windows nonvolatile RSI/RDI.
             var wrapper = VirtualAlloc(0, 4096, 0x3000, 4);
             var bridge = Enumerable.Repeat((byte)0x90, 0x1C).ToArray();
@@ -189,6 +202,11 @@ internal static class Program
             Check(memory.Read(root + 0x553E895, 1)[0] == 1 && memory.Read(player.Component + 0x200, 1)[0] == 0x8D, "disable AI and fall damage without altering resource flags");
             session.RestorePracticeFlags();
             Check(memory.Read(root + 0x553E895, 1)[0] == 0 && memory.Read(player.Component + 0x200, 1)[0] == 0x85, "restore AI and fall damage original bits");
+            memory.Write(player.Component + 0x201, [0x40]);
+            session.SetPracticeFlag(PracticeFlag.InfiniteItems, true);
+            Check(memory.Read(player.Component + 0x201, 1)[0] == 0x42, "infinite consumables and bullets preserve adjacent player flags");
+            session.RestorePracticeFlag(PracticeFlag.InfiniteItems);
+            Check(memory.Read(player.Component + 0x201, 1)[0] == 0x40, "restore original item consumption bit");
             var spot = session.ReadLocation("Practice spot");
             Check(spot == new SavedLocation("Practice spot", 0x18010000, 10, -20, 30, 1.5f), "capture loaded map, position and heading from the player transform");
             var spotPayload = spot.Payload();
@@ -201,8 +219,8 @@ internal static class Program
                 "lamp catalog contains 45 unique named destinations including all ten DLC lamps");
             Check(GameActions.Lamps.Single(x => x.Name == "Moonside Lake").Entity == 3202952 && GameActions.Lamps.Single(x => x.Name == "Lecture Building").Entity == 3202951,
                 "Moonside Lake and Lecture Building use distinct verified return points");
-            Check(BossDestinations.All.Length == 19 && BossDestinations.All.Count(x => x.Name.StartsWith("[DLC]")) == 5 && BossDestinations.All.All(x => GameActions.Lamps.Any(l => l.Entity == x.EntryLamp)),
-                "nineteen boss entrances include all five DLC bosses and valid area lamps");
+            Check(BossDestinations.All.Length == 22 && BossDestinations.All.Count(x => x.Name.StartsWith("[DLC]")) == 5 && BossDestinations.All.All(x => GameActions.Lamps.Any(l => l.Entity == x.EntryLamp)),
+                "twenty-two boss entrance presets include all five DLC bosses and valid area lamps");
             foreach (var destination in BossDestinations.All) destination.Position.Validate();
             Check(ItemInput.Parse("400003E8", 0, true) == (1000, 0x40000000u) && ItemInput.Parse("0x400003E8", 0, false) == (1000, 0x40000000u), "parse Wiki hexadecimal IDs with category included");
             Check(ItemInput.Parse("1000", 0x40000000, false) == (1000, 0x40000000u) && ItemInput.Parse("40000320", 0, true) == (800,0x40000000u), "decimal and digits-only hexadecimal item IDs remain unambiguous");
@@ -213,6 +231,110 @@ internal static class Program
             var originalTable = memory.Pointer(player.Actor);
             using (var dispatcher = new GameThreadQueue(memory, session))
             {
+                var neutral = new byte[0x210]; neutral[0x141] = 0xFF;
+                for (var i = 0; i < 4; i++) BitConverter.GetBytes(1f).CopyTo(neutral, 0x38 + i * 4);
+                BitConverter.GetBytes(1f).CopyTo(neutral, 0xE0);
+                neutral[0x155] = 0xAB;
+                var modified = GameActions.MultiplierRow(neutral, 2.5f, 3f);
+                Check(BitConverter.ToSingle(modified, 0x38) == 2.5f && BitConverter.ToSingle(modified, 0xE0) == 3 &&
+                    modified[0x155] == 0xAB && BitConverter.ToSingle(neutral, 0x38) == 1,
+                    "multiplier row scales outgoing damage and enemy rewards while preserving other fields and the original row");
+                Reject<ArgumentException>(() => GameActions.MultiplierRow(neutral, float.NaN, 1), "reject nonfinite multipliers");
+                Reject<ArgumentException>(() => GameActions.MultiplierRow(neutral, 1, 101), "reject excessive reward multiplier");
+                var container = root + 0x57C1000; var node = root + 0x57C0000; var originalRow = root + 0x57C2000;
+                var cloneRow = memory.AllocateData(0x210); memory.Write(cloneRow, modified);
+                memory.Write(player.Actor + 0x1C8, BitConverter.GetBytes(container));
+                memory.Write(container, BitConverter.GetBytes(node)); memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor));
+                memory.Write(node + 0x48, BitConverter.GetBytes(originalRow));
+                var effectPayload = new byte[64];
+                ulong[] effectFields = [player.Actor, container, cloneRow, originalRow];
+                for (var i = 0; i < effectFields.Length; i++) BitConverter.GetBytes(effectFields[i]).CopyTo(effectPayload, i * 8);
+                var helper = memory.AllocateCode(GameActions.BuildEffectHelper(root));
+                dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 48) == 1 && memory.Pointer(node + 0x48) == cloneRow &&
+                    memory.Pointer(dispatcher.Payload + 56) == node && BitConverter.ToSingle(memory.Read(node, 4)) == -1 && memory.Int32(node + 0x1C) == 4,
+                    "game-thread effect helper attaches the private row only to the native-created player node and activates it");
+                dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 48) == 0 && memory.Pointer(node + 0x48) == cloneRow,
+                    "effect ID collision cannot overwrite an existing effect");
+                memory.Write(container + 8, new byte[8]);
+                memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor + 8));
+                dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 48) == 0 && BitConverter.ToUInt64(memory.Read(container + 8, 8)) == 0,
+                    "changed effect container owner blocks native insertion");
+                memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor));
+                memory.Write(container + 8, BitConverter.GetBytes(node));
+                using (var multiplierActions = new GameActions(memory, session))
+                {
+                    var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                    foreach (var field in new (string Name, ulong Value)[] { ("effectActor", player.Actor), ("effectContainer", container),
+                        ("effectNode", node), ("effectRow", cloneRow), ("originalEffectRow", originalRow) })
+                        typeof(GameActions).GetField(field.Name, binding)!.SetValue(multiplierActions, field.Value);
+                    Check(multiplierActions.MultipliersAttached(), "multiplier ownership requires the current actor, native node and private row");
+                    multiplierActions.ResetMultipliers();
+                    Check(memory.Pointer(node + 0x48) == originalRow && memory.Int32(node) == 0 && memory.Read(node + 0x2D, 1)[0] == 1 &&
+                        !multiplierActions.MultipliersAttached(), "disabling multipliers restores the original row and schedules native node expiration");
+                }
+                var menuManager = root + 0x57D0000; var menuStep = root + 0x57D2000;
+                memory.Write(root + 0x5562870, BitConverter.GetBytes(menuManager));
+                memory.Write(menuManager + 0x48, BitConverter.GetBytes(menuStep));
+                var menuPayload = new byte[96];
+                BitConverter.GetBytes(menuManager).CopyTo(menuPayload, 0);
+                BitConverter.GetBytes(root + 0x5780500).CopyTo(menuPayload, 8);
+                var menuHelper = memory.AllocateCode(GameActions.BuildMenuHelper(root));
+                dispatcher.ExecuteAsync([new(menuHelper, dispatcher.Payload)], menuPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 80) == 1 && memory.Pointer(menuManager + 0xA88) == menuStep &&
+                    memory.Int32(menuStep + 8) == 1 && BitConverter.ToUInt64(memory.Read(dispatcher.Payload + 16, 8)) == 0,
+                    "remote menu helper transfers native step ownership to MenuMan and releases its temporary reference");
+                dispatcher.ExecuteAsync([new(menuHelper, dispatcher.Payload)], menuPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 80) == 0 && memory.Int32(menuStep + 8) == 1,
+                    "opening another remote menu cannot replace an existing game menu");
+                memory.Write(menuManager + 0xA88, new byte[8]);
+                memory.Write(root + 0x5562870, BitConverter.GetBytes(menuManager + 8));
+                dispatcher.ExecuteAsync([new(menuHelper, dispatcher.Payload)], menuPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 80) == 0 && memory.Int32(menuStep + 8) == 1,
+                    "menu manager replacement blocks stale menu construction");
+                Check(GameActions.ChaliceLamps.Length == 9 && GameActions.ChaliceLamps.Select(l => l.Entity).Distinct().Count() == 9 &&
+                    GameActions.ChaliceLamps.Last().Name == "Layer Four: Heart" && GameActions.ChaliceLamps[1].UnlockFlag == 12907830,
+                    "chalice catalog includes all nine named seal/layer/heart destinations and their talk-script unlock flags");
+                var flagManager = root + 0x57F0000;
+                memory.Write(root + 0x553B100, BitConverter.GetBytes(flagManager));
+                memory.SetInt32(flagManager, 123456); memory.SetInt32(flagManager + 4, 32);
+                memory.SetInt32(player.Actor + 0x3F8, 0x15000000);
+                var warpPayload = new byte[64];
+                ulong[] warpFields = [flagManager, 123456, 32, 2902951, 1, 0, player.Actor, 94100000];
+                for (var i = 0; i < warpFields.Length; i++) BitConverter.GetBytes(warpFields[i]).CopyTo(warpPayload, i * 8);
+                var warpHelper = memory.AllocateCode(GameActions.BuildChaliceWarpHelper(root));
+                dispatcher.ExecuteAsync([new(warpHelper, dispatcher.Payload)], warpPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 40) == 1 && memory.Int32(root + 0x57F0100) == 2902951 && memory.Int32(flagManager + 8) == 9002,
+                    "chalice helper validates generated dungeon/altar context and requests its lamp with the native destination bit");
+                memory.SetInt32(root + 0x57F0100, 0); memory.SetInt32(flagManager, 654321);
+                dispatcher.ExecuteAsync([new(warpHelper, dispatcher.Payload)], warpPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 40) == 0 && memory.Int32(root + 0x57F0100) == 0,
+                    "generated dungeon replacement prevents a chalice warp before return-point changes");
+                memory.SetInt32(flagManager, 123456); memory.SetInt32(player.Actor + 0x3F8, 0x18010000);
+                dispatcher.ExecuteAsync([new(warpHelper, dispatcher.Payload)], warpPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload + 40) == 0 && memory.Int32(root + 0x57F0100) == 0,
+                    "leaving Hunter's Dream prevents a stale chalice warp");
+                var altarOwner = root + 0x57E0000; var altarArray = root + 0x57E1000;
+                memory.Write(root + 0x553E9E8, BitConverter.GetBytes(altarOwner)); memory.SetInt32(altarOwner, 7);
+                memory.Write(altarOwner + 8, BitConverter.GetBytes(altarArray));
+                for (var bank = 1; bank <= 6; bank++)
+                {
+                    var gate = root + 0x57E2000 + (ulong)bank * 0x1000;
+                    memory.Write(altarArray + (ulong)bank * 8, BitConverter.GetBytes(gate));
+                    memory.Write(gate, BitConverter.GetBytes(root + 0x5336570));
+                    memory.SetInt32(gate + 0x100, bank); memory.SetInt32(gate + 0x108 + 0xE0, 12345 + bank);
+                    memory.SetInt32(gate + 0x108 + 0x25C, 4);
+                }
+                using (var altarActions = new GameActions(memory, session))
+                {
+                    var altars = altarActions.ReadChaliceAltars();
+                    Check(altars.Length == 6 && altars.Select(a => a.MapUid).Distinct().Count() == 6 && altars.All(a => a.Status == 4),
+                        "chalice travel enumerates all six character-owned dungeons without substituting fixed map IDs");
+                    memory.SetInt32(altarOwner, 6);
+                    Reject<IOException>(() => altarActions.ReadChaliceAltars(), "unloaded or incompatible altar owner blocks chalice traversal");
+                }
                 var payload = GameActions.ItemBatch(1000, 0x40000000, 20);
                 Check(payload.SequenceEqual(Convert.FromHexString("0100000000000000E803004014000000FFFFFFFF")), "goods payload reserves a handle for engine construction and keeps catalog ID and quantity at engine offsets");
                 Check(GameActions.ItemBatch(26000000, 0, 1).SequenceEqual(Convert.FromHexString("010000000000000080BA8C0101000000FFFFFFFF")), "weapon grant preserves full catalog ID separately from the inventory handle");
@@ -240,7 +362,7 @@ internal static class Program
                     unchecked((uint)memory.Int32(root + 0x5790048)) == 0xB00003E8 && memory.Int32(dispatcher.Payload + 4) == 0,
                     "native award receives a constructed goods handle before temporary ownership is released");
                 dispatcher.ExecuteAsync([new(root + 0x5780100, root + 0x5790008, 1), new(root + 0x5780100, root + 0x5790008, 2), new(root + 0x5780100, root + 0x5790008, 3)]).GetAwaiter().GetResult();
-                Check(memory.Int32(root + 0x5790008) == 123, "three-step native job preserves order");
+                Check(memory.Int32(root + 0x5790008) == 123 && dispatcher.Result(2) == 123, "three-step native job preserves order and exposes its completed return value");
                 dispatcher.ExecuteAsync([new(root + 0x5780200, root + 0x5790000, 0, player.Actor)]).GetAwaiter().GetResult();
                 Check(memory.Pointer(root + 0x5790010) == character.Address, "recursive getter preserves result without repeating the request");
             }
@@ -278,7 +400,7 @@ internal static class Program
         var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         void Field(string name, object? value) => typeof(MainWindow).GetField(name, binding)!.SetValue(window, value);
         void Poll() => typeof(MainWindow).GetMethod("Poll", binding)!.Invoke(window, [null, EventArgs.Empty]);
-        string[] names = ["KeepHealth", "InfiniteStamina", "GodMode", "OneShot", "Stealth", "Silent", "NoAi", "NoFallDamage"];
+        string[] names = ["KeepHealth", "InfiniteStamina", "GodMode", "OneShot", "Stealth", "Silent", "NoAi", "NoFallDamage", "InfiniteItems"];
         var toggles = names.Select(name => (System.Windows.Controls.CheckBox)window.FindName(name)).ToArray();
         Field("updating", true);
         foreach (var toggle in toggles) toggle.IsChecked = true;
@@ -289,18 +411,18 @@ internal static class Program
         Check(toggles.All(x => x.IsChecked == true), "UI preserves all selected practice toggles across a null-player loading screen");
         var replacement = root + 0x57A0000;
         memory.Write(replacement, memory.Read(player.Component, 0x208));
-        memory.Write(replacement + 0x200, [0x10]);
+        memory.Write(replacement + 0x200, [0x10, 0x20]);
         var modules = memory.Pointer(player.Actor + 0x3B0);
         memory.Write(modules + 0x20, BitConverter.GetBytes(replacement));
         memory.Write(world + 0x60, BitConverter.GetBytes(player.Actor));
         memory.Write(root + 0x553E889, [0]); // Simulate the engine resetting a global flag on load.
         var oldFlags = memory.Read(player.Component + 0x200, 1)[0];
         Poll();
-        Check(memory.Read(replacement + 0x200, 1)[0] == 0x9B && memory.Read(root + 0x553E889, 1)[0] == 1 && memory.Read(root + 0x553E895, 1)[0] == 1,
-            "UI reapplies god mode, stamina and one-shot to the loaded player");
+        Check(memory.Read(replacement + 0x200, 1)[0] == 0x9B && memory.Read(root + 0x553E889, 1)[0] == 1 && memory.Read(root + 0x553E895, 1)[0] == 1 && memory.Read(replacement + 0x201, 1)[0] == 0x22,
+            "UI reapplies combat and consumption flags to the loaded player");
         Check(memory.Read(player.Component + 0x200, 1)[0] == oldFlags, "transition never writes through the old resource component");
         typeof(MainWindow).GetMethod("StopFeatures", binding)!.Invoke(window, null);
-        Check(toggles.All(x => x.IsChecked == false) && memory.Read(replacement + 0x200, 1)[0] == 0x10,
+        Check(toggles.All(x => x.IsChecked == false) && memory.Read(replacement + 0x200, 1)[0] == 0x10 && memory.Read(replacement + 0x201, 1)[0] == 0x20,
             "explicit stop clears selections and restores the new component's original bits");
         Field("session", null); Field("memory", null); window.Close();
         memory.Write(modules + 0x20, BitConverter.GetBytes(player.Component));
@@ -328,7 +450,7 @@ internal static class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

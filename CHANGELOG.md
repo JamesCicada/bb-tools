@@ -1,6 +1,30 @@
 # Changelog
 
-## 0.1.1 - Unreleased
+## 0.2.0 - 2026-10-17 (draft)
+
+- Infinite consumables and Quicksilver Bullets, retained through loading screens.
+- Player-only outgoing damage and enemy Echoes reward multipliers (0.1–100x),
+  with owned-effect cleanup and automatic reattachment after loads.
+- Native level-up, fortify, repair, storage, blood gem and Caryll rune menu shortcuts.
+- Chalice altar selection using the current character's six existing ritual banks;
+  select any of nine named seal/layer/heart lamps from Hunter's Dream. Locked
+  lamps and mismatched generated-dungeon contexts are rejected.
+- Micolash, Gehrman and Moon Presence entrance presets (22 total). The final two
+  share their arena gate and still require normal story conditions.
+- Two-file release ZIP: BBTools.exe and README.md. Checksum remains a separate asset.
+- CI creates an annotated tag and a draft release on main-branch version bumps;
+  no automatic public publishing. Retry support preserves published releases.
+
+James confirmed the multipliers and remote workshop menus working. Chalice travel
+and the three additional boss entrances remain pending live confirmation in TODO.md.
+Validation: 87 app checks in Debug/Release, six release-automation checks, private
+1.09 instruction checks, and self-contained package startup/shutdown.
+
+- Preserve emoji status indicators (✔️ / ⌛) in the release checklist.
+- Add a future-feature roadmap covering hotkeys, presets, boss retries, encounter
+  timing, enemy inspection, item search, weapon setups, camera tools and diagnostics.
+
+## 0.1.1 - Development build
 
 - Use the supplied PNG emblem in the sidebar and window icon, with a multi-size
   Windows icon embedded in the executable.

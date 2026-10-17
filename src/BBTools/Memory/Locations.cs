@@ -61,6 +61,8 @@ public sealed partial class PlayerSession
         var bytes = memory.Read(transform + 0x1D4, 24);
         var location = new SavedLocation(name.Trim(), unchecked((uint)memory.Int32(player.Actor + 0x3F8)),
             BitConverter.ToSingle(bytes, 12), BitConverter.ToSingle(bytes, 16), BitConverter.ToSingle(bytes, 20), BitConverter.ToSingle(bytes, 0));
+        if ((location.Block >> 24) == 29)
+            throw new IOException("Generated chalice dungeons require instance identity. Use altar travel for their layer lamps; coordinate bookmarks currently support fixed maps.");
         location.Validate(); EnsureSamePlayer(player);
         return location;
     }

@@ -12,6 +12,7 @@ public sealed class GameThreadQueue : IDisposable
     private readonly ulong actor, data, originalTable, table, workspace;
     private readonly CancellationTokenSource stopped = new();
     private bool busy, disposed;
+    private int lastCallCount;
     public const int PayloadOffset = 512;
     public ulong Payload => workspace + PayloadOffset;
     public ulong Actor => actor;
@@ -66,6 +67,7 @@ public sealed class GameThreadQueue : IDisposable
                     throw new IOException("Player changed. Reconnect before submitting a game request.");
                 if (memory.Int32(workspace) is 1 or 2) throw new IOException("The previous game request has not finished. It will not be repeated.");
                 var descriptors = new byte[3 * 64];
+                lastCallCount = calls.Length;
                 for (var i = 0; i < calls.Length; i++)
                 {
                     BitConverter.GetBytes(calls[i].Function).CopyTo(descriptors, i * 64);
@@ -87,6 +89,12 @@ public sealed class GameThreadQueue : IDisposable
             throw new IOException("Game request timed out. It was not automatically repeated; check the game before retrying.");
         }
         finally { busy = false; }
+    }
+    public ulong Result(int index)
+    {
+        if (disposed || busy || index < 0 || index >= lastCallCount || memory.Int32(workspace) != 3)
+            throw new IOException("The native request has no completed result at that index.");
+        return BitConverter.ToUInt64(memory.Read(workspace + 64 + (ulong)index * 64 + 56, 8));
     }
     public void Dispose()
     {

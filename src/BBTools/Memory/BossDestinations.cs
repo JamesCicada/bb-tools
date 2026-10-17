@@ -7,6 +7,7 @@ public sealed record PracticeDestination(string Name, int EntryLamp, SavedLocati
 }
 
 // Standpoints one metre outside fog objects, checked against local 1.09 MSB placements.
+// The two final bosses share the Hunter's Dream arena gate; story conditions still apply.
 public static class BossDestinations
 {
     public static PracticeDestination[] All =>
@@ -24,6 +25,9 @@ public static class BossDestinations
         new("Amygdala", 3302950, new("Amygdala", 0x21000000, -46.255816f, 1462.003000f, -69.415607f, 1.954769f)),
         new("Celestial Emissary", 2422950, new("Celestial Emissary", 0x18020000, -6.336025f, 55.486000f, 293.910000f, -1.047198f)),
         new("Ebrietas, Daughter of the Cosmos", 2422950, new("Ebrietas, Daughter of the Cosmos", 0x18020000, 93.511242f, 4.350000f, 386.127581f, -2.630927f)),
+        new("Micolash, Host of the Nightmare", 2602950, new("Micolash, Host of the Nightmare", 0x1A000000, 144.877f, 1033.097f, -14.742f, -1.570796f)),
+        new("Gehrman, the First Hunter", 2102950, new("Gehrman, the First Hunter", 0x15000000, 12.167805f, -9.828f, -36.448844f, -1.483530f)),
+        new("Moon Presence", 2102950, new("Moon Presence", 0x15000000, 12.167805f, -9.828f, -36.448844f, -1.483530f)),
         new("Mergo's Wet Nurse", 2602950, new("Mergo's Wet Nurse", 0x1A000000, 121.140000f, 1125.334000f, -37.839000f, -1.570796f)),
         new("[DLC] Ludwig, the Holy Blade", 3402950, new("[DLC] Ludwig, the Holy Blade", 0x22000000, -407.930000f, 1503.950000f, -715.450000f, 0.000000f)),
         new("[DLC] Living Failures", 3502950, new("[DLC] Living Failures", 0x23000000, -377.540000f, 1593.050000f, -824.550000f, 1.570796f)),

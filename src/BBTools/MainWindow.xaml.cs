@@ -17,6 +17,8 @@ public partial class MainWindow : Window
     private PlayerSession? session;
     private GameActions? actions;
     private bool actionBusy;
+    private float desiredDamage = 1, desiredEchoes = 1;
+    private ulong multiplierFailedActor;
     private CharacterState? statDraft;
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private bool updating, closing, connecting, discovering, autoPaused;
@@ -35,6 +37,9 @@ public partial class MainWindow : Window
         Title = $"BB Tools v{AppInfo.DisplayVersion} · Hunter's Workshop";
         VersionLabel.Text = $"VERSION {AppInfo.DisplayVersion}";
         AboutVersion.Text = $"BB Tools v{AppInfo.DisplayVersion}";
+        ChaliceLampPicker.ItemsSource = GameActions.ChaliceLamps; ChaliceLampPicker.SelectedIndex = 0;
+        ChalicePicker.ItemsSource = Enumerable.Range(1, 6).Select(bank => new ChaliceAltar(bank, 0, 0)).ToArray(); ChalicePicker.SelectedIndex = 0;
+        MenuPicker.ItemsSource = GameActions.Menus; MenuPicker.SelectedIndex = 0;
         ItemPicker.ItemsSource = GameActions.CommonItems;
         ItemPicker.SelectedIndex = 0;
         LampPicker.ItemsSource = GameActions.Lamps;
@@ -59,7 +64,7 @@ public partial class MainWindow : Window
     }
     private async void Connect(object sender, RoutedEventArgs e)
     {
-        if (session != null) { autoPaused = true; Disconnect(); return; }
+        if (session != null) { if (actionBusy) { Status.Text = "Wait for the active game request before disconnecting."; return; } autoPaused = true; Disconnect(); return; }
         if (Candidates.SelectedItem is not ProcessCandidate candidate) { Status.Text = "Select a running game process first."; return; }
         autoPaused = false;
         await ConnectCandidate(candidate);
@@ -147,7 +152,7 @@ public partial class MainWindow : Window
             StaminaBar.Maximum = state.MaxStamina; StaminaBar.Value = state.Stamina;
             PlayerControls.IsEnabled = true;
             PracticeControls.IsEnabled = true;
-            ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
+            ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
             if (KeepHealth.IsChecked == true) session.KeepHealthFull();
             if (InfiniteStamina.IsChecked == true) session.SetInfiniteStamina(true);
             else session.RestoreStamina();
@@ -157,6 +162,9 @@ public partial class MainWindow : Window
                 if (control.IsChecked == true) session.SetPracticeFlag(flag, true);
                 else session.RestorePracticeFlag(flag);
             }
+            if (!actionBusy && actions != null && (desiredDamage != 1 || desiredEchoes != 1) &&
+                multiplierFailedActor != state.Actor && !actions.MultipliersAttached())
+                _ = ResumeMultipliers(state.Actor);
             var character = session.ReadCharacter();
             EchoValue.Text = character.Values.Echoes.ToString("N0");
             EchoControls.IsEnabled = StatControls.IsEnabled = true;
@@ -167,7 +175,7 @@ public partial class MainWindow : Window
         catch (Exception ex) when (IsExpected(ex))
         {
             PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-            PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
+            PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
             HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—";
             HealthBar.Value = StaminaBar.Value = 0;
             statDraft = null;
@@ -180,7 +188,10 @@ public partial class MainWindow : Window
         KeepHealth.IsChecked = InfiniteStamina.IsChecked = false;
         foreach (var control in FlagControls) control.IsChecked = false;
         updating = false;
+        desiredDamage = desiredEchoes = 1; multiplierFailedActor = 0;
+        DamageMultiplier.Text = EchoesMultiplier.Text = "1";
         var errors = new List<string>();
+        try { actions?.ResetMultipliers(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         try { session?.RestoreStamina(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         try { session?.RestorePracticeFlags(); } catch (Exception ex) when (IsExpected(ex)) { errors.Add(ex.Message); }
         return errors.Count == 0 ? null : $"Practice restoration could not be verified: {string.Join(" ", errors.Distinct())}";
@@ -194,7 +205,7 @@ public partial class MainWindow : Window
         lastActor = lastComponent = 0;
         ReleaseOwner();
         PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-        PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
+        PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         RefreshButton.IsEnabled = Candidates.IsEnabled = true;
         ConnectButton.Content = "Connect"; ConnectionBadge.Text = "DISCONNECTED";
         ConnectionHint.Text = "Start Bloodborne PC and load a character, then connect.";
@@ -207,7 +218,20 @@ public partial class MainWindow : Window
         if (sessionOwner == null) return;
         sessionOwner.ReleaseMutex(); sessionOwner.Dispose(); sessionOwner = null;
     }
-    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e) { closing = true; updateLifetime.Cancel(); autoTimer.Stop(); Disconnect(); }
+    private bool waitingToClose;
+    private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (actionBusy)
+        {
+            e.Cancel = true;
+            if (waitingToClose) return;
+            waitingToClose = true; closing = true; timer.Stop(); autoTimer.Stop();
+            Status.Text = "Finishing the active game request before closing…";
+            while (actionBusy) await Task.Delay(50);
+            waitingToClose = false; Close(); return;
+        }
+        closing = true; updateLifetime.Cancel(); autoTimer.Stop(); Disconnect();
+    }
 
     private void OpenGitHub(object sender, RoutedEventArgs e) => OpenWeb(new Uri(AppInfo.RepositoryUrl));
     private void OpenUpdateRelease(object sender, RoutedEventArgs e)
@@ -263,7 +287,7 @@ public partial class MainWindow : Window
         try { session.SetInfiniteStamina(InfiniteStamina.IsChecked == true); Status.Text = InfiniteStamina.IsChecked == true ? "Infinite stamina enabled." : "Previous stamina-consumption setting restored."; }
         catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"{ex.Message} Selection retained; waiting for a valid player."; }
     }
-    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent, NoAi, NoFallDamage];
+    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent, NoAi, NoFallDamage, InfiniteItems];
     private void FlagChanged(object sender, RoutedEventArgs e)
     {
         if (updating || session == null || sender is not CheckBox control) return;
@@ -274,7 +298,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"{ex.Message} Selection retained; waiting for a valid player."; }
     }
-    private void TurnOffFeatures(object sender, RoutedEventArgs e) => Status.Text = StopFeatures() ?? "Practice toggles switched off and previous flags restored.";
+    private void TurnOffFeatures(object sender, RoutedEventArgs e) => Status.Text = actionBusy ? "Wait for the active game request to finish." : StopFeatures() ?? "Practice toggles switched off and previous flags restored.";
     private void Navigate(object sender, RoutedEventArgs e)
     {
         var page = (string)((Button)sender).Tag;
@@ -297,12 +321,46 @@ public partial class MainWindow : Window
     private async Task RunGameAction(Func<GameActions, Task> action, string success)
     {
         if (actions == null || actionBusy) { Status.Text = "Connect to a loaded character and wait for the active request to finish."; return; }
-        actionBusy = true; ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
+        actionBusy = true; ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         Status.Text = "Waiting for the game thread to process the request…";
         try { await action(actions); if (!closing) Status.Text = success; }
         catch (Exception ex) when (IsExpected(ex)) { if (!closing) Status.Text = ex.Message; }
         finally { actionBusy = false; }
     }
+    private async Task ResumeMultipliers(ulong actor)
+    {
+        if (actions == null || actionBusy) return;
+        actionBusy = true;
+        try { await actions.SetMultipliersAsync(desiredDamage, desiredEchoes); }
+        catch (Exception ex) when (IsExpected(ex)) { multiplierFailedActor = actor; Status.Text = $"Multipliers paused: {ex.Message} Use Apply multipliers to retry."; }
+        finally { actionBusy = false; }
+    }
+    private async void ApplyMultipliers(object sender, RoutedEventArgs e) => await RunGameAction(async engine =>
+    {
+        if (!float.TryParse(DamageMultiplier.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var damage) ||
+            !float.TryParse(EchoesMultiplier.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var echoes))
+            throw new ArgumentException("Enter numeric multipliers between 0.1 and 100, using a decimal point.");
+        await engine.SetMultipliersAsync(damage, echoes);
+        desiredDamage = damage; desiredEchoes = echoes; multiplierFailedActor = 0;
+    }, "Player damage and enemy Echoes reward multipliers applied.");
+    private void RefreshChalices(object sender, RoutedEventArgs e) => Run(() =>
+    {
+        if (actions == null) throw new IOException("Connect to a loaded character first.");
+        var selected = (ChalicePicker.SelectedItem as ChaliceAltar)?.Bank ?? 1;
+        var altars = actions.ReadChaliceAltars(); ChalicePicker.ItemsSource = altars;
+        ChalicePicker.SelectedItem = altars.First(x => x.Bank == selected);
+    }, "Altar data refreshed from the current character.");
+    private async void OpenChaliceTravel(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    {
+        if (ChalicePicker.SelectedItem is not ChaliceAltar altar) throw new ArgumentException("Choose a chalice altar.");
+        if (ChaliceLampPicker.SelectedItem is not ChaliceLamp lamp) throw new ArgumentException("Choose a chalice lamp.");
+        return engine.WarpChaliceAsync(altar.Bank, lamp);
+    }, "Chalice lamp travel requested using the selected altar’s generated dungeon.");
+    private async void OpenRemoteMenu(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    {
+        if (MenuPicker.SelectedItem is not MenuChoice menu) throw new ArgumentException("Choose a workshop menu.");
+        return engine.OpenMenuAsync(menu);
+    }, "Menu opened. Complete or close it normally in the game.");
     private async void SpawnItem(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
         if (ItemCategory.SelectedItem is not ComboBoxItem category) throw new ArgumentException("Choose an item category.");

@@ -2,7 +2,7 @@ using System.IO;
 
 namespace BBTools.Memory;
 
-public enum PracticeFlag { GodMode, OneShot, Stealth, Silence, NoAi, NoFallDamage }
+public enum PracticeFlag { GodMode, OneShot, Stealth, Silence, NoAi, NoFallDamage, InfiniteItems }
 
 public sealed partial class PlayerSession
 {
@@ -15,6 +15,8 @@ public sealed partial class PlayerSession
         (0x19214BE, Convert.FromHexString("488D15C9D3C103")),
         (0x1921500, Convert.FromHexString("488D1588D3C103")),
         (0x1921374, Convert.FromHexString("488D151AD5C103")),
+        (0x18F9814, Convert.FromHexString("0FB7920002000081E200020000")),
+        (0x18F9F31, Convert.FromHexString("F6800102000002")),
         (0x1A35B75, Convert.FromHexString("F6800002000008"))
     ];
     public void SetPracticeFlag(PracticeFlag flag, bool enabled)
@@ -62,9 +64,10 @@ public sealed partial class PlayerSession
         PracticeFlag.Silence => 0x553E88FUL,
         PracticeFlag.NoAi => 0x553E895UL,
         PracticeFlag.NoFallDamage => 0x200UL,
+        PracticeFlag.InfiniteItems => 0x201UL,
         _ => throw new ArgumentException("Unknown practice flag.")
     });
-    private static bool LocalFlag(PracticeFlag flag) => flag is PracticeFlag.GodMode or PracticeFlag.NoFallDamage;
-    private static byte FlagMask(PracticeFlag flag) => flag switch { PracticeFlag.GodMode => 3, PracticeFlag.NoFallDamage => 8, _ => 1 };
+    private static bool LocalFlag(PracticeFlag flag) => flag is PracticeFlag.GodMode or PracticeFlag.NoFallDamage or PracticeFlag.InfiniteItems;
+    private static byte FlagMask(PracticeFlag flag) => flag switch { PracticeFlag.GodMode => 3, PracticeFlag.NoFallDamage => 8, PracticeFlag.InfiniteItems => 2, _ => 1 };
     public ulong ImageBase => imageBase;
 }

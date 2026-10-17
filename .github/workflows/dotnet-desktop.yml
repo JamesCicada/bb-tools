@@ -6,13 +6,18 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      draft_release:
+        description: Create or resume a draft for the current project version
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -53,6 +58,10 @@ jobs:
       - name: Run integration checks
         run: dotnet run --project tests/BBTools.Checks --configuration ${{ matrix.configuration }} --no-build --no-restore
 
+      - name: Check draft release automation
+        if: matrix.configuration == 'Release'
+        run: node --test scripts/draft-release.test.cjs
+
       - name: Package self-contained Windows x64 app
         if: matrix.configuration == 'Release'
         run: ./scripts/release.ps1 -Configuration Release
@@ -68,3 +77,53 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           retention-days: 14
+
+  draft-release:
+    name: Tag and prepare draft release
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.draft_release == true)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: bbtools-draft-release
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detect a new version
+        id: version
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          MANUAL_DRAFT: ${{ inputs.draft_release }}
+        run: |
+          [xml]$project = Get-Content src/BBTools/BBTools.csproj
+          $current = [string]$project.Project.PropertyGroup.Version
+          if ($current -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid project release version.' }
+          $changed = $env:MANUAL_DRAFT -eq 'true'
+          if ($env:BEFORE_SHA -match '^[0-9a-f]{40}$' -and $env:BEFORE_SHA -notmatch '^0+$') {
+            $previousText = git show "${env:BEFORE_SHA}:src/BBTools/BBTools.csproj"
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot determine previous project version.' }
+            [xml]$previous = $previousText -join "`n"
+            $changed = $changed -or $current -ne [string]$previous.Project.PropertyGroup.Version
+          }
+          # Also recover a version bump whose earlier CI run never reached tagging.
+          $changed = $changed -or @(git tag --list "v$current").Count -eq 0
+          "changed=$($changed.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+      - uses: actions/download-artifact@v4
+        if: steps.version.outputs.changed == 'true'
+        with:
+          name: BBTools-win-x64
+          path: release-artifacts
+      - name: Create tag and draft with verified assets
+        if: steps.version.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await require('./scripts/draft-release.cjs')({ github, context, core });

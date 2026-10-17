@@ -17,13 +17,22 @@ dotnet publish (Join-Path $projectRoot 'src/BBTools/BBTools.csproj') -c $Configu
     -p:DebugType=None -p:DebugSymbols=false --output $package --nologo
 if ($LASTEXITCODE -ne 0) { throw 'Release publish failed.' }
 
-foreach ($document in @('README.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'TODO.md')) {
-    Copy-Item -LiteralPath (Join-Path $projectRoot $document) -Destination $package
+Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $package
+# Standalone README links must still work without bundling the source documents.
+$readmePath = Join-Path $package 'README.md'
+$readme = [System.IO.File]::ReadAllText($readmePath)
+foreach ($document in @('CONTRIBUTING.md', 'TODO.md', 'LICENSE', 'docs/memory-research.md')) {
+    $readme = $readme.Replace("]($document)", "](https://github.com/JamesCicada/bb-tools/blob/v$releaseVersion/$document)")
 }
-New-Item -ItemType Directory -Path (Join-Path $package 'docs') -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/memory-research.md') -Destination (Join-Path $package 'docs')
+[System.IO.File]::WriteAllText($readmePath, $readme, [System.Text.UTF8Encoding]::new($false))
+# Fail rather than silently ship publish sidecars or development documents.
+$expected = @('BBTools.exe', 'README.md')
+$entries = @(Get-ChildItem -LiteralPath $package -Force)
+if ($entries.Count -ne 2 -or @($entries | Where-Object { $_.PSIsContainer -or $_.Name -notin $expected }).Count -ne 0) {
+    throw 'Release package must contain only BBTools.exe and README.md.'
+}
 $archive = Join-Path $releaseRoot "$releaseName.zip"
-Compress-Archive -LiteralPath $package -DestinationPath $archive -Force
+Compress-Archive -LiteralPath (Join-Path $package 'BBTools.exe'), (Join-Path $package 'README.md') -DestinationPath $archive -Force
 $digest = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $checksum = Join-Path $releaseRoot 'SHA256SUMS.txt'
 [System.IO.File]::WriteAllText($checksum, "$digest  $releaseName.zip`n", [System.Text.UTF8Encoding]::new($false))

@@ -4,15 +4,22 @@
 boss practice run, spawn items, and travel without juggling several tools.
 Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 
-[Download v0.1.0](https://github.com/JamesCicada/bb-tools/releases/tag/v0.1.0) ·
+[Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
 
-## Current development build
+## v0.2.0 draft
 
-The local v0.1.1 build adds the supplied app emblem, Windows EXE/window icon,
-**Made with 🖤 By James Cicada** footer, GitHub shortcut, and **Check for updates**.
-The public download above is still v0.1.0 until the next release is published.
+The local **v0.2.0 test build** adds infinite consumables/bullets, player damage
+and enemy Echoes reward multipliers, remote workshop menus, generated chalice altar
+travel, and the remaining three boss entrance presets. James confirmed the
+multipliers and workshop menus working. Chalice travel and the three additional
+boss entrances still await live confirmation; see [the checklist](TODO.md).
+The download link points to the latest published release; this draft stays private
+until reviewed and published.
+
+The app also includes its emblem, Windows icon, **Made with 🖤 By James Cicada**
+footer, GitHub shortcut and manual **Check for updates**.
 
 Update checks run only when requested and use this project's public GitHub latest
 stable release endpoint. A newer version exposes **View release**; the app does
@@ -22,7 +29,7 @@ limits are shown without reporting a successful check. Details remain visible in
 
 ## Compatibility
 
-| Component | v0.1.0 support |
+| Component | Supported profile |
 | --- | --- |
 | Host | Windows x64 |
 | Runtime | Native [Bloodborne PC](https://github.com/Supermedo/bloodborne_pc), usually `bb-probe.exe` |
@@ -36,8 +43,8 @@ the .NET SDK, or a separate .NET runtime installation. No game files are include
 
 ## Download and start
 
-1. Download `BBTools-v0.1.0-win-x64.zip` from the
-   [GitHub release](https://github.com/JamesCicada/bb-tools/releases/tag/v0.1.0).
+1. Download the Windows x64 ZIP from the
+   [latest GitHub release](https://github.com/JamesCicada/bb-tools/releases/latest).
 2. Extract the ZIP into its own folder and run `BBTools.exe`.
 3. Start Bloodborne PC normally and load a character.
 4. Click **Refresh**, select the native game process, then **Connect**.
@@ -53,6 +60,7 @@ disconnecting does not undo those changes.
 ### Player and combat
 
 - View current/max health and stamina; set HP, heal, or keep health full while alive.
+- Infinite consumables and Quicksilver Bullets.
 - Infinite stamina, god mode, one-shot kills, invisibility to enemies and silent footsteps.
 - Disable character AI updates and prevent local-player fall damage.
 - Selected practice toggles stay selected through loading screens and warps and
@@ -76,14 +84,14 @@ disconnecting does not undo those changes.
 ### Travel and practice
 
 - Search and travel to **45 named lamp destinations**, including all **10 DLC lamps**.
-- Use **19 boss-entrance presets**, including **all five DLC bosses**: select a boss,
+- Use **22 boss-entrance presets**, including **all five DLC bosses**: select a boss,
   click **Travel to area**, wait for loading, then click **Go to entrance**.
 - Save up to **100 named locations** with position and heading. Bookmarks persist
   between app sessions. Restore within the same loaded map; travel to its lamp
   first when coming from another map.
 
 Boss entrance travel does not revive defeated bosses, open doors, or alter quest
-flags. The remaining Micolash, Gehrman and Moon Presence entrance presets are planned.
+flags. Gehrman and Moon Presence share their arena gate; normal story conditions apply.
 Keep-health-full does not prevent a lethal hit; scripted deaths and boss phase
 transitions may behave differently from ordinary combat.
 
@@ -106,9 +114,25 @@ Settings live in `%LOCALAPPDATA%\BBTools\settings.json`; named locations live in
 
 ## What is next?
 
-Damage and Blood Echoes gain multipliers, remote level-up/upgrade/workshop menus,
-generated chalice travel, more boss entrances, and release improvements are tracked
-in [TODO.md](TODO.md). They are **not included in v0.1.0**.
+The v0.2.0 additions below have individual test statuses in the checklist and are **not in
+the public v0.1.0 download**. Results are tracked in [TODO.md](TODO.md).
+
+- **Practice → Player multipliers:** enter 0.1–100 for outgoing damage and enemy
+  Echoes rewards, then Apply. Set both to 1 or Turn off practice toggles to restore.
+  Loading screens retain the desired values. Spending and bloodstain retrieval
+  are not treated as rewards. Avoid other mods that use SpEffect 9999.
+- **Items & travel → Workshop menus:** level up, fortify, repair, storage, blood
+  gems and Caryll runes. Close other game menus first. The native game handles
+  normal prices, materials and closing; finish in the game.
+- **Items & travel → Chalice dungeon travel:** refresh the six altars, choose an
+  existing completed dungeon and one of the nine named seal/layer/heart lamps.
+  Start from **Hunter's Dream**, then select **Travel to chalice lamp**. Locked
+  lamps are rejected. This uses the character's generated dungeon; it does not
+  create a ritual or unlock a lamp. Coordinate bookmarks
+  support fixed maps; generated-dungeon bookmarks are rejected to prevent
+  relocation into a different dungeon instance.
+- **Boss entrances:** adds Micolash, Gehrman and Moon Presence. These presets do
+  not reset defeated bosses or advance their story flags.
 
 The checklist separates implementation, automated checks, and maintainer live-game
 confirmations. v0.1.0's implemented gameplay features are marked user tested there;
@@ -156,6 +180,19 @@ To build the downloadable ZIP and checksum:
 ```powershell
 .\scripts\release.ps1
 ```
+
+The ZIP contains only `BBTools.exe` and `README.md` in its app folder. The
+checksum is a separate release asset.
+
+For the next release, update `<Version>` in `src/BBTools/BBTools.csproj` and add
+`docs/releases/vVERSION.md` in the same commit. Pushing the version bump to `main`
+runs both build configurations and checks, verifies the packaged checksum, creates
+an annotated `vVERSION` tag, and uploads the ZIP and checksum to a **draft** release.
+Review and publish the draft on GitHub after live testing. Ordinary commits do not
+create releases. To retry an interrupted release, run **Windows desktop CI**
+manually with **draft_release** enabled at the tagged commit, or re-run the failed
+release job from its original CI run. A tag is never moved to a different commit;
+published releases are left unchanged.
 
 See [memory research](docs/memory-research.md) for implementation facts and limits.
 No original game instructions are patched and no remote threads are created.
