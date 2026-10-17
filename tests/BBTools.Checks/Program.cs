@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -20,7 +23,14 @@ internal static class Program
         if (args.Contains("--fixture")) return Fixture();
         if (args.Contains("--render")) return Render(args[1], args.Length > 2 ? int.Parse(args[2]) : 1040, args.Length > 3 ? int.Parse(args[3]) : 860, args.Length > 4 ? args[4] : "Player", args.Length > 5 ? double.Parse(args[5], System.Globalization.CultureInfo.InvariantCulture) : 0);
         if (args.Contains("--verify-elf")) return VerifyElf(args.Last());
-        try { Integration(); Console.WriteLine($"PASS: {checks} checks against a real synthetic Windows process."); return 0; }
+        if (args.Contains("--check-updates"))
+        {
+            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            var result = UpdateChecker.CheckAsync(client, AppInfo.Version).GetAwaiter().GetResult();
+            Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
+            return 0;
+        }
+        try { UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -32,6 +42,36 @@ internal static class Program
     {
         try { operation(); } catch (T) { checks++; Console.WriteLine($"PASS {message}"); return; }
         throw new Exception($"Expected rejection: {message}");
+    }
+    private sealed class FakeReleaseHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => respond(request, token);
+    }
+    private static void UpdateChecks()
+    {
+        const string release = "{\"tag_name\":\"v0.10.0\",\"draft\":false,\"prerelease\":false,\"html_url\":\"https://example.com/untrusted.exe\"}";
+        using var client = new HttpClient(new FakeReleaseHandler((request, token) =>
+        {
+            Check(request.RequestUri!.AbsoluteUri == UpdateChecker.LatestReleaseApi && request.Headers.UserAgent.ToString() == "BBTools/0.9.0" && request.Headers.Authorization == null,
+                "manual update check uses the fixed public GitHub endpoint and identifies the app without credentials");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(release) });
+        }));
+        var result = UpdateChecker.CheckAsync(client, new Version(0,9,0)).GetAwaiter().GetResult();
+        Check(result.IsNewerThan(new Version(0,9,0)) && !result.IsNewerThan(new Version(0,10,0)) && !result.IsNewerThan(new Version(1,0,0)),
+            "updates compare numeric versions and do not offer a downgrade or equal version");
+        Check(result.ReleaseUrl.AbsoluteUri == AppInfo.RepositoryUrl + "/releases/tag/v0.10.0", "update link stays on the project release page despite a response-supplied external URL");
+        UpdateResult Parse(string json) { using var doc = JsonDocument.Parse(json); return UpdateChecker.ParseRelease(doc.RootElement); }
+        Reject<IOException>(() => Parse(release.Replace("v0.10.0", "v0.10.0-beta.1")), "update parser rejects prerelease-style or unsupported version tags");
+        Reject<IOException>(() => Parse(release.Replace("\"draft\":false", "\"draft\":true")), "update parser rejects draft releases");
+        Reject<IOException>(() => Parse(release.Replace("\"prerelease\":false", "\"prerelease\":true")), "update parser rejects prereleases");
+        Reject<IOException>(() => Parse("{}"), "missing release fields cannot report that the app is up to date");
+        foreach (var status in new[] { HttpStatusCode.NotFound, HttpStatusCode.Forbidden, HttpStatusCode.TooManyRequests })
+        {
+            using var failed = new HttpClient(new FakeReleaseHandler((_, _) => Task.FromResult(new HttpResponseMessage(status))));
+            Reject<IOException>(() => UpdateChecker.CheckAsync(failed, new Version(0,1,1)).GetAwaiter().GetResult(), $"GitHub {status} reports an update-check failure");
+        }
+        using var cancelled = new HttpClient(new FakeReleaseHandler((_, _) => Task.FromCanceled<HttpResponseMessage>(new CancellationToken(true))));
+        Reject<OperationCanceledException>(() => UpdateChecker.CheckAsync(cancelled, new Version(0,1,1)).GetAwaiter().GetResult(), "cancelled update checks do not become successful results");
     }
     private static int Fixture()
     {

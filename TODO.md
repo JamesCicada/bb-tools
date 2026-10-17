@@ -23,6 +23,14 @@ New features remain pending live validation even when automated checks pass.
 | No fall damage                                       |     ✔️      |     ✔️      | Verified local-player flag; restore original bit on disable.                            |
 | Release packaging and first-run instructions         |     ✔️      |     ⌛      | Self-contained Windows ZIP and checksum; packaged startup/shutdown checked.             |
 
+## v0.1.1 additions
+
+| Feature | Implemented | User tested | Notes |
+| --- | :---: | :---: | --- |
+| Supplied PNG emblem and Windows app icon | [x] | [ ] | Original PNG preserved; multi-size ICO generated for the executable. |
+| Footer credit and GitHub shortcut | [x] | [ ] | Visible on every page; layout inspected at minimum window size. |
+| Manual stable-release update check | [x] | [ ] | 11 service checks and a live GitHub check pass; manual download only. |
+
 ## Live test pass
 
 For each implemented feature, report its name, result and any reproduction steps.

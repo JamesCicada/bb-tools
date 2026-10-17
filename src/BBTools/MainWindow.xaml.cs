@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using System.Windows.Media;
+using System.Net.Http;
+using System.Text.Json;
 using BBTools.Memory;
 using Microsoft.Win32;
 namespace BBTools;
@@ -24,9 +26,15 @@ public partial class MainWindow : Window
     private int connectedPid;
     private ulong lastActor, lastComponent;
     private Mutex? sessionOwner;
+    private static readonly HttpClient updateClient = new() { Timeout = TimeSpan.FromSeconds(15) };
+    private readonly CancellationTokenSource updateLifetime = new();
+    private Uri? updateRelease;
     public MainWindow()
     {
         InitializeComponent();
+        Title = $"BB Tools v{AppInfo.DisplayVersion} · Hunter's Workshop";
+        VersionLabel.Text = $"VERSION {AppInfo.DisplayVersion}";
+        AboutVersion.Text = $"BB Tools v{AppInfo.DisplayVersion}";
         ItemPicker.ItemsSource = GameActions.CommonItems;
         ItemPicker.SelectedIndex = 0;
         LampPicker.ItemsSource = GameActions.Lamps;
@@ -199,7 +207,41 @@ public partial class MainWindow : Window
         if (sessionOwner == null) return;
         sessionOwner.ReleaseMutex(); sessionOwner.Dispose(); sessionOwner = null;
     }
-    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e) { closing = true; autoTimer.Stop(); Disconnect(); }
+    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e) { closing = true; updateLifetime.Cancel(); autoTimer.Stop(); Disconnect(); }
+
+    private void OpenGitHub(object sender, RoutedEventArgs e) => OpenWeb(new Uri(AppInfo.RepositoryUrl));
+    private void OpenUpdateRelease(object sender, RoutedEventArgs e)
+    {
+        if (updateRelease != null) OpenWeb(updateRelease);
+    }
+    private void OpenWeb(Uri uri)
+    {
+        try { Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = ex.Message; }
+    }
+    private async void CheckForUpdates(object sender, RoutedEventArgs e)
+    {
+        if (!CheckUpdatesButton.IsEnabled) return;
+        CheckUpdatesButton.IsEnabled = false;
+        updateRelease = null; UpdateReleaseButton.Visibility = Visibility.Collapsed;
+        UpdateStatus.Text = Status.Text = "Checking GitHub for updates…";
+        try
+        {
+            var result = await UpdateChecker.CheckAsync(updateClient, AppInfo.Version, updateLifetime.Token);
+            if (closing) return;
+            var newer = result.IsNewerThan(AppInfo.Version);
+            UpdateStatus.Text = Status.Text = newer ? $"BB Tools v{result.LatestVersion.ToString(3)} is available. Open View release to download it." :
+                result.LatestVersion == AppInfo.Version ? $"You're up to date (v{AppInfo.DisplayVersion})." :
+                $"You're running v{AppInfo.DisplayVersion}. The latest published release is v{result.LatestVersion.ToString(3)}.";
+            if (newer) { updateRelease = result.ReleaseUrl; UpdateReleaseButton.Visibility = Visibility.Visible; }
+        }
+        catch (OperationCanceledException) { if (!closing) UpdateStatus.Text = Status.Text = "Update check timed out. Try again or open GitHub."; }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or JsonException)
+        {
+            if (!closing) UpdateStatus.Text = Status.Text = $"Couldn't check for updates: {ex.Message}";
+        }
+        finally { if (!closing) CheckUpdatesButton.IsEnabled = true; }
+    }
     private void Run(Action action, string success)
     {
         try { if (session == null) throw new IOException("Connect to the game first."); action(); Status.Text = success; }

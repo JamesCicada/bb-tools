@@ -8,6 +8,18 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
 
+## Current development build
+
+The local v0.1.1 build adds the supplied app emblem, Windows EXE/window icon,
+**Made with 🖤 By James Cicada** footer, GitHub shortcut, and **Check for updates**.
+The public download above is still v0.1.0 until the next release is published.
+
+Update checks run only when requested and use this project's public GitHub latest
+stable release endpoint. A newer version exposes **View release**; the app does
+not download or install updates automatically. Connection failures and GitHub rate
+limits are shown without reporting a successful check. Details remain visible in
+**Settings → About & updates**.
+
 ## Compatibility
 
 | Component | v0.1.0 support |
@@ -127,9 +139,9 @@ dotnet run --project src/BBTools -c Release --no-build
 ```
 
 The check runner starts its own synthetic Windows child process; it does not change
-an active game. **57 checks** cover memory transport, player validation, flag
+an active game. **68 checks** cover memory transport, player validation, flag
 restoration/loading, ID parsing, destination catalogs, bookmark persistence, and
-native dispatcher ordering/recursion/detach. **25 instruction signatures** were
+native dispatcher ordering/recursion/detach, and update-check responses/version ordering. **25 instruction signatures** were
 checked separately against the private supported 1.09 image. New UI layouts were
 rendered and inspected.
 

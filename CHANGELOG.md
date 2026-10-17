@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.1 - Unreleased
+
+- Use the supplied PNG emblem in the sidebar and window icon, with a multi-size
+  Windows icon embedded in the executable.
+- Add the footer credit: Made with 🖤 By James Cicada.
+- Add a GitHub shortcut and manual update checks against the latest stable release.
+  Newer releases open on GitHub; no automatic downloads or installation occur.
+- Display the app version from assembly metadata rather than duplicated UI strings.
+- Add update-service regression coverage for version ordering, trusted release URLs,
+  draft/prerelease rejection, cancellation and API failures.
+
 ## 0.1.0 - 2026-10-17
 
 First public release for Windows x64 and native Bloodborne PC
