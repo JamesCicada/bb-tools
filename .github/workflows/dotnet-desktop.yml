@@ -110,7 +110,8 @@ jobs:
           if ($env:BEFORE_SHA -match '^[0-9a-f]{40}$' -and $env:BEFORE_SHA -notmatch '^0+$') {
             $previousText = git show "${env:BEFORE_SHA}:src/BBTools/BBTools.csproj"
             if ($LASTEXITCODE -ne 0) { throw 'Cannot determine previous project version.' }
-            [xml]$previous = $previousText -join "`n"
+            # Native git output preserves the UTF-8 BOM as a string character.
+            [xml]$previous = ($previousText -join "`n").TrimStart([char]0xFEFF)
             $changed = $changed -or $current -ne [string]$previous.Project.PropertyGroup.Version
           }
           # Also recover a version bump whose earlier CI run never reached tagging.

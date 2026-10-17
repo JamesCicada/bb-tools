@@ -61,21 +61,21 @@ separately. Automated checks and package startup checks do not replace live resu
 These are proposals, not implemented features. Each needs verified runtime behavior
 and its own automated and live test pass before being marked complete.
 
-| Feature idea | Implemented | User tested | Purpose / constraints |
-| --- | :---: | :---: | --- |
-| Configurable hotkeys | ⌛ | ⌛ | Heal, toggle combat options, save/restore a location; avoid triggering while typing. |
-| Named practice presets | ⌛ | ⌛ | Save damage, reward and combat settings; apply explicitly after connecting. |
-| Boss retry workflow | ⌛ | ⌛ | Retry from a saved entrance with resource refill; boss revival requires separate flag and quest-safety research. |
-| Encounter timer | ⌛ | ⌛ | Track attempt time, deaths and personal bests with pause/loading detection. |
-| Enemy information panel | ⌛ | ⌛ | Inspect the targeted enemy's health, resistances and active effects. |
-| Searchable item catalog and favorites | ⌛ | ⌛ | Filter by category, remember frequently spawned IDs, retain custom-ID entry. |
-| Weapon setup editor | ⌛ | ⌛ | Inspect reinforcement and gem slots with valid-value checks and preview before applying. |
-| Status-effect controls | ⌛ | ⌛ | Clear poison/frenzy and optionally prevent buildup without changing unrelated effects. |
-| Camera and screenshot tools | ⌛ | ⌛ | Hide HUD, adjust field of view and add a verified free camera with restoration. |
-| Chalice-aware location bookmarks | ⌛ | ⌛ | Bind coordinates to the exact generated dungeon and character before permitting restore. |
-| Backup history and restore assistant | ⌛ | ⌛ | Show dated backups, verify contents and restore only while the game is closed. |
-| Diagnostics export | ⌛ | ⌛ | Export app/runtime versions and failed checks without save contents or personal paths. |
-| Expanded runtime compatibility | ⌛ | ⌛ | Separate adapters and validation for additional native builds and shadPS4. |
+| Feature idea                          | Implemented | User tested | Purpose / constraints                                                                                            |
+| ------------------------------------- | :---------: | :---------: | ---------------------------------------------------------------------------------------------------------------- |
+| Configurable hotkeys                  |     ⌛      |     ⌛      | Heal, toggle combat options, save/restore a location; avoid triggering while typing.                             |
+| Named practice presets                |     ⌛      |     ⌛      | Save damage, reward and combat settings; apply explicitly after connecting.                                      |
+| Boss retry workflow                   |     ⌛      |     ⌛      | Retry from a saved entrance with resource refill; boss revival requires separate flag and quest-safety research. |
+| Encounter timer                       |     ⌛      |     ⌛      | Track attempt time, deaths and personal bests with pause/loading detection.                                      |
+| Enemy information panel               |     ⌛      |     ⌛      | Inspect the targeted enemy's health, resistances and active effects.                                             |
+| Searchable item catalog and favorites |     ⌛      |     ⌛      | Filter by category, remember frequently spawned IDs, retain custom-ID entry.                                     |
+| Weapon setup editor                   |     ⌛      |     ⌛      | Inspect reinforcement and gem slots with valid-value checks and preview before applying.                         |
+| Status-effect controls                |     ⌛      |     ⌛      | Clear poison/frenzy and optionally prevent buildup without changing unrelated effects.                           |
+| Camera and screenshot tools           |     ⌛      |     ⌛      | Hide HUD, adjust field of view and add a verified free camera with restoration.                                  |
+| Chalice-aware location bookmarks      |     ⌛      |     ⌛      | Bind coordinates to the exact generated dungeon and character before permitting restore.                         |
+| Backup history and restore assistant  |     ⌛      |     ⌛      | Show dated backups, verify contents and restore only while the game is closed.                                   |
+| Diagnostics export                    |     ⌛      |     ⌛      | Export app/runtime versions and failed checks without save contents or personal paths.                           |
+| Expanded runtime compatibility        |     ⌛      |     ⌛      | Separate adapters and validation for additional native builds and shadPS4.                                       |
 
 ## Release automation
 
