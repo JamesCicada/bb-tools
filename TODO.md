@@ -6,22 +6,22 @@ New features remain pending live validation even when automated checks pass.
 
 | Feature                                              | Implemented | User tested | Notes                                                                                   |
 | ---------------------------------------------------- | :---------: | :---------: | --------------------------------------------------------------------------------------- |
-| Blood Echoes balance, health, stamina and attributes |     [x]     |     [x]     | Confirmed working by James.                                                             |
-| Native item spawning with constructed item handles   |     [x]     |     [x]     | James confirmed the revised grant works.                                                |
-| Combat selections survive loads and warps            |     [x]     |     [x]     | Live confirmation recorded; loading regression checks also pass.                             |
-| Item-ID wiki reference under Spawn                   |     [x]     |     [x]     | Wiki links, decimal/base IDs, full hexadecimal IDs with category.                       |
-| Complete base-game and Old Hunters lamp catalog      |     [x]     |     [x]     | 45 named destinations, including all 10 DLC lamps; local data verified.                 |
-| Chalice lamp travel                                  |     [ ]     |     [ ]     | Dungeon destinations depend on the character's generated dungeon.                       |
-| Save and restore named locations                     |     [x]     |     [x]     | Persistent named bookmarks; native engine relocation in the same loaded map.            |
-| Boss and important-location destinations             |     [x]     |     [x]     | 19 fog entrance presets, all five DLC bosses; custom important spots can be bookmarked. |
-| Disable enemy AI                                     |     [x]     |     [x]     | Verified All No Update AI flag; restore original state on disable.                      |
-| Damage multiplier                                    |     [ ]     |     [ ]     | Requires verified player-only damage interception.                                      |
-| Blood Echoes gain multiplier                         |     [ ]     |     [ ]     | Scale rewards, excluding spending and bloodstain recovery.                              |
-| Level-up menu from anywhere                          |     [ ]     |     [ ]     | Verify menu request and close lifecycle.                                                |
-| Weapon upgrade menu from anywhere                    |     [ ]     |     [ ]     | Preserve normal material/currency costs.                                                |
-| Repair, storage, rune and gem menus                  |     [ ]     |     [ ]     | Additional useful workshop shortcuts.                                                   |
-| No fall damage                                       |     [x]     |     [x]     | Verified local-player flag; restore original bit on disable.                            |
-| Release packaging and first-run instructions | [x] | [ ] | Self-contained Windows ZIP and checksum; packaged startup/shutdown checked. |
+| Blood Echoes balance, health, stamina and attributes |     ✔️      |     ✔️      | Confirmed working by James.                                                             |
+| Native item spawning with constructed item handles   |     ✔️      |     ✔️      | James confirmed the revised grant works.                                                |
+| Combat selections survive loads and warps            |     ✔️      |     ✔️      | Live confirmation recorded; loading regression checks also pass.                        |
+| Item-ID wiki reference under Spawn                   |     ✔️      |     ✔️      | Wiki links, decimal/base IDs, full hexadecimal IDs with category.                       |
+| Complete base-game and Old Hunters lamp catalog      |     ✔️      |     ✔️      | 45 named destinations, including all 10 DLC lamps; local data verified.                 |
+| Chalice lamp travel                                  |     ⌛      |     ⌛      | Dungeon destinations depend on the character's generated dungeon.                       |
+| Save and restore named locations                     |     ✔️      |     ✔️      | Persistent named bookmarks; native engine relocation in the same loaded map.            |
+| Boss and important-location destinations             |     ✔️      |     ✔️      | 19 fog entrance presets, all five DLC bosses; custom important spots can be bookmarked. |
+| Disable enemy AI                                     |     ✔️      |     ✔️      | Verified All No Update AI flag; restore original state on disable.                      |
+| Damage multiplier                                    |     ⌛      |     ⌛      | Requires verified player-only damage interception.                                      |
+| Blood Echoes gain multiplier                         |     ⌛      |     ⌛      | Scale rewards, excluding spending and bloodstain recovery.                              |
+| Level-up menu from anywhere                          |     ⌛      |     ⌛      | Verify menu request and close lifecycle.                                                |
+| Weapon upgrade menu from anywhere                    |     ⌛      |     ⌛      | Preserve normal material/currency costs.                                                |
+| Repair, storage, rune and gem menus                  |     ⌛      |     ⌛      | Additional useful workshop shortcuts.                                                   |
+| No fall damage                                       |     ✔️      |     ✔️      | Verified local-player flag; restore original bit on disable.                            |
+| Release packaging and first-run instructions         |     ✔️      |     ⌛      | Self-contained Windows ZIP and checksum; packaged startup/shutdown checked.             |
 
 ## Live test pass
 
