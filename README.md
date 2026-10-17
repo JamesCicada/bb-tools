@@ -1,63 +1,166 @@
 # BB Tools
 
-Windows Bloodborne practice companion inspired by ERTool. The first live adapter targets **Bloodborne PC (`bb-probe.exe`), CUSA03173 1.09**. Written independently; no upstream implementation code is included.
+**A Bloodborne PC practice companion for Windows.** Edit your hunter, set up a
+boss practice run, spawn items, and travel without juggling several tools.
+Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 
-## Features
+[Download v0.1.0](https://github.com/JamesCicada/bb-tools/releases/tag/v0.1.0) ·
+[Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
+[Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
 
-- Discover every similar shadPS4, Bloodborne, bbport and bb-probe process, including renamed build suffixes; select by PID.
-- Explicit connect/disconnect with a relocated game-image lookup and instruction checks. Connecting enables no practice toggles.
-- Optional **Settings → Find the best game process and connect automatically**. The saved setting starts off. Every three seconds it checks supported native-engine candidates, prefers an active validated character, and reconnects after engine restart. Manual disconnect pauses it until a manual connection or setting change.
-- Live current/max health and stamina displays.
-- Set health, restore full health, and keep health full while alive (200 ms polling; not protection from one-hit or scripted deaths).
-- Infinite stamina using the local player's no-consumption flag; preserve unrelated flags and restore the previous bit on disable/normal disconnect while the component remains valid.
-- God mode (local-player no-damage + no-dead flags), one-shot kills (Player Exterminate), stealth and silent footsteps. Previous flag values are restored when disabled/disconnected.
-- Item spawning: 19 common goods/weapons plus custom base IDs in Goods, Weapon, Armor and Accessory categories. Goods quantities 1–99, equipment 1. Inventory/storage limits remain the game's responsibility.
-- Warp to 18 selected lamps, including Hunter's Dream and major practice locations, through the return-point/stage-change functions. Warping turns practice toggles off first; it does not unlock lamps, bosses or quests.
-- Set Blood Echoes or add 10,000, within 0–999,999,999.
-- Edit Vitality, Endurance, Strength, Skill, Bloodtinge and Arcane within 1–99. Blood Level changes by the same attribute-point delta, within 4–544. Reload the character after applying to refresh derived stats.
-- Save-folder ZIP backups, with external destination validation and rejection of links/junctions. Close the game first.
-- Dark desktop UI with Player, Practice, Items & Travel, and Settings pages.
+## Compatibility
 
-## Run
+| Component | v0.1.0 support |
+| --- | --- |
+| Host | Windows x64 |
+| Runtime | Native [Bloodborne PC](https://github.com/Supermedo/bloodborne_pc), usually `bb-probe.exe` |
+| Game profile | CUSA03173, version 1.09 |
+| The Old Hunters | Ten named DLC lamp destinations and all five DLC boss entrances |
+| shadPS4 | Process discovery only; the live adapter is **not implemented** |
+| Other regions, builds or conflicting patches | Not verified; instruction mismatches are rejected |
 
-Windows x64 with .NET 8 SDK (or a newer compatible SDK):
+The downloadable build includes the .NET runtime. You do not need Visual Studio,
+the .NET SDK, or a separate .NET runtime installation. No game files are included.
+
+## Download and start
+
+1. Download `BBTools-v0.1.0-win-x64.zip` from the
+   [GitHub release](https://github.com/JamesCicada/bb-tools/releases/tag/v0.1.0).
+2. Extract the ZIP into its own folder and run `BBTools.exe`.
+3. Start Bloodborne PC normally and load a character.
+4. Click **Refresh**, select the native game process, then **Connect**.
+5. Optionally enable **Settings → Find the best game process and connect automatically**.
+
+Keep a save backup before experimenting: **Settings → Back up saves** creates a
+ZIP from the save folder you choose. Close the game before backing up. Health,
+Echoes, attributes and awarded items can persist through the game's normal saves;
+disconnecting does not undo those changes.
+
+## Included features
+
+### Player and combat
+
+- View current/max health and stamina; set HP, heal, or keep health full while alive.
+- Infinite stamina, god mode, one-shot kills, invisibility to enemies and silent footsteps.
+- Disable character AI updates and prevent local-player fall damage.
+- Selected practice toggles stay selected through loading screens and warps and
+  resume once the player validates. New connections start with toggles off.
+- Set Blood Echoes or add 10,000; supported balance range is 0–999,999,999.
+- Edit Vitality, Endurance, Strength, Skill, Bloodtinge and Arcane from 1–99.
+  Blood Level follows the attribute-point change, within 4–544. Apply while idle,
+  then quit to title and reload to refresh derived stats.
+
+### Items
+
+- Spawn common goods/weapons or use custom IDs in Goods, Weapon, Armor and
+  Accessory categories. Goods quantities: 1–99; equipment: 1.
+- Enter a decimal base ID with its category, or select **Wiki hexadecimal Item ID**
+  and paste the full ID, such as `400003E8`. A `0x` prefix also selects hex mode.
+- Open the linked [item-ID reference](https://www.bloodborne-wiki.com/2018/01/datamined-item-ids.html)
+  or [weapon-ID reference](https://www.bloodborne-wiki.com/2018/01/datamined-weapon-model-item-ids.html)
+  directly from the Items page. Custom IDs must exist in your installed game;
+  the game controls item and storage limits.
+
+### Travel and practice
+
+- Search and travel to **45 named lamp destinations**, including all **10 DLC lamps**.
+- Use **19 boss-entrance presets**, including **all five DLC bosses**: select a boss,
+  click **Travel to area**, wait for loading, then click **Go to entrance**.
+- Save up to **100 named locations** with position and heading. Bookmarks persist
+  between app sessions. Restore within the same loaded map; travel to its lamp
+  first when coming from another map.
+
+Boss entrance travel does not revive defeated bosses, open doors, or alter quest
+flags. The remaining Micolash, Gehrman and Moon Presence entrance presets are planned.
+Keep-health-full does not prevent a lethal hit; scripted deaths and boss phase
+transitions may behave differently from ordinary combat.
+
+## Connection and troubleshooting
+
+- **No supported image:** load a character and confirm the native process and
+  CUSA03173 1.09 profile. A similar process name does not prove compatibility.
+- **Several processes:** automatic connection ranks validated loaded characters
+  first. You can also select a specific PID manually.
+- **Automatic connection stopped after Disconnect:** manual disconnect pauses
+  automatic retries. Reconnect manually or toggle the setting to resume them.
+- **Saved location is in another map:** use lamp travel to load that area, then restore.
+- **Item request:** check the ID/category, inventory and storage. Do not repeatedly
+  submit a timed-out request without checking the game.
+- **Trainer was force-closed:** restart the game before reconnecting if the item/travel
+  dispatcher is still installed. Close/disconnect BB Tools normally when possible.
+
+Settings live in `%LOCALAPPDATA%\BBTools\settings.json`; named locations live in
+`%LOCALAPPDATA%\BBTools\locations.json`. Save-backup ZIPs go to the destination you select.
+
+## What is next?
+
+Damage and Blood Echoes gain multipliers, remote level-up/upgrade/workshop menus,
+generated chalice travel, more boss entrances, and release improvements are tracked
+in [TODO.md](TODO.md). They are **not included in v0.1.0**.
+
+The checklist separates implementation, automated checks, and maintainer live-game
+confirmations. v0.1.0's implemented gameplay features are marked user tested there;
+this is not a claim that every destination, item ID or runtime fork has been tested.
+
+## Help build BB Tools
+
+**Contributions are welcome.** You do not need to reverse-engineer the game to help:
+clear bug reports, compatibility results, UI improvements, documentation and test
+cases are valuable. If you do research a feature, include the runtime/game build,
+layout evidence and a reproducible test.
+
+- [Open an issue](https://github.com/JamesCicada/bb-tools/issues) for a bug or feature request.
+- [Read the contribution guide](CONTRIBUTING.md), fork the repository and send a pull request.
+- Check [TODO.md](TODO.md) before starting a larger feature so work can be coordinated.
+- If the project helps you, a GitHub star helps other players find it.
+
+Please keep proprietary game files, saves and private dumps out of issues and pull requests.
+
+## Build and checks
+
+For source builds, install a .NET SDK with .NET 8 Windows targeting support:
 
 ```powershell
-dotnet build BBTools.sln -m:1
-dotnet run --project src/BBTools
+dotnet build BBTools.sln -c Release -m:1
+dotnet run --project tests/BBTools.Checks -c Release --no-build
+dotnet run --project src/BBTools -c Release --no-build
 ```
 
-Start Bloodborne PC normally, load a character, refresh processes, select `bb-probe.exe` and connect. Health/stamina toggles start off. Attribute drafts are retained during normal polling; **Reload current** refreshes them. Apply attributes while idle, then quit to title and reload the character. The user reports that the original resource and attribute controls work on this installation. The newly added combat flags, native item grants and warps still need live-game validation.
+The check runner starts its own synthetic Windows child process; it does not change
+an active game. **57 checks** cover memory transport, player validation, flag
+restoration/loading, ID parsing, destination catalogs, bookmark persistence, and
+native dispatcher ordering/recursion/detach. **25 instruction signatures** were
+checked separately against the private supported 1.09 image. New UI layouts were
+rendered and inspected.
 
-Game writes can persist through autosaves. Disconnecting does not undo health, echoes or attributes already changed. Back up saves before experimenting. Closing the trainer normally attempts to restore the stamina flag; if the character component has unloaded, it cannot safely restore the old component. Restarting the game clears transient runtime flags. An interrupted trainer process cannot perform cleanup.
-
-Similar process names alone do not establish compatibility. shadPS4 candidates are listed, but the shadPS4 live adapter is not implemented yet. Unknown or modified instruction layouts are rejected. No original game instructions are patched and no remote threads are created. Item/warp requests lazily install a private copy of the current player's vtable, intercept its data getter only at the verified player-update call site, and run the requested functions there. The original table is restored on disconnect when the actor still matches. Dispatcher pages remain allocated until the engine exits to avoid freeing code a game thread could still be returning through. Each dispatcher uses a small data workspace and code page. Game/save files are not edited by the player controls.
-
-## Checks
+Optional read-only profile verification against your own prepared ELF:
 
 ```powershell
-dotnet run --project tests/BBTools.Checks
+dotnet run --project tests/BBTools.Checks -c Release -- --verify-elf 'C:\path\to\out\eboot.elf'
 ```
 
-The dependency-free check runner launches its own synthetic Windows child process and exercises the real memory transport and player adapter: discovery, reads/writes, ranges, flag restoration, stale drafts, fingerprint mismatches, wrong/null pointers and process exit. It also executes the generated dispatcher against real synthetic SysV functions, checks call-site filtering, three-call ordering, recursive getter behavior and vtable restoration, and verifies candidate ranking and setting persistence. It contains no game data.
-
-Optional read-only signature check against your privately prepared ELF:
+To build the downloadable ZIP and checksum:
 
 ```powershell
-dotnet run --project tests/BBTools.Checks -- --verify-elf 'C:\path\to\out\eboot.elf'
+.\scripts\release.ps1
 ```
 
-Verified during development: build succeeds; 36 checks pass; 18 instruction signatures match the supplied CUSA03173 1.09 prepared image. New pages rendered and inspected. New gameplay features have not yet been tested in a running game. [Memory research and limitations](docs/memory-research.md).
+See [memory research](docs/memory-research.md) for implementation facts and limits.
+No original game instructions are patched and no remote threads are created.
+Item/travel actions use a private player-vtable dispatcher on the verified update
+call site. Its original table is restored on normal disconnect when identity still
+matches; dispatcher allocations remain valid until the game exits.
 
-## Next
+## Credits and license
 
-Live-game validation of the new controls, derived-stat recalculation, shadPS4 adapter, position checkpoints, boss reset, a larger item/lamp catalog, hotkeys and named practice profiles.
+- [ERTool](https://github.com/kh0nsu/EldenRingTool) for the practice-tool inspiration.
+- [Bloodborne PC](https://github.com/Supermedo/bloodborne_pc) for the native runtime.
+- [Bloodborne Wiki](https://www.bloodborne-wiki.com/2018/01/datamined-item-ids.html)
+  for linked item references.
+- [TatsunaKyo's runtime cheat research](https://github.com/TatsunaKyo/bloodborne_pc/blob/windows/docs/cheats.md),
+  [Windows trainer / Shiningami field research](https://github.com/yaonikaixin999999/bloodborne_pc_windows/blob/codex/windows-port/trainer_windows.py),
+  and [bbhost layout research](https://github.com/droogie/bbhost) for address/layout leads,
+  independently checked against the local game data. Further provenance is in the research notes.
 
-## References
-
-- [ERTool](https://github.com/kh0nsu/EldenRingTool): practice workflow reference.
-- [Bloodborne PC](https://github.com/Supermedo/bloodborne_pc): native runtime target and relocation model.
-- [TatsunaKyo runtime cheat documentation](https://github.com/TatsunaKyo/bloodborne_pc/blob/windows/docs/cheats.md): local-player identity and stamina semantics.
-- [Windows trainer research](https://github.com/yaonikaixin999999/bloodborne_pc_windows/blob/codex/windows-port/trainer_windows.py): Shiningami community field/hook research.
-
-Auto-connect preferences are saved to `%LOCALAPPDATA%\BBTools\settings.json`. Practice toggles are never automatically enabled.
+BB Tools is independently implemented and released under the [MIT license](LICENSE).
+It is a community project and is not affiliated with FromSoftware or Sony.

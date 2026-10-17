@@ -1,0 +1,86 @@
+[center][size=6][b]BB TOOLS[/b][/size]
+[size=3]Your hunter. Your practice run.[/size]
+
+A free, open-source practice companion for native Bloodborne PC.
+Inspired by ERTool and built around Bloodborne's combat, items and travel.
+
+[url=https://github.com/JamesCicada/bb-tools]GitHub / Source Code[/url]  |  [url=https://github.com/JamesCicada/bb-tools/releases/tag/v0.1.0]GitHub Release[/url]  |  [url=https://github.com/JamesCicada/bb-tools/issues]Report a Bug[/url][/center]
+
+[size=4][b]Build your next practice session[/b][/size]
+BB Tools puts character editing, combat utilities, item spawning and travel in one desktop app. Set up your hunter, get to a fight, and keep a named bookmark for a useful spot without switching between several tools.
+
+[b]Current version: 0.1.0[/b]
+[b]Supported:[/b] Windows x64, native Bloodborne PC (usually bb-probe.exe), CUSA03173 game version 1.09.
+[b]shadPS4:[/b] its processes can appear in the list, but the live shadPS4 adapter is not included in this release.
+
+[size=4][b]Features[/b][/size]
+[b]Player and combat[/b]
+[list]
+[*]Live health and stamina display, set HP, full heal and keep-health-full.
+[*]Infinite stamina, god mode, one-shot kills, invisibility to enemies and silent footsteps.
+[*]Disable character AI updates and prevent player fall damage.
+[*]Combat selections stay selected through loading screens and warps, resuming when your character validates.
+[*]Set Blood Echoes or add 10,000.
+[*]Edit all six attributes; Blood Level follows the attribute-point change.
+[/list]
+
+[b]Items[/b]
+[list]
+[*]Common-item presets and custom IDs for goods, weapons, armor and accessories.
+[*]Decimal base IDs or full hexadecimal IDs with the category included.
+[*]Direct links to Bloodborne Wiki's item and weapon ID references.
+[*]Goods quantities from 1 to 99; equipment one at a time. Normal inventory/storage limits still apply.
+[/list]
+
+[b]Travel and practice[/b]
+[list]
+[*]45 named base-game and DLC lamp destinations, including all ten Old Hunters lamps.
+[*]19 boss-entrance presets, including all five DLC bosses.
+[*]Save up to 100 named locations with position and heading, kept between app sessions.
+[*]Search lamps by name or DLC.
+[*]Optional automatic connection to the best validated native game process.
+[*]Save-folder ZIP backups from Settings.
+[/list]
+
+[size=4][b]Installation[/b][/size]
+[list=1]
+[*]Download BBTools-v0.1.0-win-x64.zip and extract it into its own folder.
+[*]Run BBTools.exe. The release includes the .NET runtime; no separate runtime or SDK install is needed.
+[*]Start Bloodborne PC normally and load your character.
+[*]Click Refresh, select the native game process, then Connect.
+[*]Enable automatic connection in Settings if you want it. New connections start with practice toggles off.
+[/list]
+BB Tools is a standalone companion; you do not need to replace game files. Back up your saves before editing your character. Close the game before using the save-backup action.
+
+[size=4][b]Quick tips[/b][/size]
+[b]Wiki item IDs:[/b] tick "Wiki hexadecimal Item ID" and paste the full Item ID, such as 400003E8. A 0x prefix also selects hexadecimal mode. In decimal mode, use a base ID and choose its category. IDs must exist in your installed game.
+
+[b]Boss entrances:[/b] choose a boss, click "Travel to area", wait for loading, then click "Go to entrance". This puts you outside the entrance; it does not revive defeated bosses, open doors or change quest flags.
+
+[b]Saved locations:[/b] give the spot a name and save it. Restore within the same loaded map. If you are elsewhere, travel to a lamp in that area first, then restore the bookmark. Saving with the same name replaces that bookmark.
+
+[b]Attributes:[/b] apply changes while idle, then quit to title and reload your character to refresh derived values.
+
+[b]Disconnect normally:[/b] closing or disconnecting BB Tools normally attempts to restore the temporary flags and dispatcher it owns. Edits to Echoes, stats and items can persist through normal game saves. If BB Tools was force-closed, restart the game before reconnecting if the item/travel dispatcher is still installed.
+
+[size=4][b]Compatibility and current limits[/b][/size]
+This release targets the native Bloodborne PC 1.09 profile listed above. A matching process name alone does not establish compatibility; unsupported or conflicting instruction layouts are rejected. DLC destinations require the DLC to be installed.
+
+Keep-health-full does not prevent a lethal hit. Scripted deaths and boss phase transitions can behave differently from ordinary combat. No AI stops character AI updates; physics and scripted events continue.
+
+Generated chalice travel, damage/Blood Echoes gain multipliers, remote level-up/upgrade/workshop menus, and Micolash/Gehrman/Moon Presence entrance presets are planned and are not in v0.1.0.
+
+[size=4][b]Help build the next version[/b][/size]
+[b]BB Tools is open source, and contributions are welcome.[/b] If you want another feature, found a bug, or tested a different setup, please bring it to GitHub so everyone can benefit.
+[list]
+[*][url=https://github.com/JamesCicada/bb-tools/issues]Report bugs or suggest features[/url] with your tool/runtime/game version, steps and status message.
+[*][url=https://github.com/JamesCicada/bb-tools/blob/main/CONTRIBUTING.md]Contribute code, documentation, UI improvements or tests[/url]. You do not need to reverse-engineer the game to help.
+[*][url=https://github.com/JamesCicada/bb-tools/blob/main/TODO.md]Follow the roadmap and test checklist[/url]. Implementation and live-game confirmation are tracked separately.
+[*]If BB Tools helps your practice, a GitHub star helps other players find the project. A Nexus endorsement is appreciated too.
+[/list]
+Please do not attach game files, saves or private dumps to public reports.
+
+[size=4][b]Credits and license[/b][/size]
+Created by JamesCicada. Thanks to ERTool for the practice-tool inspiration, the Bloodborne PC project for the native runtime, Bloodborne Wiki for the linked item references, and the community research credited in the repository for layout leads checked against the supported game data.
+
+BB Tools is independently implemented and MIT licensed. No game files are included. This is a community project, not an official FromSoftware or Sony tool.

@@ -126,7 +126,6 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         {
             // Do not write an old component after a character/world transition.
             staminaOwner = 0;
-            throw new IOException("Player changed. Infinite stamina stopped; enable it again after loading.");
         }
         var flags = memory.Read(player.Component + 0x200, 1)[0];
         if (staminaOwner == 0) originalStaminaBit = (byte)(flags & 0x80);

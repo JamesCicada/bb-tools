@@ -15,6 +15,8 @@ public sealed class GameThreadQueue : IDisposable
     public const int PayloadOffset = 512;
     public ulong Payload => workspace + PayloadOffset;
     public ulong Actor => actor;
+    public bool MatchesCurrentPlayer() => !disposed && session.ReadPlayer().Actor == actor &&
+        session.ReadCharacter().Address == data && memory.Pointer(actor) == table;
 
     public GameThreadQueue(ProcessMemory memory, PlayerSession session)
     {

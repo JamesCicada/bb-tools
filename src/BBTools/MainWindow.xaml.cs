@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private bool updating, closing, connecting, discovering, autoPaused;
     private AppSettings settings = AppSettings.Load();
+    private LocationBook locationBook = LocationBook.Load();
     private readonly DispatcherTimer autoTimer = new() { Interval = TimeSpan.FromSeconds(3) };
     private int connectedPid;
     private ulong lastActor, lastComponent;
@@ -30,6 +31,9 @@ public partial class MainWindow : Window
         ItemPicker.SelectedIndex = 0;
         LampPicker.ItemsSource = GameActions.Lamps;
         LampPicker.SelectedIndex = 0;
+        LocationPicker.ItemsSource = locationBook.Locations;
+        LocationPicker.SelectedIndex = 0;
+        BossPicker.ItemsSource = BossDestinations.All; BossPicker.SelectedIndex = 0;
         timer.Tick += Poll;
         Closing += OnClosing;
         Refresh(this, new RoutedEventArgs());
@@ -125,8 +129,8 @@ public partial class MainWindow : Window
             var state = session.ReadPlayer();
             if (lastActor != 0 && (lastActor != state.Actor || lastComponent != state.Component))
             {
-                StopFeatures(); statDraft = null;
-                Status.Text = "Player changed. Practice toggles were switched off and attributes reloaded.";
+                statDraft = null;
+                Status.Text = "Player loaded. Selected practice toggles resumed and attributes reloaded.";
             }
             lastActor = state.Actor; lastComponent = state.Component;
             HealthValue.Text = $"{state.Health:N0} / {state.MaxHealth:N0}";
@@ -135,7 +139,7 @@ public partial class MainWindow : Window
             StaminaBar.Maximum = state.MaxStamina; StaminaBar.Value = state.Stamina;
             PlayerControls.IsEnabled = true;
             PracticeControls.IsEnabled = true;
-            ItemControls.IsEnabled = WarpControls.IsEnabled = !actionBusy;
+            ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
             if (KeepHealth.IsChecked == true) session.KeepHealthFull();
             if (InfiniteStamina.IsChecked == true) session.SetInfiniteStamina(true);
             else session.RestoreStamina();
@@ -154,13 +158,12 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (IsExpected(ex))
         {
-            StopFeatures();
             PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-            PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = false;
+            PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
             HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—";
             HealthBar.Value = StaminaBar.Value = 0;
             statDraft = null;
-            Status.Text = ex.Message;
+            Status.Text = $"{ex.Message} Selected practice toggles will resume when the player validates.";
         }
     }
     private string? StopFeatures()
@@ -183,7 +186,7 @@ public partial class MainWindow : Window
         lastActor = lastComponent = 0;
         ReleaseOwner();
         PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-        PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = false;
+        PracticeControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         RefreshButton.IsEnabled = Candidates.IsEnabled = true;
         ConnectButton.Content = "Connect"; ConnectionBadge.Text = "DISCONNECTED";
         ConnectionHint.Text = "Start Bloodborne PC and load a character, then connect.";
@@ -216,9 +219,9 @@ public partial class MainWindow : Window
     {
         if (updating || session == null) return;
         try { session.SetInfiniteStamina(InfiniteStamina.IsChecked == true); Status.Text = InfiniteStamina.IsChecked == true ? "Infinite stamina enabled." : "Previous stamina-consumption setting restored."; }
-        catch (Exception ex) when (IsExpected(ex)) { StopFeatures(); Status.Text = ex.Message; }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"{ex.Message} Selection retained; waiting for a valid player."; }
     }
-    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent];
+    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent, NoAi, NoFallDamage];
     private void FlagChanged(object sender, RoutedEventArgs e)
     {
         if (updating || session == null || sender is not CheckBox control) return;
@@ -227,7 +230,7 @@ public partial class MainWindow : Window
             session.SetPracticeFlag(Enum.Parse<PracticeFlag>((string)control.Tag), control.IsChecked == true);
             Status.Text = "Practice flag updated.";
         }
-        catch (Exception ex) when (IsExpected(ex)) { StopFeatures(); Status.Text = ex.Message; }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = $"{ex.Message} Selection retained; waiting for a valid player."; }
     }
     private void TurnOffFeatures(object sender, RoutedEventArgs e) => Status.Text = StopFeatures() ?? "Practice toggles switched off and previous flags restored.";
     private void Navigate(object sender, RoutedEventArgs e)
@@ -245,13 +248,14 @@ public partial class MainWindow : Window
     {
         if (ItemPicker.SelectedItem is not ItemChoice item || ItemCategory == null) return;
         ItemId.Text = item.Id.ToString(); ItemQuantity.Text = "1";
+        if (WikiHexId != null) WikiHexId.IsChecked = false;
         foreach (ComboBoxItem category in ItemCategory.Items)
             if (uint.Parse((string)category.Tag) == item.Category) ItemCategory.SelectedItem = category;
     }
     private async Task RunGameAction(Func<GameActions, Task> action, string success)
     {
         if (actions == null || actionBusy) { Status.Text = "Connect to a loaded character and wait for the active request to finish."; return; }
-        actionBusy = true; ItemControls.IsEnabled = WarpControls.IsEnabled = false;
+        actionBusy = true; ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         Status.Text = "Waiting for the game thread to process the request…";
         try { await action(actions); if (!closing) Status.Text = success; }
         catch (Exception ex) when (IsExpected(ex)) { if (!closing) Status.Text = ex.Message; }
@@ -260,15 +264,60 @@ public partial class MainWindow : Window
     private async void SpawnItem(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
         if (ItemCategory.SelectedItem is not ComboBoxItem category) throw new ArgumentException("Choose an item category.");
-        return engine.SpawnAsync(Number(ItemId, "Item ID"), uint.Parse((string)category.Tag), Number(ItemQuantity, "Quantity"));
+        var item = ItemInput.Parse(ItemId.Text, uint.Parse((string)category.Tag), WikiHexId.IsChecked == true);
+        return engine.SpawnAsync(item.Id, item.Category, Number(ItemQuantity, "Quantity"));
     }, "Item grant completed on the game thread. Check inventory and storage.");
     private async void Warp(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
         if (LampPicker.SelectedItem is not LampChoice lamp) throw new ArgumentException("Choose a lamp.");
-        var restoration = StopFeatures();
-        if (restoration != null) throw new IOException(restoration);
         return engine.WarpAsync(lamp);
     }, "Warp requested. Allow the game to finish loading before issuing another request.");
+    private void OpenReference(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); e.Handled = true; }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = ex.Message; }
+    }
+    private void FilterLamps(object sender, TextChangedEventArgs e)
+    {
+        if (LampPicker == null) return;
+        var selected = LampPicker.SelectedItem as LampChoice;
+        var found = GameActions.Lamps.Where(x => x.Label.Contains(LampSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();
+        LampPicker.ItemsSource = found;
+        LampPicker.SelectedItem = found.FirstOrDefault(x => x.Entity == selected?.Entity) ?? found.FirstOrDefault();
+    }
+    private void SaveLocation(object sender, RoutedEventArgs e) => Run(() =>
+    {
+        var location = session!.ReadLocation(LocationName.Text);
+        var next = new LocationBook([.. locationBook.Locations.Where(x => !x.Name.Equals(location.Name, StringComparison.OrdinalIgnoreCase)), location]);
+        next.Save(); locationBook = next;
+        LocationPicker.ItemsSource = locationBook.Locations; LocationPicker.SelectedItem = location;
+    }, "Location saved. Saving with the same name replaces that bookmark.");
+    private async void TravelBossArea(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    {
+        if (BossPicker.SelectedItem is not PracticeDestination destination) throw new ArgumentException("Select a boss entrance first.");
+        return engine.WarpAsync(GameActions.Lamps.Single(x => x.Entity == destination.EntryLamp));
+    }, "Area travel requested. After loading, use Go to entrance.");
+    private async void GoToBoss(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    {
+        if (BossPicker.SelectedItem is not PracticeDestination destination) throw new ArgumentException("Select a boss entrance first.");
+        return engine.RestoreLocationAsync(destination.Position);
+    }, "Boss entrance relocation processed.");
+    private async void RestoreLocation(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    {
+        if (LocationPicker.SelectedItem is not SavedLocation location) throw new ArgumentException("Select a saved location first.");
+        return engine.RestoreLocationAsync(location);
+    }, "Location restore processed on the game thread.");
+    private void DeleteLocation(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (LocationPicker.SelectedItem is not SavedLocation location) throw new ArgumentException("Select a saved location first.");
+            var next = new LocationBook(locationBook.Locations.Where(x => x != location).ToArray());
+            next.Save(); locationBook = next; LocationPicker.ItemsSource = next.Locations; LocationPicker.SelectedIndex = 0;
+            Status.Text = "Location deleted.";
+        }
+        catch (Exception ex) when (IsExpected(ex)) { Status.Text = ex.Message; }
+    }
     private TextBox[] AttributeInputs => [Vitality, Endurance, Strength, Skill, Bloodtinge, Arcane];
     private void PopulateStats(CharacterState character)
     {

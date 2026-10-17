@@ -1,11 +1,11 @@
 <Window x:Class="BBTools.MainWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="BB Tools · Hunter's Workshop" Width="1040" Height="860" MinWidth="860" MinHeight="680"
+ Title="BB Tools v0.1.0 · Hunter's Workshop" Width="1040" Height="860" MinWidth="860" MinHeight="680"
  Background="#101216" Foreground="#E8E5DF" FontFamily="Segoe UI" FontSize="14">
  <Window.Resources>
   <SolidColorBrush x:Key="Muted" Color="#A0A4AC"/>
   <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-  <Style x:Key="Caption" TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
+  <Style x:Key="Caption" TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Foreground" Value="{StaticResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
   <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="#1A1E24"/><Setter Property="BorderBrush" Value="#303640"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="22"/></Style>
   <Style TargetType="Button">
    <Setter Property="Background" Value="#2B313B"/><Setter Property="Foreground" Value="#ECE8DF"/><Setter Property="BorderBrush" Value="#414956"/><Setter Property="Padding" Value="16,10"/><Setter Property="Cursor" Value="Hand"/>
@@ -35,13 +35,13 @@
      <Button x:Name="NavSettings" Content="Settings" Tag="Settings" Click="Navigate"/>
      <TextBlock Text="Bloodborne PC" Margin="12,22,0,6" FontSize="12"/><TextBlock Text="CUSA03173 · 1.09" Margin="12,0,0,0" Foreground="#888F9B" FontSize="11"/>
     </StackPanel>
-    <StackPanel DockPanel.Dock="Bottom"><TextBlock Text="DEVELOPMENT BUILD" FontSize="10" Foreground="#888F9B"/><TextBlock Text="Local practice companion" FontSize="11" Foreground="#888F9B" Margin="0,6,0,0"/></StackPanel>
+    <StackPanel DockPanel.Dock="Bottom"><TextBlock Text="VERSION 0.1.0" FontSize="10" Foreground="#888F9B"/><TextBlock Text="Local practice companion" FontSize="11" Foreground="#888F9B" Margin="0,6,0,0"/></StackPanel>
    </DockPanel>
   </Border>
   <Grid Grid.Column="1" Margin="30,26,30,20">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <Grid Margin="0,0,0,24"><StackPanel><TextBlock x:Name="PageTitle" Text="The hunter" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="Shape your next practice run." Foreground="{StaticResource Muted}" Margin="0,6,0,0"/></StackPanel><Border Background="#222831" CornerRadius="12" Padding="14,7" HorizontalAlignment="Right" VerticalAlignment="Top"><TextBlock x:Name="ConnectionBadge" Text="DISCONNECTED" FontSize="11" Foreground="#C2B89E"/></Border></Grid>
-   <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+   <ScrollViewer x:Name="PageScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,0,8,0">
      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
       <TextBlock Text="GAME CONNECTION" Style="{StaticResource Caption}"/>
@@ -77,14 +77,22 @@
        <TextBlock Text="Use the game's Player Exterminate flag. Boss phase transitions may still apply." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
        <CheckBox x:Name="Stealth" Content="Invisible to enemies" Tag="Stealth" Checked="FlagChanged" Unchecked="FlagChanged"/>
        <CheckBox x:Name="Silent" Content="Silent footsteps" Tag="Silence" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <TextBlock Text="Toggles start off on each connection and stop on character changes. Turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16"/>
+       <CheckBox x:Name="NoAi" Content="Disable enemy AI" Tag="NoAi" Checked="FlagChanged" Unchecked="FlagChanged"/>
+       <TextBlock Text="Stops the engine's character AI updates. Enemies can still be affected by physics and scripted events." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
+       <CheckBox x:Name="NoFallDamage" Content="No fall damage" Tag="NoFallDamage" Checked="FlagChanged" Unchecked="FlagChanged"/>
+       <TextBlock Text="Selections stay on through loading screens and warps. They resume when the player validates. Disconnecting clears selections; turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16"/>
        <Button Content="Turn off practice toggles" Click="TurnOffFeatures" HorizontalAlignment="Left"/>
       </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="ItemsPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel x:Name="ItemControls" IsEnabled="False">
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
        <TextBlock Text="SPAWN ITEM" Style="{StaticResource Caption}"/>
        <TextBlock Text="Choose a common item, or enter a base item ID and category." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,16"/>
+       <TextBlock Margin="0,0,0,12"><Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Bloodborne Wiki · Datamined item IDs ↗</Hyperlink></TextBlock>
+       <TextBlock Margin="0,0,0,12"><Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-weapon-model-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Weapon IDs ↗</Hyperlink></TextBlock>
+       <StackPanel x:Name="ItemControls" IsEnabled="False">
+       <CheckBox x:Name="WikiHexId" Content="Wiki hexadecimal Item ID (includes category)" Margin="0,0,0,12"/>
+       <TextBlock Text="Decimal mode: base ID + selected category. Wiki mode: paste the full hexadecimal Item ID, e.g. 400003E8. A 0x prefix also selects hexadecimal mode." Style="{StaticResource Caption}"/>
        <ComboBox x:Name="ItemPicker" DisplayMemberPath="Label" MinHeight="40" SelectionChanged="ItemSelected"/>
        <Grid Margin="0,16,0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
         <StackPanel Margin="0,0,12,0"><TextBlock Text="Base item ID" Style="{StaticResource Caption}"/><TextBox x:Name="ItemId" Text="1000" AutomationProperties.Name="Base item ID"/></StackPanel>
@@ -92,11 +100,26 @@
         <StackPanel Grid.Column="2"><TextBlock Text="Quantity" Style="{StaticResource Caption}"/><TextBox x:Name="ItemQuantity" Text="1" AutomationProperties.Name="Item quantity"/></StackPanel>
        </Grid><Button Content="Spawn item" Click="SpawnItem" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
        <TextBlock Text="Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
-      </StackPanel></Border>
+      </StackPanel></StackPanel></Border>
       <Border Style="{StaticResource Card}"><StackPanel x:Name="WarpControls" IsEnabled="False"><TextBlock Text="WARP TO LAMP" Style="{StaticResource Caption}"/>
+       <TextBox x:Name="LampSearch" TextChanged="FilterLamps" ToolTip="Filter lamps by name or DLC" AutomationProperties.Name="Search lamps" Margin="0,8,0,0"/>
        <ComboBox x:Name="LampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,16"/>
        <Button Content="Warp to selected lamp" Click="Warp" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
-       <TextBlock Text="Uses the game's return-point and stage-change functions. Warp while idle; this does not change boss or quest flags. These new item and warp controls still need in-game testing." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+       <TextBlock Text="All 45 named base-game and DLC destinations. Boss-arena lamps do not reset bosses or unlock quest flags. Chalice dungeon travel is tracked separately. Warp while idle." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="BossControls" IsEnabled="False">
+       <TextBlock Text="BOSS ENTRANCES" Style="{StaticResource Caption}"/>
+       <ComboBox x:Name="BossPicker" DisplayMemberPath="Label" MinHeight="40"/>
+       <WrapPanel Margin="0,12,0,0"><Button Content="1 · Travel to area" Click="TravelBossArea" Margin="0,0,10,0"/><Button Content="2 · Go to entrance" Click="GoToBoss" Style="{StaticResource Primary}"/></WrapPanel>
+       <TextBlock Text="19 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. This places you outside the fog; it does not revive bosses, open doors or change quest flags." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+      </StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="LocationControls" IsEnabled="False">
+       <TextBlock Text="SAVED LOCATIONS" Style="{StaticResource Caption}"/>
+       <TextBox x:Name="LocationName" Text="Practice spot" MaxLength="80" AutomationProperties.Name="Location name"/>
+       <Button Content="Save current location" Click="SaveLocation" HorizontalAlignment="Left" Margin="0,10,0,16"/>
+       <ComboBox x:Name="LocationPicker" DisplayMemberPath="Label" MinHeight="40"/>
+       <WrapPanel Margin="0,12,0,0"><Button Content="Restore location" Click="RestoreLocation" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete selected" Click="DeleteLocation"/></WrapPanel>
+       <TextBlock Text="Keeps up to 100 named positions between app sessions. Restore within the same loaded map; travel to its lamp first when elsewhere." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
