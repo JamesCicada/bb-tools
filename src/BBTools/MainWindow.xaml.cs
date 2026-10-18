@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private GameActions? actions;
     private bool actionBusy;
     private ProcessCandidate[] processSnapshot = [];
+    private ItemSearchIndex? itemSearchIndex;
     private float desiredDamage = 1, desiredEchoes = 1;
     private ulong multiplierFailedActor;
     private CharacterState? statDraft;
@@ -165,8 +166,11 @@ public partial class MainWindow : Window
         discovering = true;
         try
         {
-            var candidates = ProcessDiscovery.List();
-            var best = await Task.Run(() => ProcessDiscovery.FindBest(candidates, () => closing));
+            var (candidates, best) = await Task.Run(() =>
+            {
+                var found = ProcessDiscovery.List();
+                return (found, ProcessDiscovery.FindBest(found, () => closing));
+            });
             if (best == null || closing || !settings.AutoConnect || autoPaused || session != null || connecting) return;
             processSnapshot = candidates;
             ProcessSearch.Text = "";
@@ -656,6 +660,7 @@ public partial class MainWindow : Window
     private UserLibrary Library => library ?? throw new IOException("Saved library is unavailable. Check the status message and restart after resolving the file error.");
     private void RefreshLibrary()
     {
+        itemSearchIndex = null;
         var selected = LocationPicker.SelectedItem as SavedLocation;
         LocationPicker.ItemsSource = Library.Locations().Where(x => x.Label.Contains(LocationSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();
         LocationPicker.SelectedItem = selected;
@@ -785,14 +790,16 @@ public partial class MainWindow : Window
         var query=ItemSearch.Text.Trim();
         try
         {
-            var items=(library==null?GameActions.CommonItems:Library.Catalog().Concat(GameActions.CommonItems).ToArray()).AsEnumerable();if(library!=null)items=items.Concat(Library.Favorites().Select(x=>new ItemChoice(x.Name,x.Id,x.Category)));
-            ItemPicker.ItemsSource=items.Where(x=>x.Name.Contains(query,StringComparison.OrdinalIgnoreCase)||x.Id.ToString().Contains(query)).DistinctBy(x=>(x.Id,x.Category)).ToArray();
+            itemSearchIndex ??= new ItemSearchIndex(library == null
+                ? GameActions.CommonItems
+                : Library.Catalog().Concat(GameActions.CommonItems).Concat(Library.Favorites().Select(x => new ItemChoice(x.Name,x.Id,x.Category))));
+            ItemPicker.ItemsSource = itemSearchIndex.Search(query);
         }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private void ImportGameCatalog(object sender,RoutedEventArgs e)
     {
         var picker=new OpenFolderDialog{Title="Choose Bloodborne game folder or dvdroot_ps4"};if(picker.ShowDialog()!=true)return;
-        try{var items=GameItemCatalog.Load(picker.FolderName);Library.SaveCatalog(items);SearchItems(this,new TextChangedEventArgs(TextBox.TextChangedEvent,System.Windows.Controls.UndoAction.None));Status.Text=$"Imported {items.Length:N0} item names from your game. No items were spawned.";}
+        try{var items=GameItemCatalog.Load(picker.FolderName);Library.SaveCatalog(items);itemSearchIndex=null;SearchItems(this,new TextChangedEventArgs(TextBox.TextChangedEvent,System.Windows.Controls.UndoAction.None));Status.Text=$"Imported {items.Length:N0} item names from your game. No items were spawned.";}
         catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private void SaveFavorite(object sender,RoutedEventArgs e)

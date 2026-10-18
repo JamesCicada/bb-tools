@@ -13,6 +13,7 @@ $releaseRoot = Join-Path $projectRoot 'artifacts'
 # Unique staging prevents files from an earlier publish entering this archive.
 $staging = Join-Path $releaseRoot ("stage-" + [guid]::NewGuid().ToString('N'))
 $package = Join-Path $staging $releaseName
+try {
 New-Item -ItemType Directory -Path $package -Force | Out-Null
 
 dotnet publish (Join-Path $projectRoot 'src/BBTools/BBTools.csproj') -c $Configuration -r win-x64 --self-contained true `
@@ -41,4 +42,15 @@ $checksum = Join-Path $releaseRoot 'SHA256SUMS.txt'
 [System.IO.File]::WriteAllText($checksum, "$digest  $releaseName.zip`n", [System.Text.UTF8Encoding]::new($false))
 Write-Output "Package: $archive"
 Write-Output "SHA256: $digest"
-Write-Output "Publish directory: $package"
+}
+finally {
+    # Only this invocation's generated staging folder is removed, including failed publishes.
+    $resolvedStaging = [System.IO.Path]::GetFullPath($staging)
+    $resolvedRoot = [System.IO.Path]::GetFullPath($releaseRoot) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedStaging.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Publish staging path escaped artifacts.'
+    }
+    if (Test-Path -LiteralPath $resolvedStaging) {
+        Remove-Item -LiteralPath $resolvedStaging -Recurse -Force
+    }
+}

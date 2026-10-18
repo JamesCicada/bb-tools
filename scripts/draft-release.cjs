@@ -4,17 +4,13 @@ const crypto = require('node:crypto');
 
 // Called only after both Windows build configurations and checks have passed.
 module.exports = async ({ github, context, core, root = process.cwd() }) => {
-  const project = fs.readFileSync(path.join(root, 'src/BBTools/BBTools.csproj'), 'utf8');
-  const version = project.match(/<Version>(\d+\.\d+\.\d+)<\/Version>/)?.[1];
-  if (!version) throw new Error('Expected a three-part project version.');
-  const tag = `v${version}`;
+  const { tag, notes } = require('./release-metadata.cjs')(root);
   const name = `BBTools-${tag}-win-x64.zip`;
   const directory = path.join(root, 'release-artifacts');
   const archive = fs.readFileSync(path.join(directory, name));
   const checksum = fs.readFileSync(path.join(directory, 'SHA256SUMS.txt'), 'utf8');
   const digest = crypto.createHash('sha256').update(archive).digest('hex');
   if (checksum.trim() !== `${digest}  ${name}`) throw new Error('Release checksum mismatch.');
-  const notes = fs.readFileSync(path.join(root, 'docs/releases', `${tag}.md`), 'utf8');
   const repo = context.repo;
   const releases = await github.paginate(github.rest.repos.listReleases, { ...repo, per_page: 100 });
   const existing = releases.find(release => release.tag_name === tag);

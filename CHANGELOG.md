@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Fix v0.5.0 draft-release CI by supplying its version-specific release notes and checking required notes before artifact or GitHub operations.
+
+- Cache item search data between library changes, avoiding SQLite reads and catalog deserialization for each keystroke while preserving names, aliases and category-specific IDs.
+- Move auto-connect process enumeration off the UI thread and avoid per-region candidate-array allocations during emulator image scanning.
+- Automatically remove publish staging folders after success or failure; add a previewable workspace cleanup script that retains release archives and research sources.
+- Refresh contributor guidance to reflect supported runtimes.
+
+
 ## 0.5.0 - 2026-10-18 (draft)
 
 - Officially support shadPS4 for CUSA03173 1.09: tested and confirmed. Remove the experimental opt-in from manual and automatic connection; retain image/player validation.

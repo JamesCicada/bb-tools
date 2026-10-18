@@ -45,5 +45,22 @@ evidence, pointer/identity validation, and lifecycle/cleanup handling.
 - Keep implementation completion separate from live-game confirmation in `TODO.md`.
   Mark tested and confirmed only when someone has actually reported that feature working.
 
-Current release support is native Bloodborne PC, CUSA03173 1.09. A shadPS4 adapter,
-reward/damage multipliers and remote workshop menus are useful future contributions.
+Current release support includes native Bloodborne PC and shadPS4, CUSA03173 1.09.
+See TODO.md for remaining features and live-test needs.
+
+## Keep the workspace tidy
+
+`./scripts/clean.ps1 -WhatIf` previews removal of generated publish staging and
+unpacked smoke-test folders. Run without `-WhatIf` to clean them. Add
+`-IncludeBuildOutputs` to remove the app/check runner bin and obj directories;
+restore/build afterward. Cleanup retains release ZIPs, research repositories,
+research scripts, screenshots, saves, logs and the local library.
+
+Release packaging automatically removes its own temporary staging folder on
+success or failure. Only the ZIP and checksum remain in artifacts.
+
+## Prepare a version bump
+
+Update the project version, CHANGELOG.md and `docs/releases/vX.Y.Z.md` together.
+`node --test scripts/draft-release.test.cjs` checks that the current version has
+nonempty release notes before CI can proceed to tagging and draft creation.

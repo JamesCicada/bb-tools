@@ -62,3 +62,20 @@ test('retry refreshes a differing draft asset only at the same tagged commit', a
   assert.deepEqual(f.calls.map(x => x[0]), ['getRef', 'deleteReleaseAsset', 'uploadReleaseAsset', 'uploadReleaseAsset']);
   assert.equal(f.calls[1][1].asset_id, 99);
 });
+
+test('current project version has nonempty release notes checked into the repository', () => {
+  const metadata = require('./release-metadata.cjs')(path.join(__dirname, '..'));
+  assert.ok(metadata.notes.includes(metadata.tag));
+});
+test('missing release notes fail before any GitHub mutation with an actionable error', async t => {
+  const f = fixture(t);
+  fs.unlinkSync(path.join(f.root, 'docs/releases/v0.2.0.md'));
+  await assert.rejects(draft(f), /Missing release notes: docs\/releases\/v0.2.0.md/);
+  assert.equal(f.calls.length, 0);
+});
+test('empty release notes fail before any GitHub mutation', async t => {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.root, 'docs/releases/v0.2.0.md'), '   ');
+  await assert.rejects(draft(f), /Empty release notes/);
+  assert.equal(f.calls.length, 0);
+});

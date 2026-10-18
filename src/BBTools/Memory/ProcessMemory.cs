@@ -73,7 +73,9 @@ public sealed class ProcessMemory : IMemory, IDisposable
             if(region.State==0x1000&&region.Type is 0x20000 or 0x40000)
             {
                 var start=(ulong)region.AllocationBase;
-                foreach(var candidate in new[]{start,start+0x400000})if(candidate>=0x10000&&seen.Add(candidate))yield return candidate;
+                if(start>=0x10000&&seen.Add(start))yield return start;
+                var relocated=start+0x400000;
+                if(relocated>=0x10000&&seen.Add(relocated))yield return relocated;
             }
             var next=(ulong)region.BaseAddress+(ulong)region.RegionSize;if(next<=address)break;address=next;
         }
