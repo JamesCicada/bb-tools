@@ -5,20 +5,24 @@ using Microsoft.Data.Sqlite;
 
 namespace BBTools;
 
-public sealed record PracticePreset(string Name, bool KeepHealth, bool Stamina, string[] Flags, float Damage, float Echoes)
+public sealed record PracticePreset(string Name, bool KeepHealth, bool Stamina, string[] Flags, float Damage, float Echoes, float Fov = 43, bool OverrideFov = false, AppSettings? Preferences = null, bool KeepDurability = false, bool AutoRepair = false, int RepairThreshold = 30, bool TuneCamera = false, float CameraDistance = 1, float CameraHeight = 1, string Group = "General", bool KeepStatusEmpty = false)
 {
-    public override string ToString() => Name;
+    public override string ToString() => $"{Group} · {Name}";
     public void Validate()
     {
-        UserLibrary.ValidateName(Name);
+        UserLibrary.ValidateName(Name);UserLibrary.ValidateName(Group);
+        Preferences?.Validate();
+        if (!float.IsFinite(CameraDistance) || !float.IsFinite(CameraHeight) || CameraDistance is < .5f or >2 || CameraHeight is < .5f or >2) throw new ArgumentException("Invalid preset camera tuning.");
+        if (RepairThreshold is < 1 or > 100) throw new ArgumentException("Repair threshold must be 1–100.");
+        if (!float.IsFinite(Fov) || Fov is < 38 or > 120) throw new ArgumentException("Preset FOV must be between 38 and 120.");
         if (Flags == null || Flags.Length > 7 || Flags.Distinct().Count() != Flags.Length ||
-            Flags.Any(x => !Enum.TryParse<PracticeFlag>(x, out var flag) || !Enum.IsDefined(flag)) ||
+            Flags.Any(x => !Enum.GetNames<PracticeFlag>().Contains(x)) ||
             !float.IsFinite(Damage) || !float.IsFinite(Echoes) || Damage is < .1f or > 100 || Echoes is < .1f or > 100)
             throw new ArgumentException("Invalid practice preset.");
     }
 }
 
-public sealed class UserLibrary
+public sealed partial class UserLibrary
 {
     public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BBTools", "library.db");
     private readonly string path;
@@ -82,7 +86,7 @@ public sealed class UserLibrary
     }
     public void Delete(string kind,string name)
     {
-        if (kind is not ("location" or "preset")) throw new ArgumentException("Unknown library category.");
+        if (kind is not ("location" or "preset" or "favorite")) throw new ArgumentException("Unknown library category.");
         using var db = Open(); using var cmd = db.CreateCommand(); cmd.CommandText="DELETE FROM entries WHERE kind=$kind AND name=$name";
         cmd.Parameters.AddWithValue("$kind",kind); cmd.Parameters.AddWithValue("$name",name); cmd.ExecuteNonQuery();
     }

@@ -104,6 +104,11 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
             throw new IOException("Player values failed validation. Wait until your character is loaded.");
         return new(actor, component, hp, maxHp, stamina, maxStamina);
     }
+    public void RefillResources()
+    {
+        ValidateImage();var player=ReadPlayer();if(player.Health==0)throw new IOException("Refill does not revive a dead player.");EnsureSamePlayer(player);
+        memory.SetInt32(player.Component+0xF8,player.MaxHealth);memory.SetInt32(player.Component+0x134,player.MaxStamina);
+    }
     public void SetHealth(int value)
     {
         ValidateImage();

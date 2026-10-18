@@ -8,19 +8,19 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
 
-## v0.3.0 draft
+## v0.4.0
 
-**v0.3.0** adds a 38–120° vertical FOV slider without an external patch, saved
-practice presets, a local SQLite library and searchable warp bookmarks. The process
-picker shows all enumerable processes, ranks likely Bloodborne runtimes first and
-filters by name or PID. Navigation now separates Player, Combat, Items, Travel,
-Camera, Workshop and Settings.
+Boss revival/retry, expanded and startup presets, camera settings, status buildup
+controls, hotkeys, encounter timing, library tools, save recovery, logs and diagnostics
+are tested and confirmed. See the [feature guide](#v040-feature-guide) and [checklist](TODO.md).
 
-FOV, presets and process selection/filtering are tested and confirmed. Database
-migration, location search and remaining edge cases retain separate pending checks
-in [the checklist](TODO.md). Chalice travel and three additional boss entrances also
-remain pending. The download link points to the latest published release; this draft
-remains private until reviewed and published.
+**Known issue:** weapon durability controls (repair now, threshold auto-repair and
+keep-full mode) are experimental and not working reliably. Further work is deferred
+to the next development session; do not rely on them. The native Workshop repair menu
+remains available.
+
+The download link points to the latest published release. v0.4.0 is prepared as a
+GitHub draft after CI passes. Advanced native controls remain on the roadmap.
 
 The app also includes its emblem, Windows icon, **Made with 🖤 By James Cicada**
 footer, GitHub shortcut and manual **Check for updates**.
@@ -230,8 +230,8 @@ Presets and saved warp locations use `%LOCALAPPDATA%\BBTools\library.db` (SQLite
 Existing `locations.json` bookmarks migrate once in a transaction; the original file
 is retained. Keep that JSON when resolving a migration error. Location search matches
 names and map labels, and restoring still requires the same loaded map. Database
-migration and location search have automated coverage and await live confirmation. Item favorites, profiles and
-library import/export remain planned.
+migration, location search, item favorites, profiles and library import/export are
+implemented, tested and confirmed.
 
 The Camera page provides a live vertical FOV slider with an explicit override toggle
 and original-value reset, ranging from 38 to 120 degrees. Above the game's normal
@@ -249,3 +249,46 @@ runtimes with ★, with bb-probe.exe first. Filter by name, decimal PID, or a
 marked restricted have unavailable creation-time identity and cannot be connected
 until that identity is accessible. Any manually selected process must still pass
 the supported game-image validation. Auto-connect considers only likely runtimes.
+
+### Session logs
+
+Each app launch creates a UTF-8 log in `logs` beside `BBTools.exe`. Only the five
+newest BB Tools session logs are retained. Logs include app/runtime information,
+connection and action status, handled errors and unhandled exception details.
+Repeated identical errors are throttled. Logging errors do not stop game controls;
+an unwritable app folder is reported in the app status. Logs are created at runtime
+and are not included in the release ZIP.
+
+### v0.4.0 feature guide
+
+- **Startup preferences:** save the current camera FOV as a startup default in Settings.
+  Combat can bind a saved preset to startup. Settings apply only after a living character
+  is ready, once per connection. Presets now include camera tuning, durability, buildup
+  controls and app/hotkey preferences. Startup never edits attributes/Echoes balances,
+  spawns items, revives bosses or warps.
+- **Boss revival/retry:** choose a supported boss in Travel from any loaded area, including mid-encounter.
+  One click resets encounter flags and requests an area reload; the changes can be saved by the game;
+  use a separate practice save. Retry additionally moves outside the fog,
+  refills health/stamina and starts the timer. Micolash, Gehrman and Moon Presence
+  remain unavailable. Original flag journals are kept in
+  `%LOCALAPPDATA%\BBTools\boss-revival`; these are diagnostic snapshots, not full save backups.
+- **Durability/status:** durability repair controls remain experimental and require further work.
+  Status buildup controls are tested and confirmed. Clearing buildup does not remove
+  active poison or other active effects, and polling does not guarantee hit immunity.
+- **Camera tuning:** scale distance and look-at height 0.5–2.0; disable to restore
+  individual originals. FOV and camera overrides are experimental and unstable: performance drops and visual issues are possible. These settings are included in presets.
+- **Hotkeys/timer:** configure Ctrl+Alt+F1–F12 actions in Settings. Actions require
+  the game/trainer to have focus and are ignored in app text fields/dialogs. The
+  encounter timer pauses while loading/dead; finish manually to record a session best.
+- **Library:** groups, preset rename/duplicate, custom item favorites and search,
+  versioned JSON import/export and consistent SQLite database backups. Imports
+  replace matching names in a transaction without applying anything to the game.
+- **Save recovery:** choose a BB Tools backup folder in Settings. Restore requires
+  the game/launcher closed, validates ZIP paths/sizes/CRC and retains the previous
+  save folder plus a recovery ZIP. Test on a disposable folder copy first.
+- **Diagnostics:** export version/config/status information with filesystem paths
+  redacted. Saves and full session logs are not included in this export.
+
+The [checklist](TODO.md) records tested and confirmed features, the outstanding
+weapon durability issue and unimplemented native research. Do not assume the entire
+future roadmap is included in the development build.

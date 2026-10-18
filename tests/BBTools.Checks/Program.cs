@@ -30,7 +30,7 @@ internal static class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -47,9 +47,154 @@ internal static class Program
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token) => respond(request, token);
     }
+    private static void SaveRestoreChecks()
+    {
+        var folder=Path.Combine(Path.GetTempPath(),"BBTools-save-"+Guid.NewGuid().ToString("N"));var save=Path.Combine(folder,"save");var backups=Path.Combine(folder,"backups");Directory.CreateDirectory(save);Directory.CreateDirectory(backups);
+        try
+        {
+            File.WriteAllText(Path.Combine(save,"save.dat"),"old data");var archive=MainWindow.CreateBackup(save,backups);File.WriteAllText(Path.Combine(save,"save.dat"),"current data");
+            Reject<IOException>(()=>SaveRestore.Restore(archive,save,()=>false),"save restore refuses while the game is active");
+            var bad=Path.Combine(backups,"bad.zip");using(var zip=System.IO.Compression.ZipFile.Open(bad,System.IO.Compression.ZipArchiveMode.Create)){using var writer=new StreamWriter(zip.CreateEntry("../escape.dat").Open());writer.Write("escape");}
+            Reject<IOException>(()=>SaveRestore.Restore(bad,save,()=>true),"restore rejects path traversal before changing saves");Check(File.ReadAllText(Path.Combine(save,"save.dat"))=="current data"&&!File.Exists(Path.Combine(folder,"escape.dat")),"rejected backup leaves save folder and neighboring files untouched");
+            var damaged=Path.Combine(backups,"damaged.zip");using(var zip=System.IO.Compression.ZipFile.Open(damaged,System.IO.Compression.ZipArchiveMode.Create)){using var writer=new StreamWriter(zip.CreateEntry("save.dat",System.IO.Compression.CompressionLevel.NoCompression).Open());writer.Write("unique-save-payload");}
+            var bytes=File.ReadAllBytes(damaged);var payload=System.Text.Encoding.UTF8.GetBytes("unique-save-payload");var at=bytes.AsSpan().IndexOf(payload);bytes[at]^=1;File.WriteAllBytes(damaged,bytes);
+            Reject<IOException>(()=>SaveRestore.Restore(damaged,save,()=>true),"restore verifies save entry CRC before replacing files");
+            var restored=SaveRestore.Restore(archive,save,()=>true);Check(File.ReadAllText(Path.Combine(save,"save.dat"))=="old data"&&File.ReadAllText(Path.Combine(restored.RecoveryFolder,"save.dat"))=="current data"&&File.Exists(restored.RecoveryZip),"restore replaces the selected save folder and retains both recovery copies");
+            Check(SaveRestore.History(backups).Any(x=>x.Path==archive),"backup history lists created BB Tools archives");
+        }
+        finally{Directory.Delete(folder,true);}
+    }
+    private static void StatusChecks(ProcessMemory memory,PlayerSession session,ulong root)
+    {
+        foreach(var f in PlayerSession.StatusFingerprints)memory.Write(root+f.Offset,f.Bytes);
+        var actor=session.ReadPlayer().Actor;var modules=memory.Pointer(actor+0x3B0);var old=memory.Read(modules+0x28,8);var resist=memory.AllocateData(0x100);
+        memory.Write(modules+0x28,BitConverter.GetBytes(resist));memory.Write(resist,BitConverter.GetBytes(root+0x5335900));memory.Write(resist+8,BitConverter.GetBytes(actor));
+        for(var i=0;i<5;i++){memory.SetInt32(resist+0x10+(ulong)i*4,25);memory.SetInt32(resist+0x24+(ulong)i*4,200);}
+        try
+        {
+            session.ClearStatusBuildup();Check(memory.Read(resist+0x10,20).All(x=>x==0)&&memory.Int32(resist+0x24)==200,"status clear resets only buildup and preserves resistance limits");
+            memory.Write(resist+8,BitConverter.GetBytes(actor+8));Reject<IOException>(()=>session.ClearStatusBuildup(),"foreign status module ownership prevents clear writes");
+        }
+        finally{memory.Write(modules+0x28,old);}
+    }
+    private static void TimerAndHotkeyChecks()
+    {
+        TimeSpan now=TimeSpan.Zero;var timer=new EncounterTimer(()=>now);timer.Context(true,true);timer.Start("Cleric Beast");now=TimeSpan.FromSeconds(5);timer.Context(false,false);now=TimeSpan.FromSeconds(15);timer.Context(true,true);now=TimeSpan.FromSeconds(18);timer.Finish();
+        Check(timer.Elapsed==TimeSpan.FromSeconds(8) && timer.Best==TimeSpan.FromSeconds(8),"encounter timer excludes loading time and records a completed best");
+        timer.Start("Cleric Beast");now+=TimeSpan.FromSeconds(1);timer.Context(true,false);now+=TimeSpan.FromSeconds(5);timer.Context(true,true);Check(timer.Deaths==1 && timer.Elapsed==TimeSpan.FromSeconds(1),"encounter timer counts death once and pauses while dead");
+        timer.TogglePause();now+=TimeSpan.FromSeconds(10);timer.Context(true,true);Check(timer.Elapsed==TimeSpan.FromSeconds(1),"manual encounter pause excludes elapsed time");
+        timer.Start("Father Gascoigne");Check(timer.Best==null && timer.Attempts==1 && timer.Deaths==0,"personal best and attempt counters do not mix different bosses");
+        Check(timer.Summary.Contains("00:00.0"),"encounter timer formats the visible summary");
+        Check(!Diagnostics.RedactPaths(@"Failed C:\Users\Someone\save.dat").Contains("Someone") && !Diagnostics.RedactPaths(@"Failed \\server\share\save.dat").Contains("server") && !Diagnostics.RedactPaths("Failed C:/Users/Someone/save.dat").Contains("Someone"),"diagnostics redact drive and UNC personal paths");
+        var pressed=new List<int>();var keys=new HashSet<int>();
+        using(var manager=new HotkeyManager(0,pressed.Add,key=>keys.Contains(key)))
+        {
+            manager.Apply(new HotkeyPreferences(true));keys.UnionWith([0x11,0x12,0x75]);manager.Poll();manager.Poll();
+            Check(pressed.SequenceEqual(new[]{0}),"hotkey key-state polling triggers Ctrl+Alt+F6 once while held");
+            keys.Remove(0x75);manager.Poll();keys.Add(0x75);manager.Poll();Check(pressed.Count==2,"hotkey release permits the next press");
+            keys.Clear();manager.Poll();keys.Add(0x76);manager.Poll();Check(pressed.Count==2,"configured modifiers are required for hotkeys");
+            manager.Apply(new HotkeyPreferences(true,Modifiers:"None"));manager.Poll();Check(pressed.Count==2,"applying hotkeys while a key is held does not fire it");
+            keys.Clear();manager.Poll();keys.Add(0x76);manager.Poll();Check(pressed.Last()==1&&pressed.Count==3,"plain F-key shortcuts work without hidden Ctrl+Alt requirements");
+            manager.Apply(new HotkeyPreferences());keys.Clear();manager.Poll();keys.Add(0x75);manager.Poll();Check(pressed.Count==3,"disabled hotkeys do not trigger");
+            manager.Apply(new HotkeyPreferences(true,Modifiers:"None"));manager.Dispose();keys.Clear();manager.Poll();keys.Add(0x76);manager.Poll();Check(pressed.Count==3,"disposed hotkeys cannot trigger actions");
+        }
+        Reject<ArgumentException>(()=>new HotkeyPreferences(true,Modifiers:"Shift").Validate(),"unsupported hotkey modifiers are rejected");
+        new HotkeyPreferences(true).Validate();Reject<ArgumentException>(()=>new HotkeyPreferences(true,"F6","F6").Validate(),"duplicate global hotkeys are rejected");
+        Reject<ArgumentException>(()=>new HotkeyPreferences(true,"A").Validate(),"practice hotkeys are limited to explicit function-key bindings");
+    }
+    private static void DurabilityChecks(ProcessMemory memory,PlayerSession session,ulong root)
+    {
+        foreach(var f in PlayerSession.DurabilityFingerprints) memory.Write(root+f.Offset,f.Bytes);
+        var previousRepo=memory.Read(root+0x5540340,8);var previousItems=memory.Read(root+0x553E990,8);
+        var data=session.ReadCharacter().Address;var equipment=data+0x1D0;var slots=equipment+0x24;var originalEquipment=memory.Read(equipment,0x200);
+        void Ptr(ulong at,ulong value)=>memory.Write(at,BitConverter.GetBytes(value));
+        var repo=memory.AllocateData(0x100);var cap=memory.AllocateData(0x100);var handle=memory.AllocateData(0x100);var file=memory.AllocateData(0x500);
+        var manager=memory.AllocateData(0x100);var weapon=memory.AllocateData(0x100);var entries=memory.AllocateData(0x100);var reserve=memory.AllocateData(0x100);var cached=memory.AllocateData(0x100);
+        try
+        {
+            Ptr(root+0x5540340,repo);memory.SetInt32(repo+0x70,1);Ptr(repo+0x78,cap);Ptr(cap+0x70,handle);Ptr(handle+0x70,file);
+            var header=new byte[0x40];BitConverter.GetBytes((ushort)2).CopyTo(header,10);System.Text.Encoding.ASCII.GetBytes("EQUIP_PARAM_WEAPON_ST").CopyTo(header,12);header[0x2D]=0x85;header[0x2E]=2;memory.Write(file,header);
+            memory.SetInt32(file+0x40,7000000);Ptr(file+0x48,0x70);memory.SetInt32(file+0x58,7100000);Ptr(file+0x60,0x1AC);
+            memory.Write(file+0x70+0xBE,BitConverter.GetBytes((ushort)200));Ptr(root+0x553E990,manager);Ptr(manager+8+8,weapon);
+            memory.Write(slots,Enumerable.Repeat((byte)0xFF,32).ToArray());memory.SetInt32(slots,1);memory.SetInt32(equipment+0x158+0x24,2);memory.SetInt32(equipment+0x158+0x88,3);Ptr(equipment+0x158+0x58,entries);Ptr(equipment+0x158+0x48,reserve);memory.SetInt32(entries+16,unchecked((int)0x80800001));memory.SetInt32(equipment+0x94,unchecked((int)0x80800002));Ptr(manager+8+16,cached);Ptr(cached,root+0x53362D0);memory.SetInt32(cached+8,unchecked((int)0x80800002));memory.SetInt32(cached+0xC,7000003);memory.SetInt32(cached+0x18,13);Ptr(weapon,root+0x53362D0);memory.SetInt32(weapon+8,unchecked((int)0x80800001));memory.SetInt32(weapon+0xC,7000003);memory.SetInt32(weapon+0x18,80);
+            Check(session.ReadWeaponDurability().Single().Maximum==200,"weapon durability resolves equipped instance and normalized catalog maximum");
+            Check(session.RepairWeapons(30)==0 && memory.Int32(weapon+0x18)==80,"auto repair respects configured durability threshold");
+            Check(session.RepairWeapons(50)==1 && memory.Int32(weapon+0x18)==200,"repair refills only equipped weapon durability to its catalog maximum");
+            Check(memory.Int32(cached+0x18)==13,"repair updates inventory instance rather than the equipment display/cache reference");
+            memory.SetInt32(slots,3);memory.SetInt32(reserve+16,unchecked((int)0x80800001));memory.SetInt32(weapon+0x18,20);
+            Check(session.RepairWeapons(30)==1 && memory.Int32(weapon+0x18)==200,"threshold repair resolves the second inventory bank");
+            memory.SetInt32(slots+4,3);Check(session.ReadWeaponDurability().Length==1,"duplicate equipment slots repair an owned instance only once");memory.SetInt32(slots+4,-1);
+            memory.SetInt32(slots,4);Reject<IOException>(()=>session.RepairWeapons(),"out-of-bounds equipment indices prevent repair writes");memory.SetInt32(slots,3);
+            memory.SetInt32(weapon+8,1);Reject<IOException>(()=>session.RepairWeapons(),"stale item handle prevents repair writes");memory.SetInt32(weapon+8,unchecked((int)0x80800001));
+            Ptr(weapon,root+0x5336330);Check(session.ReadWeaponDurability().Length==0,"armor and unrelated instance types are excluded from repair");
+            Ptr(weapon,root+0x53362D0);memory.SetInt32(weapon+0x18,201);Reject<IOException>(()=>session.RepairWeapons(),"invalid durability values fail before repair");
+        }
+        finally {memory.Write(root+0x5540340,previousRepo);memory.Write(root+0x553E990,previousItems);memory.Write(equipment,originalEquipment);}
+    }
+    private static void BossFlagChecks(ProcessMemory memory,PlayerSession session,ulong root)
+    {
+        Check(BossRevivalCatalog.All.Length==19 && BossRevivalCatalog.All.All(x=>BossDestinations.All.Any(d=>d.Name==x.Name)),"revival allowlist contains nineteen catalogued base-game and DLC bosses");
+        Reject<ArgumentException>(()=>BossRevivalCatalog.Find("Gehrman, the First Hunter"),"unverified story-ending revival remains unavailable");
+        var profile=BossRevivalCatalog.Find("Cleric Beast");var changes=BossRevivalCatalog.Changes(profile);
+        Check(changes.Count==10 && changes.Count(x=>x.Value)==1 && changes[profile.DefeatFlag+2],"boss reset clears encounter family while preserving repeat-entrance staging");
+        var manager=memory.AllocateData(0x100);var head=memory.AllocateData(0x100);var node=memory.AllocateData(0x100);var data=memory.AllocateData(0x100);
+        void Ptr(ulong at,ulong value)=>memory.Write(at,BitConverter.GetBytes(value));
+        memory.SetInt32(manager+0x1C,1000);Ptr(manager+0x38,head);Ptr(head+8,node);memory.Write(head+0x19,[1]);Ptr(node,head);Ptr(node+0x10,head);memory.SetInt32(node+0x20,(int)(profile.DefeatFlag/1000));memory.SetInt32(node+0x28,2);Ptr(node+0x30,data);
+        var store=new EventFlagStore(memory,manager);var outside=profile.DefeatFlag-1;store.Set(new Dictionary<uint,bool>{{outside,true},{profile.DefeatFlag,true}});
+        store.Set(changes);Check(changes.All(x=>store.Read(x.Key)==x.Value) && store.Read(outside),"event flag writes reset only allowlisted bits and preserve adjacent flags");
+        var image=memory.AllocateData(0x5541000);
+        foreach(var fingerprint in PlayerSession.Fingerprints.Concat(GameActions.ChaliceFingerprints))memory.Write(image+fingerprint.Offset,fingerprint.Bytes);
+        Ptr(image+PlayerSession.WorldPointer,BitConverter.ToUInt64(memory.Read(root+PlayerSession.WorldPointer,8)));Ptr(image+0x553B130,BitConverter.ToUInt64(memory.Read(root+0x553B130,8)));Ptr(image+0x553B100,manager);
+        var actor=session.ReadPlayer().Actor;var oldBlock=memory.Int32(actor+0x3F8);var journals=Path.Combine(Path.GetTempPath(),"BBTools-boss-"+Guid.NewGuid().ToString("N"));
+        using(var actions=new GameActions(memory,new PlayerSession(memory,image)))
+        {
+            try
+            {
+                memory.SetInt32(actor+0x3F8,0x18010000);store.Set(new Dictionary<uint,bool>{{profile.DefeatFlag,true}});
+                var journal=actions.ReviveBoss(profile.Name,journals);
+                Check(File.Exists(journal) && !store.Read(profile.DefeatFlag) && store.Read(profile.DefeatFlag+2),"one-click revival resets encounter flags outside Hunter's Dream and journals their original state");
+                using var saved=JsonDocument.Parse(File.ReadAllText(journal));Check(saved.RootElement.GetProperty("Flags").GetProperty(profile.DefeatFlag.ToString()).GetBoolean(),"boss flag journal retains original defeated state");
+                store.Set(changes.ToDictionary(x=>x.Key,x=>false));
+                Check(File.Exists(actions.ReviveBoss(profile.Name,journals))&&store.Read(profile.DefeatFlag+2),"revival permits an unencountered boss without a story-progress gate");
+            }
+            finally{memory.SetInt32(actor+0x3F8,oldBlock);if(Directory.Exists(journals))Directory.Delete(journals,true);}
+        }
+        memory.SetInt32(node+0x20,1);Reject<IOException>(()=>store.Read(profile.DefeatFlag),"missing flag blocks cannot be mistaken for an unset boss flag");
+        memory.SetInt32(node+0x20,(int)(profile.DefeatFlag/1000));Ptr(node, node);Reject<IOException>(()=>store.Read(profile.DefeatFlag),"cyclic event flag trees are rejected");
+    }
+    private static void LoggingChecks()
+    {
+        var folder=Path.Combine(Path.GetTempPath(),"BBTools-logs-"+Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var logs=Path.Combine(folder,"logs"); Directory.CreateDirectory(logs);
+            var unrelated=Path.Combine(logs,"other.log");File.WriteAllText(unrelated,"keep");
+            var similarlyNamed=Path.Combine(logs,"BBTools-not-a-session.log");File.WriteAllText(similarlyNamed,"keep");
+            var paths=new List<string>();
+            for(var i=0;i<8;i++)
+            {
+                using var log=new SessionLog(folder); paths.Add(log.FilePath);
+                log.Write("INFO","Unicode session 🖤 "+i);
+                log.Error(new IOException("Test failure"),"test-action");log.Error(new IOException("Test failure"),"test-action");
+                using var reader = new StreamReader(new FileStream(log.FilePath,FileMode.Open,FileAccess.Read,FileShare.ReadWrite | FileShare.Delete));
+                var live=reader.ReadToEnd();
+                Check(live.Contains("Session started") && live.Contains("Unicode session 🖤"),"session log is immediately readable and UTF-8");
+            }
+            Check(paths.Distinct().Count()==8 && paths.All(x=>Path.GetDirectoryName(x)==logs),"each session gets a unique log beside the app");
+            Check(paths.Take(3).All(x=>!File.Exists(x)) && paths.Skip(3).All(File.Exists),"retention keeps exactly the newest five session logs");
+            Check(File.Exists(unrelated) && File.Exists(similarlyNamed),"retention leaves unrelated files untouched");
+            var content=File.ReadAllLines(paths.Last());
+            Check(content.Any(x=>x.Contains("Session ended")) && content.Count(x=>x.Contains("[ERROR]"))==1,"clean shutdown is logged and repeated errors are throttled");
+            Check(content.Any(x=>x.Contains("System.IO.IOException") && x.Contains("test-action")),"error logs include context and exception details");
+            var blocked=Path.Combine(folder,"file-not-folder");File.WriteAllText(blocked,"blocked");
+            Reject<IOException>(()=>new SessionLog(blocked),"unwritable log location reports failure to startup handler");
+        }
+        finally { Directory.Delete(folder,true); }
+    }
     private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
     {
-        foreach(var f in CameraFov.Fingerprints) memory.Write(root+f.Offset,f.Bytes);
+        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints)) memory.Write(root+f.Offset,f.Bytes);
         memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
         var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
         var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
@@ -81,6 +226,8 @@ internal static class Program
         fov.Restore();Check(memory.Read(root+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.StandardClamp),"reset restores the clamp installed by this app");
         fov.Apply(46);Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==46 && BitConverter.ToSingle(memory.Read(file+0xA4,4))==46,"FOV override updates all validated camera rows");
         fov.Apply(47);fov.Restore();Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==43 && BitConverter.ToSingle(memory.Read(file+0xA4,4))==48,"FOV reset restores each individual original value after slider changes");
+        fov.Apply(100);var world=memory.Pointer(root+PlayerSession.WorldPointer);var originalPlayer=memory.Read(world+0x60,8);memory.Write(world+0x60,new byte[8]);
+        try{fov.Restore();Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==43&&memory.Read(root+CameraFov.ClampOffset,4).SequenceEqual(CameraFov.StandardClamp),"FOV cleanup restores global camera rows and clamp during a loading screen");}finally{memory.Write(world+0x60,originalPlayer);}
         memory.Write(root+CameraFov.ClampOffset,CameraFov.UncappedClamp); fov.Apply(90);
         Check(fov.Maximum==120 && BitConverter.ToSingle(memory.Read(file+0x84,4))==90,"verified runtime uncap enables wider angles without patching instructions");
         memory.Write(file+0x84,BitConverter.GetBytes(60f));
@@ -96,6 +243,11 @@ internal static class Program
         Ptr(handle+0x70,replacement);fov.Apply(46);
         Check(BitConverter.ToSingle(memory.Read(file+0x84,4))==45 && BitConverter.ToSingle(memory.Read(replacement+0x84,4))==46,"new camera table resumes FOV without writing through old allocations");
         fov.Restore();Check(BitConverter.ToSingle(memory.Read(replacement+0x84,4))==41 && BitConverter.ToSingle(memory.Read(replacement+0xA4,4))==47,"post-load restoration uses the replacement table's original values");
+        memory.Write(replacement+0x70,BitConverter.GetBytes(4f));memory.Write(replacement+0x7C,BitConverter.GetBytes(1.42f));memory.Write(replacement+0x90,BitConverter.GetBytes(3f));memory.Write(replacement+0x9C,BitConverter.GetBytes(2f));
+        var tuning=new CameraTuning(memory,session);tuning.Apply(2,.5f);
+        Check(BitConverter.ToSingle(memory.Read(replacement+0x70,4))==8 && Math.Abs(BitConverter.ToSingle(memory.Read(replacement+0x7C,4))-.71f)<.00001f,"camera distance and height scale their independent original fields");
+        tuning.Apply(1.5f,1);Check(BitConverter.ToSingle(memory.Read(replacement+0x70,4))==6,"camera tuning slider changes do not compound multipliers");
+        tuning.Restore();Check(BitConverter.ToSingle(memory.Read(replacement+0x70,4))==4 && BitConverter.ToSingle(memory.Read(replacement+0x7C,4))==1.42f,"camera tuning reset restores original distance and height");
         memory.Write(replacement+12,[0]);Reject<IOException>(()=>fov.Apply(45),"wrong camera parameter type blocks FOV writes");
     }
     private static void LibraryChecks()
@@ -114,6 +266,13 @@ internal static class Program
             library.Delete("location",changed.Name);
             Check(new UserLibrary(path,legacy).Locations().Length == 0,"deleted migrated bookmarks are not resurrected");
             var preset = new PracticePreset("Boss practice",true,true,["GodMode","InfiniteItems"],2,.5f);
+            var expanded=preset with {Fov=110,OverrideFov=true,Preferences=new AppSettings(true,true,100,"Boss practice"),KeepDurability=true,AutoRepair=true,RepairThreshold=25};
+            library.Save(expanded);var expandedRead=library.Presets().Single();
+            Check(expandedRead.Fov==110 && expandedRead.OverrideFov && expandedRead.Preferences?.StartupFov==100 && expandedRead.KeepDurability && expandedRead.RepairThreshold==25,"expanded presets roundtrip camera, startup preferences and durability settings");
+            Reject<ArgumentException>(()=>library.Save(expanded with {Fov=121}),"out-of-range preset FOV rejected");
+            Reject<ArgumentException>(()=>library.Save(expanded with {RepairThreshold=0}),"invalid preset repair threshold rejected");
+            var legacyPreset=JsonSerializer.Deserialize<PracticePreset>("{\"Name\":\"Legacy\",\"KeepHealth\":false,\"Stamina\":true,\"Flags\":[],\"Damage\":1,\"Echoes\":1}")!;
+            legacyPreset.Validate();Check(legacyPreset.Fov==43 && !legacyPreset.OverrideFov && legacyPreset.Preferences==null,"older combat presets remain readable with defaults");
             library.Save(preset);
             var loaded = new UserLibrary(path,legacy).Presets().Single();
             Check(loaded.Name == preset.Name && loaded.Flags.SequenceEqual(preset.Flags) && loaded.Damage == 2 && loaded.Echoes == .5f && loaded.KeepHealth && loaded.Stamina,"preset roundtrip retains combat options and multipliers");
@@ -126,6 +285,15 @@ internal static class Program
             var quoted = spot with { Name="Hunter's ; DROP TABLE entries; --" }; library.Save(quoted);
             Check(library.Locations().Single() == quoted,"parameterized SQL preserves punctuation in bookmark names");
             library.Delete("preset",preset.Name); Check(library.Presets().Length == 0,"preset deletion persists");
+            library.Save(preset);library.Save(spot);library.Save(new FavoriteItem("Vials",1000,0x40000000,20));
+            var export=Path.Combine(folder,"export.json");library.Export(export);var destination=new UserLibrary(Path.Combine(folder,"import.db"),Path.Combine(folder,"none.json"));destination.Import(export);
+            Check(destination.Presets().Single().Name==preset.Name && destination.Locations().Contains(spot) && destination.Favorites().Single().Quantity==20,"library export/import roundtrips presets, bookmarks and item favorites");
+            library.Backup(Path.Combine(folder,"backup.db"));Check(new UserLibrary(Path.Combine(folder,"backup.db"),legacy).Presets().Length==1,"SQLite backup is a readable consistent library snapshot");
+            destination.RenamePreset(preset.Name,"Renamed");Check(destination.Presets().Single().Name=="Renamed","preset rename updates stored payload and primary key");
+            File.WriteAllText(export,JsonSerializer.Serialize(new LibraryDocument(1,[preset,preset],[],[])));
+            Reject<ArgumentException>(()=>destination.Import(export),"duplicate import names are rejected transactionally");Check(destination.Presets().Single().Name=="Renamed","failed import leaves existing library unchanged");
+            Reject<ArgumentException>(()=>library.Export(path),"JSON export cannot overwrite its active SQLite database");
+            File.WriteAllText(export,"{\"Version\":1,\"Presets\":[null],\"Locations\":[],\"Favorites\":[]}");Reject<ArgumentException>(()=>destination.Import(export),"null import entries are rejected before writes");
             File.WriteAllText(legacy,"invalid JSON");
             Reject<JsonException>(() => new UserLibrary(Path.Combine(folder,"bad.db"),legacy),"malformed legacy file is reported without marking migration complete");
             new LocationBook([spot]).Save(legacy);
@@ -256,6 +424,11 @@ internal static class Program
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
             CameraChecks(memory,session,root);
+            DurabilityChecks(memory,session,root);
+            BossFlagChecks(memory,session,root);
+            StatusChecks(memory,session,root);
+            session.RefillResources();Check(session.ReadPlayer().Health==600 && session.ReadPlayer().Stamina==100,"retry resource refill restores health and stamina");
+            memory.SetInt32(player.Component+0xF8,0);Reject<IOException>(()=>session.RefillResources(),"resource refill never revives a dead player");memory.SetInt32(player.Component+0xF8,300);memory.SetInt32(player.Component+0x134,70);
             session.SetHealth(450); Check(session.ReadPlayer().Health == 450, "set health through WriteProcessMemory");
             Reject<ArgumentException>(() => session.SetHealth(601), "reject health beyond maximum");
             Reject<ArgumentException>(() => session.SetHealth(0), "reject zero health input");
@@ -472,7 +645,8 @@ internal static class Program
             Check(ProcessDiscovery.Best([new(newer, false), new(engine, true)]) == engine, "auto-connect prefers a validated loaded character");
             Check(ProcessDiscovery.Best([new(newer, true), new(engine, true)]) == engine, "auto-connect prefers the engine over a launcher when both validate");
             var settingsPath = Path.Combine(AppContext.BaseDirectory, $"bbtools-settings-{Guid.NewGuid():N}.json");
-            try { new AppSettings(true).Save(settingsPath); Check(AppSettings.Load(settingsPath).AutoConnect, "auto-connect preference persists"); }
+            try { new AppSettings(true,true,110,"Startup",new HotkeyPreferences(true)).Save(settingsPath);var startupSettings=AppSettings.Load(settingsPath);Check(startupSettings.AutoConnect && startupSettings.StartupFovEnabled && startupSettings.StartupFov==110 && startupSettings.StartupPresetName=="Startup" && startupSettings.Hotkeys?.Enabled==true, "startup FOV, preset binding and hotkey preferences persist");
+                Reject<ArgumentException>(()=>new AppSettings(StartupFov:121).Save(settingsPath),"invalid startup FOV cannot overwrite persisted preferences"); }
             finally { File.Delete(settingsPath); }
             memory.Write(root + PlayerSession.Fingerprints[0].Offset, [0]);
             Reject<IOException>(() => session.SetEchoes(1), "changed instruction fingerprint blocks writes");
@@ -508,6 +682,9 @@ internal static class Program
         memory.Write(world + 0x60, new byte[8]);
         Poll();
         Check(toggles.All(x => x.IsChecked == true), "UI preserves all selected practice toggles across a null-player loading screen");
+        Check(((System.Windows.Controls.Button)window.FindName("CancelRetryButton")).IsEnabled,"pending boss retry remains cancellable while the player is loading");
+        Field("retryDestination",BossDestinations.All[0]);typeof(MainWindow).GetMethod("CancelBossRetry",binding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(typeof(MainWindow).GetField("retryDestination",binding)!.GetValue(window)==null && (long)typeof(MainWindow).GetField("retryGeneration",binding)!.GetValue(window)!>0,"retry cancellation clears placement and invalidates in-flight travel continuation");
         var replacement = root + 0x57A0000;
         memory.Write(replacement, memory.Read(player.Component, 0x208));
         memory.Write(replacement + 0x200, [0x10, 0x20]);
@@ -523,6 +700,24 @@ internal static class Program
         typeof(MainWindow).GetMethod("StopFeatures", binding)!.Invoke(window, null);
         Check(toggles.All(x => x.IsChecked == false) && memory.Read(replacement + 0x200, 1)[0] == 0x10 && memory.Read(replacement + 0x201, 1)[0] == 0x20,
             "explicit stop clears selections and restores the new component's original bits");
+        var startupFolder=Path.Combine(Path.GetTempPath(),"BBTools-startup-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(startupFolder);
+        try
+        {
+            var startupLibrary=new UserLibrary(Path.Combine(startupFolder,"library.db"),Path.Combine(startupFolder,"none.json"));startupLibrary.Save(new PracticePreset("Startup",true,true,["GodMode"],1,1,110,true));
+            Field("library",startupLibrary);Field("settings",new AppSettings(StartupPresetName:"Startup"));Field("actions",new GameActions(memory,session));Field("startupPresetPending",true);
+            startupLibrary.Save(new PracticePreset("AAA",false,false,[],1,1));
+            typeof(MainWindow).GetMethod("RefreshLibrary",binding)!.Invoke(window,null);
+            var presetPicker=(System.Windows.Controls.ComboBox)window.FindName("PresetPicker");presetPicker.SelectedItem=presetPicker.Items.Cast<PracticePreset>().Single(x=>x.Name=="Startup");
+            typeof(MainWindow).GetMethod("RefreshLibrary",binding)!.Invoke(window,null);
+            Check(((PracticePreset)((System.Windows.Controls.ComboBox)window.FindName("PresetPicker")).SelectedItem).Name=="Startup","preset selection survives database deserialization and refresh");
+            ((System.Windows.Controls.TextBox)window.FindName("PresetName")).Text="Saved profile";typeof(MainWindow).GetMethod("SavePreset",binding)!.Invoke(window,[window,new RoutedEventArgs()]);
+            Check(((PracticePreset)((System.Windows.Controls.ComboBox)window.FindName("PresetPicker")).SelectedItem).Name=="Saved profile","newly saved preset remains selected despite its array-valued fields");
+            memory.Write(world+0x60,new byte[8]);Poll();Check((bool)typeof(MainWindow).GetField("startupPresetPending",binding)!.GetValue(window)!,"startup preset waits through loading without consuming the request");
+            memory.Write(world+0x60,BitConverter.GetBytes(player.Actor));Poll();
+            Check(((System.Windows.Controls.CheckBox)window.FindName("FovEnabled")).IsChecked==true && ((System.Windows.Controls.Slider)window.FindName("FovSlider")).Value==110 && !(bool)typeof(MainWindow).GetField("startupPresetPending",binding)!.GetValue(window)!,"startup preset applies camera settings once a living character validates");
+            typeof(MainWindow).GetMethod("StopFeatures",binding)!.Invoke(window,null);
+        }
+        finally{Directory.Delete(startupFolder,true);}
         Field("session", null); Field("memory", null); window.Close();
         memory.Write(modules + 0x20, BitConverter.GetBytes(player.Component));
     }
@@ -530,6 +725,8 @@ internal static class Program
     {
         var app = new Application();
         var window = new MainWindow { Width = width, Height = height };
+        if(page=="Presets"){((System.Windows.Controls.Expander)window.FindName("PresetExpander")).IsExpanded=true;page="Practice";}
+        if(page=="CameraTuning"){((System.Windows.Controls.Expander)window.FindName("TuningExpander")).IsExpanded=true;page="Camera";}
         var nav = (System.Windows.Controls.Button)window.FindName("Nav" + page);
         nav.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         var content = (FrameworkElement)window.Content;
@@ -549,7 +746,7 @@ internal static class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

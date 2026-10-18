@@ -28,9 +28,9 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
             throw new IOException("Camera FOV instructions differ from the supported build.");
         }
     }
-    private (ulong File, ulong[] Fields) Resolve()
+    internal (ulong File, ulong[] Fields) Resolve(bool requirePlayer = true)
     {
-        session.ValidateImage(); session.ReadPlayer();
+        session.ValidateImage(); if(requirePlayer) session.ReadPlayer();
         var repo = memory.Pointer(session.ImageBase + 0x5540340);
         var slot = repo + 0x70 + 0x21 * 0x48;
         if (memory.Int32(slot) != 1) throw new IOException("A unique camera parameter table is not loaded.");
@@ -110,7 +110,7 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
         try
         {
             if (owned.Count==0) return;
-            if (Resolve().File != table) { owned.Clear(); table=0; return; }
+            if (Resolve(false).File != table) { owned.Clear(); table=0; return; }
             foreach(var (at,entry) in owned.ToArray())
             {
                 if(BitConverter.ToSingle(memory.Read(at,4)) == entry.Written) memory.Write(at,BitConverter.GetBytes(entry.Original));

@@ -3,12 +3,13 @@ using System.Text.Json;
 
 namespace BBTools.Memory;
 
-public sealed record SavedLocation(string Name, uint Block, float X, float Y, float Z, float Yaw)
+public sealed record SavedLocation(string Name, uint Block, float X, float Y, float Z, float Yaw, string Group = "General")
 {
-    public string Label => $"{Name} · map {Block >> 24:D2}_{(Block >> 16) & 255:D2}";
+    public string Label => $"{Group} · {Name} · map {Block >> 24:D2}_{(Block >> 16) & 255:D2}";
     public override string ToString() => Label;
     public void Validate()
     {
+        UserLibrary.ValidateName(Group);
         if (string.IsNullOrWhiteSpace(Name) || Name.Length > 80 || Block == uint.MaxValue || Block == 0 ||
             new[] { X, Y, Z, Yaw }.Any(x => !float.IsFinite(x)) || new[] { X, Y, Z }.Any(x => Math.Abs(x) > 100000))
             throw new ArgumentException("The saved location is invalid.");

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 - 2026-10-18 (draft)
+
+- Add one-click revival and area reload for 19 base-game/DLC bosses from any loaded area, including mid-encounter. Retry also places the player outside the fog, refills health/stamina and starts the encounter timer. Original flags are journaled locally; Micolash and the two ending bosses remain unsupported for revival.
+- Expand presets to cover FOV, camera distance/height, combat, buildup controls and app/hotkey preferences. Add startup preset and independent startup FOV options, plus preset groups, rename and duplicate.
+- Add configurable function-key hotkeys with selectable modifiers and a visible shortcut summary. Use physical-key polling and retain game/trainer focus and text-entry guards.
+- Add camera distance/height overrides and a visible warning that FOV/camera overrides are unstable and may cause performance and visual issues.
+- Add status buildup clearing/keep-empty controls and a loading/death-aware encounter timer.
+- Add item favorites/search, library import/export and SQLite backups, save backup history and verified restore with retained recovery copies.
+- Add per-session logs beside the EXE, retaining the five newest, and diagnostics export with filesystem-path redaction.
+- Tested and confirmed: the implemented additions above, including boss revival, startup presets and hotkeys.
+- Known issue: weapon repair, threshold auto-repair and keep-full durability controls are experimental and not working reliably. Further work is deferred to the next development session; the native Workshop repair menu is separate.
+- Validation: 209 automated checks in Debug and Release, 60 installed 1.09 instruction signatures, and self-contained startup/shutdown. The ZIP contains only BBTools.exe and README.md.
+
 ## 0.3.0 - 2026-10-17 (draft)
 
 - Show all enumerable processes with likely Bloodborne runtimes ranked first; add name, decimal PID and hexadecimal PID filtering. Preserve restricted entries in the list while requiring a verified process identity to connect. Auto-connect still scans only likely game candidates.

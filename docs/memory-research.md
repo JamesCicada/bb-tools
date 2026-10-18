@@ -207,3 +207,43 @@ paused. Restoration is limited to the current table and values still owned by
 this override; loading invalidates captured addresses. Synthetic-process tests
 cover limits, individual defaults, foreign changes and rejected layouts. Live
 camera behavior remains pending confirmation.
+
+## Development batch: revival, durability, gauges and camera tuning
+
+Boss revival uses a fixed allowlist of 19 base-game/DLC profiles from the inspected
+boss-rush reference and independently checked defeat/met flag IDs in the local 1.09
+EMEVD files. It requires a loaded living character, journals the original
+ten flags before mutation, then revalidates the character, flag manager and original
+values while threads are suspended. Only that encounter family is reset; the
+repeat-entrance met bit is enabled. The bounded event-flag tree walk supports the
+native pointer/pool storage kinds and preserves adjacent bits. This does not roll
+back all quest/world state: revival is a persistent practice-save operation, not a
+full save-state restore. Micolash and ending bosses remain excluded.
+
+Repair follows the native inventory path, not cached/display references at +0x94.
+EquipGameData is character +0x1D0. Its eight equipment indices at +0x24 select
+16-byte entries in EquipInventoryData (+0x158): first-bank count +0x24, inclusive
+last index +0x88, first bank pointer +0x58 and second bank pointer +0x48. The
+entry's +0 handle resolves the actual owned durability instance. Instruction
+sites 0x14D270D, 0x14D2717 and 0x14D2724 verify this selection. Cached equipment
+references can resolve a different instance and must never be used for repair.
+The instance manager at RVA 0x553E990 resolves allocated handles through the low
+16-bit index and checks the full handle at instance +8. Weapon-only vtable RVA
+0x53362D0, getter/setter RVAs 0x1A93B70/0x1A93B80, and current durability +0x18
+are verified against the private image. EquipParamWeapon is repository slot zero;
+the native lookup normalizes catalog IDs to multiples of 100. Its +0xBE u16 maximum
+bounds repairs. Identity/type/range checks and thread suspension precede writes.
+Full-durability mode polls repairs; it is not a wear-instruction patch.
+
+The status module at module-container +0x28 must have owner +8 and vtable RVA
+0x5335900. Its five signed buildup gauges at +0x10 are bounded by five limits at
++0x24; load/size function fingerprints are checked. Only current gauges are cleared.
+Active effects are neither removed nor reclassified; polling is not single-hit immunity.
+
+Camera tuning scales LockCamParam distance +0 and look-at height +0xC, with reader
+fingerprints at RVAs 0x143AE68 and 0x143AEEF. Individual originals are retained,
+multiplier changes do not compound, and ownership-aware restoration preserves
+foreign edits. FOV remains a separate override and retains its clamp ownership.
+
+All new native behavior has synthetic-process coverage and private-image checks;
+live confirmation is still separate in TODO.md.
