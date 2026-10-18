@@ -40,4 +40,4 @@ Free and open source under the MIT license. No game files are included. Inspired
 
 ## Upload notes
 
-Paste [the BBCode description](nexus-mods-description.bbcode) into Nexus. Use the version of the actual uploaded build; the repository remains on 0.4.0 while preparing for 1.0. The ZIP contains only BBTools.exe and README.md.
+Paste [the BBCode description](nexus-mods-description.bbcode) into Nexus. Use the version of the actual uploaded build; this update is version 0.5.0, continuing toward 1.0. The ZIP contains only BBTools.exe and README.md.

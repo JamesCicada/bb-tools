@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — 1.0 preparation
+## 0.5.0 - 2026-10-18 (draft)
 
 - Officially support shadPS4 for CUSA03173 1.09: tested and confirmed. Remove the experimental opt-in from manual and automatic connection; retain image/player validation.
 - Replace weapon repair with game-thread inventory repair and per-slot before/after reports. Both-hand live retest pending.

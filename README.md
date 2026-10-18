@@ -1,4 +1,4 @@
-> **Development build:** preparing for 1.0; the project version remains 0.4.0 until live testing is complete.
+> **Version 0.5.0:** continued development toward 1.0.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
 > **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
 > Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
@@ -16,19 +16,20 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
-## v0.4.0
+## v0.5.0
 
-Boss revival/retry, expanded and startup presets, camera settings, status buildup
-controls, hotkeys, encounter timing, library tools, save recovery, logs and diagnostics
-are tested and confirmed. See the [feature guide](#v040-feature-guide) and [checklist](TODO.md).
+Official shadPS4 support, native inventory repair, movement/gravity controls,
+HUD visibility, poison cure, game-owned item-name import, advanced presets and
+chalice bookmarks. Noclip/free camera are disabled and hidden; entity inspection
+is hidden pending realtime targeted-enemy updates. See the [changelog](CHANGELOG.md)
+and [test checklist](TODO.md).
 
-**Known issue:** weapon durability controls (repair now, threshold auto-repair and
-keep-full mode) are experimental and not working reliably. Further work is deferred
-to the next development session; do not rely on them. The native Workshop repair menu
-remains available.
+shadPS4 is tested and confirmed. The native repair replacement still needs live
+confirmation on both hands. Ending-boss revival profiles are experimental; camera
+and exploration overrides can cause visual or performance issues.
 
-The download link points to the latest published release. v0.4.0 is prepared as a
-GitHub draft after CI passes. Advanced native controls remain on the roadmap.
+The download link points to the latest published release. v0.5.0 is prepared as a
+GitHub draft after CI passes, ready for manual review and publication.
 
 The app also includes its emblem, Windows icon, **Made with 🖤 By James Cicada**
 footer, GitHub shortcut and manual **Check for updates**.
