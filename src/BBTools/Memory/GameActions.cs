@@ -4,7 +4,7 @@ namespace BBTools.Memory;
 
 public sealed record ItemChoice(string Name, int Id, uint Category = 0x40000000)
 {
-    public string Label => Name;
+    public string Label => $"{Name} · {Id}";
     public override string ToString() => Label;
 }
 public sealed record LampChoice(string Name, int Entity)
@@ -98,7 +98,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
     {
         var payload = location.Payload();
         var current = session.ReadLocation("Current");
-        if (current.Block != location.Block) throw new IOException("Travel to this location's map using a lamp first, then restore it. Coordinate relocation requires the same loaded map.");
+        session.ValidateLocationContext(location,current);
         var dispatcher = Ready();
         var world = memory.Pointer(session.ImageBase + 0x553B148);
         return dispatcher.ExecuteAsync([new(session.ImageBase + 0x154B110, world, dispatcher.Payload, dispatcher.Payload + 16, dispatcher.Payload + 32)], payload);

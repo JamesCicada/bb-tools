@@ -31,6 +31,9 @@ public partial class MainWindow : Window
     private bool fovPaused;
     private bool startupPresetPending;
     private bool durabilityPaused;
+    private FreeCamera? freeCamera;
+    private ExplorationFlight? flight;private HudVisibility? hudVisibility;
+    private MovementSpeed? movementSpeed;private WorldGravity? worldGravity;private bool advancedPaused;
     private DateTime durabilityRetryAt;
     private bool statusPaused;
     private CameraTuning? cameraTuning;
@@ -121,7 +124,6 @@ public partial class MainWindow : Window
         if (candidate.Started == 0) { Status.Text = "This process identity is restricted or unavailable. Refresh and select an accessible game process."; return; }
         App.Log?.Write("INFO", $"Connecting to {candidate.Label}, creation ticks {candidate.Started}");
         connecting = true;
-        if (candidate.Name.Contains("shadps4", StringComparison.OrdinalIgnoreCase)) { connecting = false; Status.Text = "Live controls currently target Bloodborne PC 1.09. The shadPS4 adapter is not implemented yet."; return; }
         ConnectButton.IsEnabled = RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = false;
         Status.Text = "Checking the loaded game image and player structures…";
         ProcessMemory? pending = null;
@@ -135,12 +137,12 @@ public partial class MainWindow : Window
             if (!acquired) { sessionOwner.Dispose(); sessionOwner = null; throw new IOException("Another BB Tools window is already connected to this process."); }
             pending = new ProcessMemory(candidate.Id);
             var opened = pending;
-            var image = await Task.Run(() => PlayerSession.FindImage(opened, opened.AllocationBases()));
+            var image = await Task.Run(() => PlayerSession.FindImage(opened, opened.ImageCandidates(candidate.Name.Contains("shadps4",StringComparison.OrdinalIgnoreCase))));
             if (closing) { pending.Dispose(); ReleaseOwner(); return; }
             session = new PlayerSession(opened, image);
             actions = new GameActions(opened, session);
             memory = opened; pending = null; connectedPid = candidate.Id;knownRuntimes.Add((candidate.Id,candidate.Started));
-            ConnectionBadge.Text = "CONNECTED";
+            ConnectionBadge.Text = candidate.Name.Contains("shadps4",StringComparison.OrdinalIgnoreCase)?"SHADPS4 · CONNECTED":"CONNECTED";
             ConnectionHint.Text = $"{candidate.Label} · Bloodborne 1.09 instructions matched";
             ConnectButton.Content = "Disconnect";
             startupPresetPending = settings.StartupPresetName != null;
@@ -202,6 +204,19 @@ public partial class MainWindow : Window
             StaminaValue.Text = $"{state.Stamina:N0} / {state.MaxStamina:N0}";
             HealthBar.Maximum = state.MaxHealth; HealthBar.Value = state.Health;
             StaminaBar.Maximum = state.MaxStamina; StaminaBar.Value = state.Stamina;
+            if(!advancedPaused)
+            {
+                try{movementSpeed??=new MovementSpeed(memory,session);worldGravity??=new WorldGravity(memory,session);if(MovementEnabled.IsChecked==true)movementSpeed.Apply((float)MovementSlider.Value);else movementSpeed.Restore();if(GravityEnabled.IsChecked==true)worldGravity.Apply((float)GravitySlider.Value);else worldGravity.Restore();}
+                catch(Exception ex)when(IsExpected(ex)){advancedPaused=true;App.LogError(ex);Status.Text=$"Movement/physics paused: {ex.Message} Toggle the setting to retry.";}
+            }
+            if(FlightEnabled.IsChecked==true)
+            {
+                try{flight??=new ExplorationFlight(memory,session);flight.Apply(false);if(!actionBusy&&HotkeyManager.ForegroundProcess()==connectedPid&&HotkeyManager.IsDown(0x11)&&!HotkeyManager.IsDown(0x12))
+                    {var forward=(HotkeyManager.IsDown(0x26)?1:0)-(HotkeyManager.IsDown(0x28)?1:0);var right=(HotkeyManager.IsDown(0x27)?1:0)-(HotkeyManager.IsDown(0x25)?1:0);var up=(HotkeyManager.IsDown(0x21)?1:0)-(HotkeyManager.IsDown(0x22)?1:0);if(forward!=0||right!=0||up!=0)_=MoveFlight(flight.Step(forward,right,up,(float)FlightSpeed.Value*.2f));}}
+                catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);FlightEnabled.IsChecked=false;Status.Text=$"Flight stopped: {ex.Message}";}
+            }
+            try{hudVisibility??=new HudVisibility(memory,session);if(HideHud.IsChecked==true)hudVisibility.Apply();else hudVisibility.Restore();}
+            catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);HideHud.IsChecked=false;Status.Text=$"HUD override stopped: {ex.Message}";}
             cameraFov ??= new CameraFov(memory, session);
             if (!fovPaused)
             {
@@ -237,11 +252,8 @@ public partial class MainWindow : Window
             PlayerControls.IsEnabled = true;
             PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
-            if ((!durabilityPaused || DateTime.UtcNow>=durabilityRetryAt) && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
-            {
-                try { session.RepairWeapons(KeepDurability.IsChecked==true?100:Number(RepairThreshold,"Repair threshold"));durabilityPaused=false; }
-                catch(Exception ex) when(IsExpected(ex)) { durabilityPaused=true;durabilityRetryAt=DateTime.UtcNow.AddSeconds(2);App.LogError(ex);Status.Text=$"Durability waiting: {ex.Message} Automatic retry in two seconds."; }
-            }
+            if (!actionBusy && retryDestination==null && !retryTravelling && DateTime.UtcNow>=durabilityRetryAt && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
+                _=RepairWeaponsOnGameThread(false);
             if(!statusPaused && KeepStatusEmpty.IsChecked==true)
             {try{session.ClearStatusBuildup();}catch(Exception ex)when(IsExpected(ex)){statusPaused=true;App.LogError(ex);Status.Text=$"Status clear paused: {ex.Message} Use Clear now to retry.";}}
             if (KeepHealth.IsChecked == true) session.KeepHealthFull();
@@ -286,7 +298,14 @@ public partial class MainWindow : Window
         DamageMultiplier.Text = EchoesMultiplier.Text = "1";
         FovEnabled.IsChecked = false;
         TuneCamera.IsChecked = false;
+        FreeCameraEnabled.IsChecked=false;FlightEnabled.IsChecked=false;HideHud.IsChecked=false;
+        MovementEnabled.IsChecked=GravityEnabled.IsChecked=false;advancedPaused=false;
         var errors = new List<string>();
+        try { freeCamera?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { hudVisibility?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { flight?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { movementSpeed?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { worldGravity?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { cameraTuning?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { cameraFov?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { actions?.ResetMultipliers(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
@@ -301,6 +320,7 @@ public partial class MainWindow : Window
         timer.Stop(); var cleanupIssue = StopFeatures();
         try { actions?.Dispose(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); cleanupIssue = $"Request dispatcher cleanup: {ex.Message}"; }
         actions = null;
+        freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;
         cameraFov = null; fovPaused = false;cameraTuning=null;tuningPaused=false;
         memory?.Dispose(); memory = null; session = null; statDraft = null; connectedPid = 0;
         lastActor = lastComponent = 0;
@@ -502,12 +522,50 @@ public partial class MainWindow : Window
         Library.Save(location); RefreshLibrary(); LocationPicker.SelectedItem = location;
     }, "Location saved. Saving with the same name replaces that bookmark.");
     private void ClearStatusBuildup(object sender,RoutedEventArgs e)=>Run(()=>{statusPaused=false;session!.ClearStatusBuildup();},"Status buildup gauges cleared. Existing active effects are unchanged.");
-    private void DurabilityToggled(object sender,RoutedEventArgs e){durabilityPaused=false;}
-    private void RepairWeapons(object sender,RoutedEventArgs e)
+    private void RefreshCharacters(object sender,RoutedEventArgs e)=>Run(()=>{CharacterPicker.ItemsSource=session!.ReadNearbyCharacters();CharacterPicker.SelectedIndex=0;},"Loaded character list refreshed.");
+    private void InspectCharacter(object sender,RoutedEventArgs e)=>Run(()=>{if(CharacterPicker.SelectedItem is not InspectableCharacter selected)throw new ArgumentException("Choose a loaded character.");CharacterDetails.Text=session!.InspectCharacter(selected).Summary;},"Character snapshot updated.");
+    private async void CurePoison(object sender,RoutedEventArgs e)=>await RunGameAction(async engine=>{var count=await engine.CureActivePoisonAsync();App.Log?.Write("ACTION",$"Removed {count} active poison effects");},"Active slow/rapid poison removed and buildup cleared.");
+    private void FreeCameraChanged(object sender,RoutedEventArgs e)
     {
-        var count=0;var found=0;var succeeded=false;
-        Run(()=>{durabilityPaused=false;found=session!.ReadWeaponDurability().Length;count=session.RepairWeapons();succeeded=true;App.Log?.Write("ACTION",$"Repaired {count} of {found} equipped weapons");},"Weapon repair checked.");
-        if(succeeded)Status.Text=found==0?"No repairable equipped weapons found. Equip a weapon and try again.":$"Repaired {count} of {found} equipped weapons; remaining weapons are already full.";
+        if(FreeCameraEnabled==null)return;
+        if(FreeCameraEnabled.IsChecked==true){FreeCameraEnabled.IsChecked=false;return;}
+        try{freeCamera?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=$"Free camera restoration pending: {ex.Message}";}
+    }
+    private void FlightChanged(object sender,RoutedEventArgs e)
+    {
+        if(FlightEnabled==null)return;
+        if(FlightEnabled.IsChecked==true){FreeCameraEnabled.IsChecked=false;return;}
+        try{flight?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=$"Flight restoration pending: {ex.Message}";}
+    }
+    private async Task MoveFlight(SavedLocation location)
+    {
+        if(actions==null||actionBusy)return;actionBusy=true;
+        try{await actions.RestoreLocationAsync(location);}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);FlightEnabled.IsChecked=false;Status.Text=$"Flight stopped: {ex.Message}";}finally{actionBusy=false;}
+    }
+    private async void ReturnFromFlight(object sender,RoutedEventArgs e)
+    {
+        if(flight?.Anchor is not SavedLocation anchor){Status.Text="No flight return point is available.";return;}
+        await RunGameAction(async engine=>{await engine.RestoreLocationAsync(anchor);FlightEnabled.IsChecked=false;},"Returned to the flight start and disabled flight.");
+    }
+    private AdvancedSettings CaptureAdvanced()=>new(MovementEnabled.IsChecked==true,(float)MovementSlider.Value,GravityEnabled.IsChecked==true,(float)GravitySlider.Value,HideHud.IsChecked==true);
+    private void AdvancedChanged(object sender,RoutedEventArgs e){advancedPaused=false;}
+    private void AdvancedValueChanged(object sender,RoutedPropertyChangedEventArgs<double> e){if(MovementValue==null||GravityValue==null)return;MovementValue.Text=$"Movement {MovementSlider.Value:0.0}×";GravityValue.Text=$"Gravity {GravitySlider.Value:0.00}×";advancedPaused=false;}
+    private void ResetAdvanced(object sender,RoutedEventArgs e){MovementEnabled.IsChecked=GravityEnabled.IsChecked=false;MovementSlider.Value=GravitySlider.Value=1;advancedPaused=false;try{movementSpeed?.Restore();worldGravity?.Restore();Status.Text="Movement and world gravity restored.";}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}}
+    private void DurabilityToggled(object sender,RoutedEventArgs e){durabilityPaused=false;}
+    private async void RepairWeapons(object sender,RoutedEventArgs e)=>await RepairWeaponsOnGameThread(true);
+    private async Task RepairWeaponsOnGameThread(bool manual)
+    {
+        if(actions==null||actionBusy)return;
+        actionBusy=true;durabilityRetryAt=DateTime.UtcNow.AddSeconds(1);
+        try
+        {
+            var reports=await actions.RepairWeaponsNativeAsync(manual||KeepDurability.IsChecked==true?100:Number(RepairThreshold,"Repair threshold"));
+            durabilityPaused=false;DurabilitySummary.Text=reports.Length==0?"No repairable equipped weapons detected.":string.Join("\n",reports.Select(x=>x.Label));
+            var repaired=reports.Count(x=>x.After>x.Before);
+            if(manual||repaired>0){Status.Text=$"Native repair: {repaired} repaired / {reports.Length} equipped weapons found.";App.Log?.Write("ACTION",Status.Text+" "+string.Join("; ",reports.Select(x=>x.Label)));}
+        }
+        catch(Exception ex)when(IsExpected(ex)){durabilityPaused=true;durabilityRetryAt=DateTime.UtcNow.AddSeconds(3);App.LogError(ex);DurabilitySummary.Text=ex.Message;Status.Text=$"Native repair waiting: {ex.Message}";}
+        finally{actionBusy=false;}
     }
     private async void ReviveBoss(object sender,RoutedEventArgs e)
     {
@@ -619,7 +677,7 @@ public partial class MainWindow : Window
         {
             var preset = new PracticePreset(PresetName.Text.Trim(), KeepHealth.IsChecked == true, InfiniteStamina.IsChecked == true,
                 FlagControls.Where(x => x.IsChecked == true).Select(x => (string)x.Tag).ToArray(), desiredDamage, desiredEchoes,
-                (float)FovSlider.Value, FovEnabled.IsChecked == true, settings with { StartupPresetName = null },KeepDurability.IsChecked==true,AutoRepair.IsChecked==true,Number(RepairThreshold,"Repair threshold"),TuneCamera.IsChecked==true,(float)CameraDistance.Value,(float)CameraHeight.Value,PresetGroup.Text.Trim(),KeepStatusEmpty.IsChecked==true);
+                (float)FovSlider.Value, FovEnabled.IsChecked == true, settings with { StartupPresetName = null },KeepDurability.IsChecked==true,AutoRepair.IsChecked==true,Number(RepairThreshold,"Repair threshold"),TuneCamera.IsChecked==true,(float)CameraDistance.Value,(float)CameraHeight.Value,PresetGroup.Text.Trim(),KeepStatusEmpty.IsChecked==true,CaptureAdvanced());
             Library.Save(preset); RefreshLibrary(); PresetPicker.SelectedItem = PresetPicker.Items.Cast<PracticePreset>().FirstOrDefault(x=>x.Name.Equals(preset.Name,StringComparison.OrdinalIgnoreCase));
             Status.Text = "Current active settings saved. A matching name replaces the existing preset; unapplied multiplier edits are excluded.";
         }
@@ -641,9 +699,10 @@ public partial class MainWindow : Window
             if (preset.Preferences != null)
             {
                 var next = preset.Preferences with { StartupPresetName = settings.StartupPresetName };
-                next.Save(); settings = next; AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;LoadHotkeyControls();hotkeys?.Apply(settings.Hotkeys??new());
+                next.Save(); settings = next; updating=true;updating=false;AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;LoadHotkeyControls();hotkeys?.Apply(settings.Hotkeys??new());
             }
             CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;
+            var advanced=preset.Advanced??new();MovementSlider.Value=advanced.Movement;GravitySlider.Value=advanced.Gravity;MovementEnabled.IsChecked=advanced.MovementEnabled;GravityEnabled.IsChecked=advanced.GravityEnabled;HideHud.IsChecked=advanced.HideHud;advancedPaused=false;
             FovSlider.Value = preset.Fov; FovEnabled.IsChecked = preset.OverrideFov; fovPaused = false;
             if (!preset.OverrideFov) cameraFov?.Restore();
             UpdateStartupSummary();
@@ -726,9 +785,15 @@ public partial class MainWindow : Window
         var query=ItemSearch.Text.Trim();
         try
         {
-            var items=GameActions.CommonItems.AsEnumerable();if(library!=null)items=items.Concat(Library.Favorites().Select(x=>new ItemChoice(x.Name,x.Id,x.Category)));
+            var items=(library==null?GameActions.CommonItems:Library.Catalog().Concat(GameActions.CommonItems).ToArray()).AsEnumerable();if(library!=null)items=items.Concat(Library.Favorites().Select(x=>new ItemChoice(x.Name,x.Id,x.Category)));
             ItemPicker.ItemsSource=items.Where(x=>x.Name.Contains(query,StringComparison.OrdinalIgnoreCase)||x.Id.ToString().Contains(query)).DistinctBy(x=>(x.Id,x.Category)).ToArray();
         }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
+    }
+    private void ImportGameCatalog(object sender,RoutedEventArgs e)
+    {
+        var picker=new OpenFolderDialog{Title="Choose Bloodborne game folder or dvdroot_ps4"};if(picker.ShowDialog()!=true)return;
+        try{var items=GameItemCatalog.Load(picker.FolderName);Library.SaveCatalog(items);SearchItems(this,new TextChangedEventArgs(TextBox.TextChangedEvent,System.Windows.Controls.UndoAction.None));Status.Text=$"Imported {items.Length:N0} item names from your game. No items were spawned.";}
+        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private void SaveFavorite(object sender,RoutedEventArgs e)
     {

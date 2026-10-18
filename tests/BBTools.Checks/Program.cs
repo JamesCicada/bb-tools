@@ -10,7 +10,7 @@ using System.Windows.Media.Imaging;
 using BBTools;
 using BBTools.Memory;
 
-internal static class Program
+internal static partial class Program
 {
     [DllImport("kernel32.dll")] private static extern nint VirtualAlloc(nint address, nuint size, uint type, uint protection);
     [DllImport("kernel32.dll")] private static extern bool VirtualFree(nint address, nuint size, uint type);
@@ -22,6 +22,7 @@ internal static class Program
     {
         if (args.Contains("--fixture")) return Fixture();
         if (args.Contains("--render")) return Render(args[1], args.Length > 2 ? int.Parse(args[2]) : 1040, args.Length > 3 ? int.Parse(args[3]) : 860, args.Length > 4 ? args[4] : "Player", args.Length > 5 ? double.Parse(args[5], System.Globalization.CultureInfo.InvariantCulture) : 0);
+        if(args.Contains("--verify-catalog")){var items=GameItemCatalog.Load(args.Last());Check(items.Any(x=>x.Id==7000000&&x.Category==0&&x.Name.Contains("Saw Cleaver")),"private game catalog resolves the Saw Cleaver name and weapon ID");Check(items.Any(x=>x.Id==1000&&x.Category==0x40000000&&x.Name=="Blood Vial"),"private game catalog separates goods and weapon categories");Console.WriteLine($"PASS {items.Length} item-name entries read from private game files.");return 0;}
         if (args.Contains("--verify-elf")) return VerifyElf(args.Last());
         if (args.Contains("--check-updates"))
         {
@@ -30,7 +31,7 @@ internal static class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { CatalogChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -133,8 +134,9 @@ internal static class Program
     }
     private static void BossFlagChecks(ProcessMemory memory,PlayerSession session,ulong root)
     {
-        Check(BossRevivalCatalog.All.Length==19 && BossRevivalCatalog.All.All(x=>BossDestinations.All.Any(d=>d.Name==x.Name)),"revival allowlist contains nineteen catalogued base-game and DLC bosses");
-        Reject<ArgumentException>(()=>BossRevivalCatalog.Find("Gehrman, the First Hunter"),"unverified story-ending revival remains unavailable");
+        Check(BossRevivalCatalog.All.Length==22 && BossRevivalCatalog.All.All(x=>BossDestinations.All.Any(d=>d.Name==x.Name)),"revival allowlist contains all twenty-two catalogued base-game and DLC bosses");
+        Check(BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Moon Presence"))[9900] && BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Moon Presence"))[12101800],"Moon Presence profile explicitly enables its route and records Gehrman as defeated");
+        Check(!BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Micolash, Host of the Nightmare"))[12604879],"Micolash revival resets its chase phase and room flags");
         var profile=BossRevivalCatalog.Find("Cleric Beast");var changes=BossRevivalCatalog.Changes(profile);
         Check(changes.Count==10 && changes.Count(x=>x.Value)==1 && changes[profile.DefeatFlag+2],"boss reset clears encounter family while preserving repeat-entrance staging");
         var manager=memory.AllocateData(0x100);var head=memory.AllocateData(0x100);var node=memory.AllocateData(0x100);var data=memory.AllocateData(0x100);
@@ -420,6 +422,9 @@ internal static class Program
             using var memory = new ProcessMemory(child.Id);
             Check(memory.IsAlive, "open synthetic process");
             Check(PlayerSession.FindImage(memory, memory.AllocationBases()) == root, "discover relocated image through VirtualQueryEx");
+            var emulatorFixture=new ProcessCandidate(child.Id,"shadPS4",child.StartTime.ToUniversalTime().Ticks);
+            Check(ProcessDiscovery.FindBest([emulatorFixture],()=>false)==emulatorFixture,"validated emulator auto-connect requires no experimental opt-in");
+
             var session = new PlayerSession(memory, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
@@ -427,6 +432,8 @@ internal static class Program
             DurabilityChecks(memory,session,root);
             BossFlagChecks(memory,session,root);
             StatusChecks(memory,session,root);
+            GravityChecks(memory,session,root);
+            ExplorationChecks(memory,session,root);
             session.RefillResources();Check(session.ReadPlayer().Health==600 && session.ReadPlayer().Stamina==100,"retry resource refill restores health and stamina");
             memory.SetInt32(player.Component+0xF8,0);Reject<IOException>(()=>session.RefillResources(),"resource refill never revives a dead player");memory.SetInt32(player.Component+0xF8,300);memory.SetInt32(player.Component+0x134,70);
             session.SetHealth(450); Check(session.ReadPlayer().Health == 450, "set health through WriteProcessMemory");
@@ -645,7 +652,7 @@ internal static class Program
             Check(ProcessDiscovery.Best([new(newer, false), new(engine, true)]) == engine, "auto-connect prefers a validated loaded character");
             Check(ProcessDiscovery.Best([new(newer, true), new(engine, true)]) == engine, "auto-connect prefers the engine over a launcher when both validate");
             var settingsPath = Path.Combine(AppContext.BaseDirectory, $"bbtools-settings-{Guid.NewGuid():N}.json");
-            try { new AppSettings(true,true,110,"Startup",new HotkeyPreferences(true)).Save(settingsPath);var startupSettings=AppSettings.Load(settingsPath);Check(startupSettings.AutoConnect && startupSettings.StartupFovEnabled && startupSettings.StartupFov==110 && startupSettings.StartupPresetName=="Startup" && startupSettings.Hotkeys?.Enabled==true, "startup FOV, preset binding and hotkey preferences persist");
+            try { new AppSettings(true,true,110,"Startup",new HotkeyPreferences(true),ExperimentalShad:true).Save(settingsPath);var startupSettings=AppSettings.Load(settingsPath);Check(startupSettings.AutoConnect && startupSettings.StartupFovEnabled && startupSettings.StartupFov==110 && startupSettings.StartupPresetName=="Startup" && startupSettings.Hotkeys?.Enabled==true && startupSettings.ExperimentalShad, "startup FOV, preset binding, experimental runtime opt-in and hotkey preferences persist");
                 Reject<ArgumentException>(()=>new AppSettings(StartupFov:121).Save(settingsPath),"invalid startup FOV cannot overwrite persisted preferences"); }
             finally { File.Delete(settingsPath); }
             memory.Write(root + PlayerSession.Fingerprints[0].Offset, [0]);
@@ -670,6 +677,12 @@ internal static class Program
     {
         _ = new Application();
         var window = new MainWindow();
+        Check(((FrameworkElement)window.FindName("FreeCameraPanel")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("FreeCameraPanel")).IsEnabled,"free camera controls are hidden and disabled");
+        Check(((FrameworkElement)window.FindName("NoclipEnabled")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("NoclipEnabled")).IsEnabled,"noclip control is hidden and disabled");
+        Check(((FrameworkElement)window.FindName("EntityInspectorPanel")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("EntityInspectorPanel")).IsEnabled,"entity snapshot panel stays hidden pending realtime targeting");
+        ((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked=true;
+        Check(((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked==false,"hidden free camera cannot be activated programmatically");
+
         var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         void Field(string name, object? value) => typeof(MainWindow).GetField(name, binding)!.SetValue(window, value);
         void Poll() => typeof(MainWindow).GetMethod("Poll", binding)!.Invoke(window, [null, EventArgs.Empty]);
@@ -746,7 +759,7 @@ internal static class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original),(Offset:FreeCamera.Offset,Bytes:FreeCamera.Prefix)}).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

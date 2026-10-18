@@ -12,6 +12,13 @@ public sealed record FavoriteItem(string Name,int Id,uint Category,int Quantity,
 public sealed record LibraryDocument(int Version,PracticePreset[] Presets,SavedLocation[] Locations,FavoriteItem[] Favorites);
 public sealed partial class UserLibrary
 {
+    public ItemChoice[] Catalog()=>Read<ItemChoice[]>("catalog").SelectMany(x=>x).ToArray();
+    public void SaveCatalog(ItemChoice[] items)
+    {
+        if(items.Length is <1 or >30000||items.Any(x=>string.IsNullOrWhiteSpace(x.Name)||x.Name.Length>256))throw new ArgumentException("Invalid item catalog.");
+        foreach(var item in items)GameActions.ItemBatch(item.Id,item.Category,1);
+        Save("catalog","Imported game names",items);
+    }
     public FavoriteItem[] Favorites(){var all=Read<FavoriteItem>("favorite");foreach(var x in all)x.Validate();return all;}
     public void Save(FavoriteItem item){item.Validate();Save("favorite",item.Name,item);}
     public void Export(string destination)

@@ -247,3 +247,23 @@ foreign edits. FOV remains a separate override and retains its clamp ownership.
 
 All new native behavior has synthetic-process coverage and private-image checks;
 live confirmation is still separate in TODO.md.
+
+
+## Unreleased native exploration and repair research
+
+All RVAs below target the locally verified CUSA03173 1.09 prepared image. They are
+fingerprinted before use; fixture checks are not live runtime confirmation.
+
+- Repair: native EquipGameData repair `0x14D24E0`, read durability `0x14D26D0`, inventory resolver `0x1A89070`, weapon parameter lookup `0x1F29AA0`. Enumerate eight equipment slots and verify native post-repair values. Reinforcement IDs increment by 100, not one.
+- Movement: transient player-only result hook at `0x1A196BB`; preserve original instructions and foreign actors. This is not independently verified action-animation speed.
+- Gravity: world root `0x553D700`, wrapper +0x28 then +8, Havok gravity vector +0x5B0. This affects the whole world.
+- Flight: module +0x20, component +0x200 bit 0x40; collision controller actor +0x58, +0x114 bit 2. Restore only owned actor/component state.
+- HUD: GameDataMan `0x553B130`, options +0x48, visible byte +9. Hides frontend as well as HUD.
+- Free camera: root `0x553E860`, owner +0x2830, camera +0x60; freeze verified follow update `0x143AC60`, restore code before attempting old-camera cleanup.
+- Poison: native removal `0x17E1D90`; only slow/rapid poison parameter states 2/5 are selected.
+- New revival profiles were checked against local event scripts. Moon Presence enables route flag 9900; ending-boss actions can alter story progression.
+- Chalice coordinate bookmarks capture character, connection token, altar UID and a bounded progress-flag snapshot. They intentionally expire across reconnect/progress changes.
+- shadPS4 discovery scans committed private/mapped allocation candidates and requires the same independent game-image fingerprints. Experimental opt-in does not establish compatibility with emulator calling or memory behavior.
+
+Independent action speed, global time scaling, direct weapon/gem mutation, jump height,
+and persistent cross-session dungeon identity remain unverified and unimplemented.

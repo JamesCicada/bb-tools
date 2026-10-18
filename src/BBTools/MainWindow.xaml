@@ -103,15 +103,35 @@
        <CheckBox x:Name="NoFallDamage" Content="No fall damage" Tag="NoFallDamage" Checked="FlagChanged" Unchecked="FlagChanged"/>
        <CheckBox x:Name="InfiniteItems" Content="Infinite consumables &amp; bullets" Tag="InfiniteItems" Checked="FlagChanged" Unchecked="FlagChanged"/>
        <Separator Margin="0,16"/>
+       <Expander x:Name="EntityInspectorPanel" Visibility="Collapsed" IsEnabled="False" Header="Inspect nearby characters" Foreground="#E8E5DF" Margin="0,0,0,16"><StackPanel>
+        <ComboBox x:Name="CharacterPicker" Margin="0,10,0,0"/><WrapPanel Margin="0,10,0,0"><Button Content="Refresh character list" Click="RefreshCharacters" Margin="0,0,10,0"/><Button Content="Inspect selected" Click="InspectCharacter"/></WrapPanel>
+        <TextBlock x:Name="CharacterDetails" Text="Read-only snapshot of a selected loaded character. No enemy memory is modified." TextWrapping="Wrap" Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+       </StackPanel></Expander>
        <TextBlock Text="STATUS BUILDUP" Style="{StaticResource Caption}"/>
        <CheckBox x:Name="KeepStatusEmpty" Content="Keep status buildup empty"/>
+       <Button Content="Cure active slow/rapid poison" Click="CurePoison" HorizontalAlignment="Left" Margin="0,10,0,0"/>
        <Button Content="Clear status buildup now" Click="ClearStatusBuildup" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock Text="Clears the five buildup gauges while the player validates. Existing poison or other active effects still require their normal cure; this does not remove active effects or guarantee immunity to a single hit." Style="{StaticResource Caption}" Margin="0,12,0,16"/>
+       <TextBlock Text="Clears the five buildup gauges while the player validates. Cure poison removes only active slow/rapid poison effects through the native engine. Clear buildup resets meters; neither reverses damage already taken or guarantees one-hit immunity." Style="{StaticResource Caption}" Margin="0,12,0,16"/>
+       <TextBlock Text="MOVEMENT AND PHYSICS · EXPERIMENTAL" Style="{StaticResource Caption}"/>
+       <CheckBox x:Name="MovementEnabled" Content="Override player movement speed" Checked="AdvancedChanged" Unchecked="AdvancedChanged"/>
+       <TextBlock x:Name="MovementValue" Text="Movement 1.0×"/><Slider x:Name="MovementSlider" Minimum="0.1" Maximum="5" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged"/>
+       <CheckBox x:Name="GravityEnabled" Content="Override world gravity (all actors and objects)" Checked="AdvancedChanged" Unchecked="AdvancedChanged"/>
+       <TextBlock x:Name="GravityValue" Text="Gravity 1.0×"/><Slider x:Name="GravitySlider" Minimum="0.05" Maximum="2" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged"/>
+       <Button Content="Restore movement and gravity" Click="ResetAdvanced" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+       <TextBlock Text="Movement scales player translation without speeding up enemies. Gravity affects the entire physics world. Use a practice save; extreme values can break collision and scripted movement. Disable or disconnect to restore owned changes." Style="{StaticResource Caption}" Margin="0,10,0,16"/>
+       <Expander Header="Flight · experimental" Foreground="#E8E5DF" Margin="0,0,0,16"><StackPanel>
+        <CheckBox x:Name="FlightEnabled" Content="Enable flight / no gravity" Checked="FlightChanged" Unchecked="FlightChanged"/>
+        <CheckBox x:Name="NoclipEnabled" Visibility="Collapsed" IsEnabled="False" Content="Disable player collision while flying" Checked="FlightChanged" Unchecked="FlightChanged"/>
+        <TextBlock Text="Flight speed (metres per second)" Style="{StaticResource Caption}" Margin="0,10,0,0"/><Slider x:Name="FlightSpeed" Minimum="1" Maximum="20" Value="5" TickFrequency="1" IsSnapToTickEnabled="True"/>
+        <Button Content="Return to flight start and disable" Click="ReturnFromFlight" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+        <TextBlock Text="With the game focused, hold Ctrl + arrow keys to move, Ctrl + Page Up/Down to rise/descend. Uses repeated native coordinate relocation. Enable deliberately each session; not applied by startup presets. Disabling in midair can drop the player. Cross-map travel stops flight. Use a practice save." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+       </StackPanel></Expander>
        <TextBlock Text="WEAPON DURABILITY" Style="{StaticResource Caption}"/>
        <CheckBox x:Name="KeepDurability" Content="Keep equipped weapons at full durability" Checked="DurabilityToggled" Unchecked="DurabilityToggled"/>
        <CheckBox x:Name="AutoRepair" Content="Auto-repair equipped weapons below threshold" Checked="DurabilityToggled" Unchecked="DurabilityToggled"/>
        <StackPanel Orientation="Horizontal" Margin="0,10,0,0"><TextBlock Text="Threshold %" VerticalAlignment="Center" Margin="0,0,10,0"/><TextBox x:Name="RepairThreshold" Text="30" Width="80" AutomationProperties.Name="Repair threshold percent"/></StackPanel>
        <Button Content="Repair equipped weapons now" Click="RepairWeapons" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+       <TextBlock x:Name="DurabilitySummary" Text="Repair uses the native equipped-weapon routine. Results for each slot appear here." TextWrapping="Wrap" Foreground="#D0B179" Margin="0,10,0,0"/>
        <TextBlock Text="Refills equipped weapon durability while the character validates. Full-durability mode takes priority over the threshold. Disabling resumes normal wear; repairs can be saved by the game." Style="{StaticResource Caption}" Margin="0,12,0,16"/>
        <TextBlock Text="PLAYER MULTIPLIERS" Style="{StaticResource Caption}"/>
        <UniformGrid Columns="2" Margin="0,8,0,12">
@@ -133,6 +153,7 @@
        <StackPanel x:Name="ItemControls" IsEnabled="False">
        <CheckBox x:Name="WikiHexId" Content="Wiki hexadecimal Item ID (includes category)" Margin="0,0,0,12"/>
        <TextBlock Text="Decimal mode: base ID + selected category. Wiki mode: paste the full hexadecimal Item ID, e.g. 400003E8. A 0x prefix also selects hexadecimal mode." Style="{StaticResource Caption}"/>
+       <Button Content="Import all item names from game files" Click="ImportGameCatalog" HorizontalAlignment="Left" Margin="0,0,0,10"/>
        <TextBox x:Name="ItemSearch" TextChanged="SearchItems" AutomationProperties.Name="Search item catalog" ToolTip="Search common item names or IDs" Margin="0,0,0,10"/>
        <ComboBox x:Name="ItemPicker" DisplayMemberPath="Label" MinHeight="40" SelectionChanged="ItemSelected"/>
        <Grid Margin="0,16,0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
@@ -174,7 +195,7 @@
        <ComboBox x:Name="BossPicker" DisplayMemberPath="Label" MinHeight="40"/>
        <WrapPanel Margin="0,12,0,0"><Button Content="1 · Travel to area" Click="TravelBossArea" Margin="0,0,10,0"/><Button Content="2 · Go to entrance" Click="GoToBoss" Style="{StaticResource Primary}"/></WrapPanel>
        <WrapPanel Margin="0,12,0,0"><Button Content="Revive + reload boss area" Click="ReviveBoss" Margin="0,0,10,0"/><Button Content="Revive + travel for retry" Click="RetryBoss" Margin="0,0,10,0"/></WrapPanel>
-       <TextBlock Text="One click resets saved encounter flags and reloads the selected boss area. Can be used from any area, including mid-fight; this can disrupt the encounter or story progress. Supports 19 bosses including DLC; Micolash, Gehrman and Moon Presence are pending. Original flags are journaled locally. Use a separate practice save." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+       <TextBlock Text="One click resets saved encounter flags and reloads the selected boss area. Can be used from any area, including mid-fight; this can disrupt the encounter or story progress. Supports all 22 boss destinations including DLC. New Micolash and ending-boss profiles are experimental. Moon Presence enables its encounter route; defeating ending bosses may advance NG/story state. Original flags are journaled locally. Use a separate practice save." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
        <TextBlock Text="22 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. Travel/entrance buttons relocate you; revival controls reset supported encounters separately. Doors and story prerequisites are unchanged." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel><Button x:Name="CancelRetryButton" Content="Cancel pending entrance placement" Click="CancelBossRetry" HorizontalAlignment="Left" Margin="0,12,0,0" ToolTip="Stops pending placement. Travel already requested and revival flag changes are retained."/></StackPanel></Border>
       <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="LocationControls" IsEnabled="False">
@@ -186,10 +207,17 @@
        <TextBox x:Name="LocationSearch" TextChanged="SearchLocations" AutomationProperties.Name="Search saved locations" ToolTip="Search by name or map" Margin="0,0,0,10"/>
        <ComboBox x:Name="LocationPicker" DisplayMemberPath="Label" MinHeight="40"/>
        <WrapPanel Margin="0,12,0,0"><Button Content="Restore location" Click="RestoreLocation" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete selected" Click="DeleteLocation"/></WrapPanel>
-       <TextBlock Text="Stores named positions in the local library between app sessions. Search by name or map. Restore within the same loaded map; travel to its lamp first when elsewhere." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
+       <TextBlock Text="Stores named positions in the local library between app sessions. Search by name or map. Restore within the same loaded map; travel to its lamp first when elsewhere. Chalice bookmarks are bound to this connection, character, altar, dungeon and progress snapshot; reconnecting or changing that state requires a fresh bookmark." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
       </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="CameraPage" Visibility="Collapsed">
+      <Border x:Name="FreeCameraPanel" Visibility="Collapsed" IsEnabled="False" Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
+       <CheckBox x:Name="FreeCameraEnabled" Content="Enable detached free camera · experimental" Checked="FreeCameraChanged" Unchecked="FreeCameraChanged"/>
+       <TextBlock Text="Camera speed" Style="{StaticResource Caption}"/><Slider x:Name="FreeCameraSpeed" Minimum="1" Maximum="20" Value="5" TickFrequency="1" IsSnapToTickEnabled="True"/>
+       <TextBlock Text="Game focus: hold Ctrl + arrows / Page Up / Page Down to translate; Ctrl + I/K pitches and Ctrl + J/L turns. Uses the FOV slider below. Disables flight; enable deliberately, not through startup presets. Extended follow-camera mode only; modified update routines are rejected. Disable to restore native follow and request a camera reset." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+      </StackPanel></Border>
+      <CheckBox x:Name="HideHud" Content="Hide HUD / front-end UI" Margin="0,0,0,10"/>
+      <TextBlock Text="Hiding front-end UI may hide game menus too. Uncheck here to restore; disconnect also restores the captured value." Style="{StaticResource Caption}" Margin="0,0,0,14"/>
       <TextBlock Text="⚠ FOV and camera overrides are experimental and unstable. They can reduce performance and cause visual issues. Restore defaults if problems occur." Foreground="#D0B179" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16"/>
       <Border Style="{StaticResource Card}" Margin="0,0,0,18"><Expander x:Name="TuningExpander" Header="Camera distance and height" Foreground="#E8E5DF"><StackPanel Margin="0,12,0,0">
        <TextBlock x:Name="CameraTuningSummary" Text="Distance 1.0× · Height 1.0×" Margin="0,0,0,12"/>
@@ -210,6 +238,10 @@
       </StackPanel></Border>
      </StackPanel>
      <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
+       <TextBlock Text="SUPPORTED RUNTIMES" Style="{StaticResource Caption}"/>
+       <TextBlock Text="Bloodborne PC and shadPS4 · CUSA03173 1.09. Tested and confirmed. Select the game process or use automatic connection. Game-image and player validation remain required." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
+      </StackPanel></Border>
       <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
        <TextBlock Text="ABOUT &amp; UPDATES" Style="{StaticResource Caption}"/>
        <Button Content="Export diagnostics" Click="ExportDiagnostics" HorizontalAlignment="Left" Margin="0,0,0,12"/>

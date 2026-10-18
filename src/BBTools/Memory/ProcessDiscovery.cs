@@ -63,13 +63,12 @@ public static class ProcessDiscovery
         {
             if (cancelled()) return null;
             if (!Matches(candidate.Name) || candidate.Started == 0) continue;
-            if (candidate.Name.Contains("shadps4", StringComparison.OrdinalIgnoreCase)) continue;
             try
             {
                 using var process = Process.GetProcessById(candidate.Id);
                 if (process.StartTime.ToUniversalTime().Ticks != candidate.Started) continue;
                 using var memory = new ProcessMemory(candidate.Id, writable: false);
-                var image = PlayerSession.FindImage(memory, memory.AllocationBases());
+                var image = PlayerSession.FindImage(memory, memory.ImageCandidates(candidate.Name.Contains("shadps4",StringComparison.OrdinalIgnoreCase)));
                 var session = new PlayerSession(memory, image);
                 var loaded = false;
                 try { session.ReadCharacter(); loaded = true; } catch (IOException) { }

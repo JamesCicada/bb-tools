@@ -2,21 +2,30 @@ using System.IO;
 using System.Text.Json;
 namespace BBTools.Memory;
 
-public sealed record BossRevival(string Name,uint DefeatFlag,int MetOffset);
+public sealed record BossRevival(string Name,uint DefeatFlag,int MetOffset,uint[]? EnableFlags=null,uint[]? ClearFlags=null);
 public static class BossRevivalCatalog
 {
     public static BossRevival[] All =>
     [
         new("Cleric Beast",12411700,2),new("Father Gascoigne",12411800,2),new("Blood-starved Beast",12301800,2),
         new("Vicar Amelia",12401800,2),new("The Witch of Hemwick",12201800,2),new("Darkbeast Paarl",12301700,2),
-        new("Shadow of Yharnam",12701800,2),new("Rom, the Vacuous Spider",13201800,2),new("The One Reborn",12801800,2),
-        new("Martyr Logarius",12501800,2),new("Amygdala",13301800,2),new("Celestial Emissary",12421700,2),
+        new("Shadow of Yharnam",12701800,2),new("Rom, the Vacuous Spider",13201800,2,[13200040,13200120]),new("The One Reborn",12801800,2),
+        new("Martyr Logarius",12501800,2,[12500000]),new("Amygdala",13301800,2),new("Celestial Emissary",12421700,2),
         new("Ebrietas, Daughter of the Cosmos",12421800,2),new("Mergo's Wet Nurse",12601800,2),
-        new("[DLC] Ludwig, the Holy Blade",13401800,1),new("[DLC] Living Failures",13501850,1),
-        new("[DLC] Lady Maria of the Astral Clocktower",13501800,1),new("[DLC] Laurence, the First Vicar",13401850,1),new("[DLC] Orphan of Kos",13601800,1)
+        new("[DLC] Ludwig, the Holy Blade",13401800,1),new("[DLC] Living Failures",13501850,1,[13501200,13504220]),
+        new("[DLC] Lady Maria of the Astral Clocktower",13501800,1),new("[DLC] Laurence, the First Vicar",13401850,1),new("[DLC] Orphan of Kos",13601800,1),
+        new("Micolash, Host of the Nightmare",12601850,2,null,[12604731,..Enumerable.Range(12604850,50).Select(x=>(uint)x)]),
+        new("Gehrman, the First Hunter",12101800,2,null,[12101850,12101852,..Enumerable.Range(12104800,12).Select(x=>(uint)x)]),
+        new("Moon Presence",12101850,2,[12101800,9900],[..Enumerable.Range(12104850,32).Select(x=>(uint)x)])
     ];
-    public static BossRevival Find(string name) => All.SingleOrDefault(x=>x.Name==name) ?? throw new ArgumentException("Revival for this boss is not verified yet. Micolash, Gehrman and Moon Presence remain unavailable.");
-    public static Dictionary<uint,bool> Changes(BossRevival boss) => Enumerable.Range(0,10).ToDictionary(i=>boss.DefeatFlag+(uint)i,i=>i==boss.MetOffset);
+    public static BossRevival Find(string name) => All.SingleOrDefault(x=>x.Name==name) ?? throw new ArgumentException("Choose a catalogued boss revival profile.");
+    public static Dictionary<uint,bool> Changes(BossRevival boss)
+    {
+        var changes=Enumerable.Range(0,10).ToDictionary(i=>boss.DefeatFlag+(uint)i,i=>i==boss.MetOffset);
+        foreach(var flag in boss.ClearFlags??[])changes[flag]=false;
+        foreach(var flag in boss.EnableFlags??[])changes[flag]=true;
+        return changes;
+    }
 }
 
 // Bounded walk of the verified 1.09 event flag store. Only the boss allowlist uses writes.

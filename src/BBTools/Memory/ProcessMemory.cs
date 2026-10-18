@@ -64,6 +64,20 @@ public sealed class ProcessMemory : IMemory, IDisposable
             address = next;
         }
     }
+    public IEnumerable<ulong> ImageCandidates(bool emulator)
+    {
+        if(!emulator){foreach(var at in AllocationBases())yield return at;yield break;}
+        var seen=new HashSet<ulong>();ulong address=0;
+        while(address<0x0000800000000000&&VirtualQueryEx(handle,(nuint)address,out var region,(nuint)Marshal.SizeOf<MemoryInfo>())!=0)
+        {
+            if(region.State==0x1000&&region.Type is 0x20000 or 0x40000)
+            {
+                var start=(ulong)region.AllocationBase;
+                foreach(var candidate in new[]{start,start+0x400000})if(candidate>=0x10000&&seen.Add(candidate))yield return candidate;
+            }
+            var next=(ulong)region.BaseAddress+(ulong)region.RegionSize;if(next<=address)break;address=next;
+        }
+    }
     public void Dispose() => handle.Dispose();
     public ulong AllocateData(int size)
     {
@@ -107,6 +121,24 @@ public sealed class ProcessMemory : IMemory, IDisposable
             if (!flushed || !restored) throw new IOException("Camera clamp cache/protection restoration failed.");
         }
         if (!Read(address,4).SequenceEqual(replacement)) throw new IOException("Camera clamp update could not be verified.");
+    }
+    // Only the independently verified movement read site may use this hook path.
+    internal void ReplaceMovementCode(ulong imageBase,byte[] expected,byte[] replacement)
+    {
+        if(expected.Length!=14||replacement.Length!=14)throw new ArgumentException("Invalid movement patch size.");
+        var at=imageBase+MovementSpeed.Offset;
+        if(!Read(at,14).SequenceEqual(expected))throw new IOException("Movement instructions changed externally; no patch was applied.");
+        if(!VirtualProtectEx(handle,(nuint)at,14,0x40,out var protection))throw new IOException("Movement code is unavailable.");
+        try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
+        finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
+    }
+    internal void FreezeFollowCamera(ulong imageBase,bool freeze)
+    {
+        var at=imageBase+FreeCamera.Offset;var expected=FreeCamera.Prefix.ToArray();if(!freeze)expected[0]=0xC3;
+        if(!Read(at,expected.Length).SequenceEqual(expected))throw new IOException("Follow camera update changed externally; no patch was applied.");
+        if(!VirtualProtectEx(handle,(nuint)at,1,0x40,out var protection))throw new IOException("Follow camera update is unavailable.");
+        try{if(!WriteProcessMemory(handle,(nuint)at,[freeze?(byte)0xC3:FreeCamera.Prefix[0]],1,out var count)||count!=1)throw new IOException("Follow camera patch failed.");}
+        finally{var flushed=FlushInstructionCache(handle,(nuint)at,1);var restored=VirtualProtectEx(handle,(nuint)at,1,protection,out _);if(!flushed||!restored)throw new IOException("Follow camera cache/protection restoration failed.");}
     }
     public void Suspended(Action operation)
     {

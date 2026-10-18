@@ -1,4 +1,4 @@
-param([string]$Configuration = 'Release')
+param([string]$Configuration = 'Release', [switch]$Development)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -6,6 +6,9 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $releaseVersion = [string]$project.Project.PropertyGroup.Version
 if ($releaseVersion -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part release version in BBTools.csproj.' }
 $releaseName = "BBTools-v$releaseVersion-win-x64"
+if ($Development) { $releaseName = "BBTools-v$releaseVersion-development-win-x64" }
+$documentRef = "v$releaseVersion"
+if ($Development) { $documentRef = "main" }
 $releaseRoot = Join-Path $projectRoot 'artifacts'
 # Unique staging prevents files from an earlier publish entering this archive.
 $staging = Join-Path $releaseRoot ("stage-" + [guid]::NewGuid().ToString('N'))
@@ -21,8 +24,8 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packag
 # Standalone README links must still work without bundling the source documents.
 $readmePath = Join-Path $package 'README.md'
 $readme = [System.IO.File]::ReadAllText($readmePath)
-foreach ($document in @('CONTRIBUTING.md', 'TODO.md', 'LICENSE', 'docs/memory-research.md')) {
-    $readme = $readme.Replace("]($document)", "](https://github.com/JamesCicada/bb-tools/blob/v$releaseVersion/$document)")
+foreach ($document in @('CONTRIBUTING.md', 'TODO.md', 'LICENSE', 'docs/memory-research.md', 'docs/COMPATIBILITY.md', 'docs/1.0-test-plan.md')) {
+    $readme = $readme.Replace("]($document)", "](https://github.com/JamesCicada/bb-tools/blob/$documentRef/$document)")
 }
 [System.IO.File]::WriteAllText($readmePath, $readme, [System.Text.UTF8Encoding]::new($false))
 # Fail rather than silently ship publish sidecars or development documents.

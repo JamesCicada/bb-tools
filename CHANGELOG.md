@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — 1.0 preparation
+
+- Officially support shadPS4 for CUSA03173 1.09: tested and confirmed. Remove the experimental opt-in from manual and automatic connection; retain image/player validation.
+- Replace weapon repair with game-thread inventory repair and per-slot before/after reports. Both-hand live retest pending.
+- Add player movement speed, world gravity, flight and HUD visibility. Noclip and detached free camera are disabled and hidden for now.
+- Add active slow/rapid poison cure. Hide entity inspection pending realtime targeted-enemy updates.
+- Add experimental Micolash, Gehrman and Moon Presence revival profiles.
+- Import searchable item names from game-owned files into the local library.
+- Add connection-bound chalice bookmarks and advanced movement/gravity/HUD presets.
+- Rewrite Nexus descriptions and add compatibility results and a live test plan.
+- Validation: 247 isolated checks pass in Debug and Release; six release-automation checks pass. shadPS4 support is tested and confirmed; other new features retain their individual live-test status.
+
+
 ## 0.4.0 - 2026-10-18 (draft)
 
 - Add one-click revival and area reload for 19 base-game/DLC bosses from any loaded area, including mid-encounter. Retry also places the player outside the fog, refills health/stamina and starts the encounter timer. Original flags are journaled locally; Micolash and the two ending bosses remain unsupported for revival.

@@ -78,7 +78,7 @@ separately. Automated checks and package startup checks do not replace live resu
 
 ### Fixes after first live feedback
 
-- ✔️ Repair now follows equipped inventory indices through both entry banks to owned instances, verifies writes and reports the repair count. Automatic repair retries transient failures.
+- ✔️ Earlier repair attempted owned-instance writes, but live feedback found unreliable right-hand repair. Superseded by the native inventory repair replacement below.
 - ✔️ Revival has no Dream/prior-encounter gate; one click resets flags and reloads the selected area. Retry waits for a loading transition before entrance placement.
 - ✔️ Hotkeys use physical-state polling with a visible shortcut summary and selectable modifiers, including None for F-keys alone.
 - ✔️ Camera page warns that FOV/distance/height overrides are unstable and can cause performance and visual issues.
@@ -103,27 +103,37 @@ is recorded for the implemented additions except weapon durability.
 - ✔️ Save restore: close game/launcher, use a disposable save-folder copy, restore a backup and check retained recovery folder/ZIP.
 - ✔️ Session logs and redacted diagnostics export.
 
+### Development build awaiting live tests
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Native inventory weapon repair | ✔️ | ⌛ | Replaces the unreliable cache writes. Test all four weapon slots, manual repair, threshold and keep-full modes. |
+| Player movement multiplier | ✔️ | ⌛ | Player-only transient movement scale; one shared multiplier, not independent walk/run/sprint controls. |
+| World gravity | ✔️ | ⌛ | Affects all actors and physics; restores captured values. |
+| Active poison cure | ✔️ | ⌛ | Removes slow/rapid poison effects while preserving unrelated effects. |
+| Loaded-character inspector | ✔️ | ⌛ | Hidden pending realtime targeted-enemy updates. |
+| Micolash, Gehrman and Moon Presence revival | ✔️ | ⌛ | Experimental event profiles; ending bosses can alter story/NG progression. |
+| Game-owned item-name catalog import | ✔️ | ⌛ | Import English names from your own game files; search by name or ID. |
+| HUD visibility and detached free camera | ✔️ | ⌛ | HUD available; free camera disabled and hidden. |
+| Flight and noclip | ✔️ | ⌛ | Flight available; noclip disabled and hidden. |
+| Chalice coordinate bookmarks | ✔️ | ⌛ | Restricted to the same connection, character, altar and dungeon progress snapshot. |
+| Expanded advanced presets | ✔️ | ⌛ | Movement, world gravity and HUD; flight/free camera are explicit session actions. |
+| Official shadPS4 support | ✔️ | ✔️ | Tested and confirmed; no experimental opt-in. Image/player validation retained. |
+
+See [the test plan](docs/1.0-test-plan.md) and [compatibility results](docs/COMPATIBILITY.md).
+Earlier live confirmations remain valid only for their recorded feature/configuration.
+
 ### Research still pending
 
-Micolash and the two ending bosses require additional encounter/ending-state profiles.
-Independent walk/run/sprint speed, action speed, global game speed, enemy inspection,
-weapon/gem editing, active-effect cures, HUD/free camera, gravity/jumps, flight/noclip,
-exact chalice instance bookmarks and additional runtime adapters remain unimplemented.
-These need verified native fields or engine calls and lifecycle checks; they are not
-represented by placeholder controls. The implemented item catalog is the bundled
-common catalog plus custom favorites, not a complete datamined item-name database.
+- ⌛ Independent walking/running/sprinting and action-animation speed.
+- ⌛ Global simulation speed / slow motion.
+- ⌛ Direct weapon reinforcement and gem editing with native inventory synchronization.
+- ⌛ Camera shake and shoulder offset.
+- ⌛ Jump-height control independent of world gravity.
+- ⌛ Persistent generated-dungeon bookmarks across reconnection/progress changes.
+- ⌛ Exact lock-on target inspection and full enemy defense statistics.
 
-## Next development priorities
-
-1. **P1 — Weapon durability (next session):** resolve repair-now, threshold
-   auto-repair and keep-full mode with live validation. These remain known issues.
-2. **P2 — Remaining boss revival profiles:** research Micolash, Gehrman and Moon Presence.
-3. **P3 — Movement settings:** player walk/run/sprint speed with restoration and loading checks.
-4. **P4 — Advanced practice and exploration:** action/game speed, enemy inspection,
-   weapon/gem editing, free camera, gravity/jumps, flight and noclip.
-
-FOV, expanded/startup presets, library tools, hotkeys, encounter timing and the
-implemented boss retry workflow are tested and confirmed.
+These need verified engine paths. They are not represented by placeholder controls.
 
 ### Library and preset live checks
 
@@ -148,29 +158,29 @@ and tested-and-confirmed status are tracked separately; pending live checks rema
 | Named practice presets                |     ✔️      |          ✔️          | Save, replace, apply and delete combat settings, health refill, stamina and applied multipliers; explicit application after connecting.                                                                        |
 | SQLite preset and warp database       |     ✔️      |          ✔️          | Schema-versioned local database; transactional one-time migration retains existing locations.json.                                                                                                             |
 | Search saved warp locations           |     ✔️      |          ✔️          | Search saved bookmarks by name or map; existing same-map relocation checks still apply.                                                                                                                        |
-| Library organization and profiles     |     ✔️      |          ✔️          | Preset rename/duplicate, named groups for presets/bookmarks, item favorites and settings profiles. Runtime/character-aware generated-dungeon bookmarks remain separate research.                               |
+| Library organization and profiles     |     ✔️      |          ✔️          | Preset rename/duplicate, named groups for presets/bookmarks, item favorites and settings profiles. Connection/character-bound generated-dungeon bookmarks implemented; cross-session persistence remains research.                               |
 | Database backup and import/export     |     ✔️      |          ✔️          | Versioned JSON for presets, bookmarks and favorites, transactional validated imports and consistent SQLite backups.                                                                                            |
-| Boss retry workflow                   |     ✔️      |          ✔️          | 19 base-game/DLC profiles. From any loaded area: journal original encounter flags, revive, reload area, place outside fog, refill health/stamina and start timer. Micolash/Gehrman/Moon Presence are excluded. |
+| Boss retry workflow                   |     ✔️      |          ✔️          | 22 base-game/DLC profiles (three experimental). From any loaded area: journal original encounter flags, revive, reload area, place outside fog, refill health/stamina and start timer. Micolash/Gehrman/Moon Presence await live tests. |
 | Encounter timer                       |     ✔️      |          ✔️          | Manual start/finish or automatic retry start; pause while loading/dead; attempts, deaths and session best. Tested and confirmed.                                                                   |
-| Enemy information panel               |     ⌛      |          ⌛          | Inspect the targeted enemy's health, resistances and active effects.                                                                                                                                           |
-| Searchable common items and favorites |     ✔️      |          ✔️          | Search bundled common items and saved custom-ID favorites by name/ID; load favorites before explicit spawning. Complete game-wide metadata remains future work.                                                |
+| Enemy information panel               |     ✔️      |          ⌛          | Snapshot panel hidden until realtime targeted-enemy updates are implemented.                                                                                                                                           |
+| Searchable common items and favorites |     ✔️      |          ✔️          | Search bundled common items and saved custom-ID favorites by name/ID; load favorites before explicit spawning. Optional full game-owned English name import implemented; live test pending.                                                |
 | Weapon setup editor                   |     ⌛      |          ⌛          | Inspect reinforcement and gem slots with valid-value checks and preview before applying.                                                                                                                       |
-| Unlimited weapon durability           |     ✔️      |          ⌛          | Known issue: not working reliably. Further investigation deferred to the next development session. |
-| Automatic weapon repair               |     ✔️      |          ⌛          | Known issue: not working reliably. Further investigation deferred to the next development session. |
+| Unlimited weapon durability           |     ✔️      |          ⌛          | Native inventory repair replacement implemented; live both-hand validation pending. |
+| Automatic weapon repair               |     ✔️      |          ⌛          | Native inventory repair replacement implemented; live both-hand validation pending. |
 | Status-effect controls                |     ⌛      |          ⌛          | Clear poison/frenzy and optionally prevent buildup without changing unrelated effects.                                                                                                                         |
 | Field-of-view (FOV) slider            |     ✔️      |          ✔️          | Live vertical FOV override and original-value restore. 38–120° vertical, with automatic reversible clamp removal above 48°.                                                                                    |
 | Wider FOV without an external patch   |     ✔️      |          ✔️          | Verified four-byte in-memory clamp update; preserves preexisting uncap, restores owned changes and rejects unknown code.                                                                                       |
-| Player movement speed                 |     ⌛      |          ⌛          | Separate walking, running and sprint speed multipliers; affect only the player and restore defaults on disable.                                                                                                |
+| Player movement speed                 |     ✔️      |          ⌛          | Shared player-only movement scale implemented; independent walk/run/sprint controls remain research.                                                                                                |
 | Player action speed                   |     ⌛      |          ⌛          | Optional player animation speed multiplier; verify attacks, dodges and interactions independently of movement.                                                                                                 |
 | Game speed and slow motion            |     ⌛      |          ⌛          | Adjustable simulation speed for practice with a quick reset; verify menus, audio and loading behavior.                                                                                                         |
 | Camera distance and height            |     ✔️      |          ✔️          | Distance/look-at-height scales 0.5–2.0, original-value restoration, loading recovery and preset support. Shoulder offset remains unimplemented.                                                                |
 | Camera and screenshot tools           |     ⌛      |          ⌛          | Hide HUD, toggle camera shake and add a verified free camera with adjustable speed and restoration.                                                                                                            |
 | Gravity and jump controls             |     ⌛      |          ⌛          | Optional player gravity and jump-height settings for exploration; verify collision and restore normal values.                                                                                                  |
-| Flight and noclip exploration         |     ⌛      |          ⌛          | Research controlled flight and collision bypass with a return-to-bookmark action and map-boundary checks.                                                                                                      |
-| Chalice-aware location bookmarks      |     ⌛      |          ⌛          | Bind coordinates to the exact generated dungeon and character before permitting restore.                                                                                                                       |
+| Flight and noclip exploration         |     ✔️      |          ⌛          | Flight available; noclip disabled and hidden pending further work.                                                                                                      |
+| Chalice-aware location bookmarks      |     ✔️      |          ⌛          | Connection/character/altar/progress snapshot required; reconnect expires the bookmark.                                                                                                                       |
 | Backup history and restore assistant  |     ✔️      |          ✔️          | List BB Tools ZIPs; verify paths/sizes/CRC, require game closed, retain prior folder and recovery ZIP before replacement.                                                                                      |
 | Diagnostics export                    |     ✔️      |          ✔️          | App/runtime versions and redacted status/config summary, excluding save contents and personal filesystem paths.                                                                                                |
-| Expanded runtime compatibility        |     ⌛      |          ⌛          | Separate adapters and validation for additional native builds and shadPS4.                                                                                                                                     |
+| Expanded runtime compatibility        |     ✔️      |          ⌛          | shadPS4 officially supported, tested and confirmed. Other runtime profiles remain unverified.                                                                                                                                     |
 
 ## Release automation
 

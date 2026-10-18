@@ -51,6 +51,7 @@ internal sealed class HotkeyManager : IDisposable
         }
     }
     public void Dispose(){disposed=true;timer.Stop();timer.Tick-=Tick;}
+    internal static bool IsDown(int key)=>(GetAsyncKeyState(key)&0x8000)!=0;
     public static nint ForegroundWindow => GetForegroundWindow();
     public static int ForegroundProcess(){GetWindowThreadProcessId(GetForegroundWindow(),out var pid);return (int)pid;}
     [DllImport("user32.dll")]private static extern short GetAsyncKeyState(int key);

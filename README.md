@@ -1,3 +1,11 @@
+> **Development build:** preparing for 1.0; the project version remains 0.4.0 until live testing is complete.
+> New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
+> **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
+> Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
+> Noclip and free camera are disabled and hidden for now. Entity inspection is hidden
+> pending live updates for the targeted enemy. Other development features still follow the test checklist.
+
+
 # BB Tools
 
 **A Bloodborne PC practice companion for Windows.** Edit your hunter, set up a
@@ -6,7 +14,7 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
-[Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md)
+[Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
 ## v0.4.0
 
@@ -39,7 +47,7 @@ limits are shown without reporting a successful check. Details remain visible in
 | Runtime | Native [Bloodborne PC](https://github.com/Supermedo/bloodborne_pc), usually `bb-probe.exe` |
 | Game profile | CUSA03173, version 1.09 |
 | The Old Hunters | Ten named DLC lamp destinations and all five DLC boss entrances |
-| shadPS4 | Process discovery only; the live adapter is **not implemented** |
+| shadPS4 | Officially supported for CUSA03173 1.09; tested and confirmed |
 | Other regions, builds or conflicting patches | Not verified; instruction mismatches are rejected |
 
 The downloadable build includes the .NET runtime. You do not need Visual Studio,
