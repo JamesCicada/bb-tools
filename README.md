@@ -1,4 +1,4 @@
-> **Version 0.6.0:** God mode + Ignore hits and first-encounter boss revival are tested and confirmed on Bloodborne PC.
+> **Version 0.6.1:** God mode + Ignore hits and first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
 > **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
 > Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
@@ -15,6 +15,16 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.1 patch
+
+Fix: replaced placeholder Discord presence details with actual game data. Optional
+area, level, total deaths, character name and NG cycle sharing is off by default.
+Uses the selected Discord application’s Bloodborne logo and a BBTools GitHub button.
+Tested and confirmed on Bloodborne PC.
+
+Nexus Mods uploads now follow publication of a stable GitHub release.
+See [Nexus CI setup](https://github.com/JamesCicada/bb-tools/blob/main/docs/nexusmods-ci.md).
 
 ## What changed in v0.6.0
 
@@ -62,9 +72,16 @@ captured flag. Death/respawn and bloodstain recovery still need live confirmatio
 
 **Settings → Preferences → Discord Rich Presence** is on by default and can be
 turned off. With Discord desktop running and a connected game, it shows Bloodborne,
-the runtime and elapsed time. It sends no character stats or location. Disconnect,
+the runtime and elapsed time, with the Discord application’s Bloodborne logo and a **BBTools** GitHub button.
+Extra game details are off by default. Enable **Share extra game details** to choose
+area, Blood Level, total deaths, character name and NG cycle individually. These
+readings are shared with people who can view your activity; unavailable fields are
+omitted. Area labels describe the loaded map, not exact coordinates. Disconnect,
 disabling and app close clear the activity; Discord restarts are retried. The
-public application ID is `1189594649954877620`; no bot token is used.
+public application ID is `1196921008809066616`; no bot token is used.
+The member-list status requests the custom details text. Discord still takes the
+profile card application title from the Developer Portal application name; rename
+that application or use a dedicated BB Tools application for a fully branded title.
 
 Photo mode/free camera and flight/noclip are disabled and hidden while movement
 and HUD restoration issues are investigated. Ordinary FOV, camera distance/height,

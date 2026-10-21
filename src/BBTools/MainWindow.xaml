@@ -850,7 +850,16 @@
           <StackPanel>
            <TextBlock Text="DISCORD RICH PRESENCE" Style="{StaticResource Caption}" />
            <CheckBox x:Name="DiscordPresenceEnabled" Content="Show Bloodborne activity on Discord" IsChecked="True" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,4,0,0" />
-           <TextBlock Text="Shares only that Bloodborne is running and its runtime. No character name, location or stats. Clears when disconnected or disabled. Discord desktop must be running." Style="{StaticResource Caption}" Margin="0,10,0,0" />
+           <TextBlock Text="Basic presence shows Bloodborne and the runtime with the Discord application’s Bloodborne logo and a GitHub button. Clears when disconnected or disabled. Discord desktop must be running." Style="{StaticResource Caption}" Margin="0,10,0,0" />
+           <CheckBox x:Name="DiscordExtra" Content="Share extra game details" IsEnabled="{Binding IsChecked, ElementName=DiscordPresenceEnabled}" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,12,0,0" />
+           <WrapPanel IsEnabled="{Binding IsChecked, ElementName=DiscordExtra}" Margin="18,4,0,0">
+            <CheckBox x:Name="DiscordArea" Content="Area" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,0,18,0" />
+            <CheckBox x:Name="DiscordLevel" Content="Level" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,0,18,0" />
+            <CheckBox x:Name="DiscordDeaths" Content="Total deaths" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,0,18,0" />
+            <CheckBox x:Name="DiscordName" Content="Character name" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,0,18,0" />
+            <CheckBox x:Name="DiscordNg" Content="NG cycle" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" />
+           </WrapPanel>
+           <TextBlock Text="Extra details are off by default. Selected fields are public to people who can view your activity. Area names describe the loaded map; unavailable readings are omitted." Style="{StaticResource Caption}" Margin="0,8,0,0" />
            <TextBlock x:Name="DiscordPresenceStatus" Text="Waiting for a connected game." Foreground="#D0B179" />
           </StackPanel>
          </Border>

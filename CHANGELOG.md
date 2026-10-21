@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1 — 2026-10-21
+
+- Integrate the official Nexus Mods v3 upload API with CI/CD: publish the verified ZIP and changelog after a stable GitHub release is published, with validation-only runs and duplicate protection.
+
+- Fix: replaced placeholder Discord presence details with actual game data.
+
+- Use Discord application 1196921008809066616 and its default Bloodborne logo, with a BBTools button linking to GitHub; request custom details in the member-list status. The application title remains controlled by Discord application settings.
+- Add opt-in area, level, total deaths, character name and NG cycle sharing, with individual field selections. Extra data is off by default, read without game writes, sampled at bounded intervals and omitted when unavailable.
+- Coalesce frequent presence updates and clear extra details when sharing is disabled. Tested and confirmed on Bloodborne PC.
+
 ## 0.6.0 — 2026-10-21
 
 Tested and confirmed on Bloodborne PC: God mode + Ignore hits together, and first-encounter boss revival. Other additions retain their individual live-test status.

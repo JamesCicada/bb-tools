@@ -88,7 +88,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Refresh(this, new RoutedEventArgs());
         updating = true; AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;
-        FovSlider.Value = settings.StartupFov; FovEnabled.IsChecked = settings.StartupFovEnabled;DiscordPresenceEnabled.IsChecked=settings.DiscordRichPresence; updating = false;
+        FovSlider.Value = settings.StartupFov; FovEnabled.IsChecked = settings.StartupFovEnabled;LoadDiscordControls(); updating = false;
         UpdateStartupSummary();
         LoadHotkeyControls();
         autoTimer.Tick += async (_, _) => await TryAutoConnect();
@@ -704,7 +704,7 @@ public partial class MainWindow : Window
                 var next = preset.Preferences with { StartupPresetName = settings.StartupPresetName };
                 next.Save(); settings = next;
                 AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;
-                DiscordPresenceEnabled.IsChecked=settings.DiscordRichPresence;UpdateDiscordPresence();
+                LoadDiscordControls();UpdateDiscordPresence();
                 LoadHotkeyControls();LoadCameraControls();LoadPhotoControls();hotkeys?.Apply(settings.Hotkeys??new());
             }
             CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;

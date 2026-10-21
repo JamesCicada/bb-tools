@@ -8,13 +8,14 @@ namespace BBTools;
 // Local desktop IPC only; no token, OAuth, Discord account data or game writes.
 public sealed class DiscordPresence : IDisposable
 {
-    public const string ApplicationId="1189594649954877620";
+    public const string ApplicationId="1196921008809066616";
+    private sealed record PresenceState(string Runtime,DiscordGameDetails? Details);
     private readonly CancellationTokenSource lifetime=new();
     private readonly SemaphoreSlim changed=new(0,1);
     private readonly Func<CancellationToken,Task<Stream>> connect;
     private readonly Task worker;
     private Stream? pipe;
-    private string? desired;
+    private PresenceState? desired;
     private long started;
     private TaskCompletionSource cleared=new(TaskCreationOptions.RunContinuationsAsynchronously);
     private volatile bool disposed;
@@ -22,14 +23,15 @@ public sealed class DiscordPresence : IDisposable
     public string Status=>Volatile.Read(ref status);
     public DiscordPresence(Func<CancellationToken,Task<Stream>>? connector=null)
     {connect=connector??ConnectAsync;worker=Task.Run(RunAsync);}
-    public void Update(string? runtime)
+    public void Update(string? runtime,DiscordGameDetails? details=null)
     {
         if(disposed)return;
         lock(changed)
         {
-            if(desired==runtime)return;
+            var next=runtime==null?null:new PresenceState(runtime,details);
+            if(desired==next)return;
             if(desired==null&&runtime!=null)started=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            desired=runtime;
+            desired=next;
             if(runtime==null)cleared=new(TaskCreationOptions.RunContinuationsAsynchronously);
             if(changed.CurrentCount==0)changed.Release();
         }
@@ -45,9 +47,15 @@ public sealed class DiscordPresence : IDisposable
         }
         throw new IOException("Discord desktop is not available.");
     }
-    internal static byte[] Activity(string? runtime,long start,string nonce)
+    internal static byte[] Activity(string? runtime,long start,string nonce,DiscordGameDetails? extra=null)
     {
-        object? activity=runtime==null?null:new {details="Playing Bloodborne",state=runtime,timestamps=new{start},instance=false};
+        object? activity=runtime==null?null:new {
+            type=0,status_display_type=2,
+            details=extra?.DetailsText??"Bloodborne · BB Tools",
+            state=extra?.StateText(runtime)??runtime,
+            timestamps=new{start},instance=false,
+            buttons=new[]{new{label="BBTools",url=AppInfo.RepositoryUrl}}
+        };
         return JsonSerializer.SerializeToUtf8Bytes(new{cmd="SET_ACTIVITY",args=new{pid=Environment.ProcessId,activity},nonce});
     }
     internal static async Task WriteFrame(Stream stream,int opcode,byte[] payload,CancellationToken token)
@@ -79,11 +87,17 @@ public sealed class DiscordPresence : IDisposable
     }
     private async Task RunAsync()
     {
+        var lastSent=System.Diagnostics.Stopwatch.StartNew();var hasSent=false;var hadExtraDetails=false;
         while(!lifetime.IsCancellationRequested)
         {
             try
             {
-                string? target;long start;lock(changed){target=desired;start=started;}
+                PresenceState? target;long start;lock(changed){target=desired;start=started;}
+                // Coalesce frequent detail changes. Clearing presence bypasses
+                // the refresh delay so opting out never waits for the next tick.
+                var refreshDelay=TimeSpan.FromSeconds(5)-lastSent.Elapsed;
+                if(target!=null&&pipe!=null&&hasSent&&!(hadExtraDetails&&target.Details==null)&&refreshDelay>TimeSpan.Zero)
+                {await changed.WaitAsync(refreshDelay,lifetime.Token).ConfigureAwait(false);continue;}
                 using var timeout=CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);timeout.CancelAfter(TimeSpan.FromSeconds(3));
                 if(target!=null&&pipe==null)
                 {
@@ -95,8 +109,9 @@ public sealed class DiscordPresence : IDisposable
                 {
                     lock(changed){target=desired;start=started;}
                     // Refresh unchanged activity too: detects client restarts and answers pings.
-                    var nonce=Guid.NewGuid().ToString("N");await WriteFrame(pipe,1,Activity(target,start,nonce),timeout.Token).ConfigureAwait(false);
+                    var nonce=Guid.NewGuid().ToString("N");await WriteFrame(pipe,1,Activity(target?.Runtime,start,nonce,target?.Details),timeout.Token).ConfigureAwait(false);
                     await Receive(nonce,timeout.Token).ConfigureAwait(false);
+                    lastSent.Restart();hasSent=true;hadExtraDetails=target?.Details!=null;
                     if(target==null){pipe.Dispose();pipe=null;}
                 }
                 Volatile.Write(ref status,target==null?"Waiting for a connected game.":"Showing Bloodborne activity on Discord.");

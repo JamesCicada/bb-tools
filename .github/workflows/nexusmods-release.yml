@@ -1,0 +1,73 @@
+name: Publish to Nexus Mods
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag
+        required: true
+        type: string
+      validate_only:
+        description: Check credentials, destination and checksum without uploading
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexusmods-bbtools-release
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    if: github.event_name == 'workflow_dispatch' || (github.event.release.draft == false && github.event.release.prerelease == false)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          persist-credentials: false
+      - name: Verify release and Nexus destination
+        id: prepare
+        uses: actions/github-script@v7
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+        with:
+          script: |
+            const result = await require('./scripts/nexus-release.cjs')({ github, context, core });
+            for (const [key, value] of Object.entries(result)) core.setOutput(key, value);
+      - name: Verify archive contents
+        if: steps.prepare.outputs.configured == 'true'
+        env:
+          ARCHIVE_PATH: ${{ steps.prepare.outputs.filename }}
+        run: |
+          python3 - <<'PY'
+          import os, zipfile
+          with zipfile.ZipFile(os.environ['ARCHIVE_PATH']) as archive:
+              if sorted(archive.namelist()) != ['BBTools.exe', 'README.md']:
+                  raise SystemExit('The release ZIP must contain only BBTools.exe and README.md.')
+              if archive.testzip() is not None:
+                  raise SystemExit('The release ZIP contains a corrupt entry.')
+          PY
+      - name: Upload verified release and changelog
+        if: steps.prepare.outputs.upload == 'true'
+        # Official v3 action v1.0.0-beta.11; includes the current non-deprecated endpoint.
+        uses: Nexus-Mods/upload-action@98532f7670c27cbecc78fae03fa3e278147827e2
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ steps.prepare.outputs.file_id }}
+          mod_id: ${{ steps.prepare.outputs.mod_id }}
+          filename: ${{ steps.prepare.outputs.filename }}
+          version: ${{ steps.prepare.outputs.version }}
+          display_name: BB Tools v${{ steps.prepare.outputs.version }} Win x64
+          description: Standalone Windows x64 build. Extract and run BBTools.exe.
+          category: main
+          archive_existing_version: 'false'
+          primary_mod_manager_download: 'false'
+          allow_mod_manager_download: 'false'
+          update_mod_version: 'true'
+          changelog: ${{ steps.prepare.outputs.changelog }}

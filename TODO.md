@@ -262,3 +262,17 @@ remain unconfirmed until tested on Bloodborne PC and shadPS4.
 | --- | :---: | :---: | --- |
 | God mode + Ignore hits together | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC after the polling update. Earlier lag/crash report does not establish a renderer crash cause. |
 | Avoid redundant combat/stamina writes | ✔️ | ⌛ | Poll still validates/reapplies cleared flags and follows loading; stable flags produce no writes. Combined-toggle native regression checks pass; no claim of a crash fix. |
+
+
+## v0.6.1 Discord branding and optional details
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Discord Bloodborne logo and GitHub button | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC. Application 1196921008809066616 default logo with no image override, and BBTools button; member-list status uses details. Profile card title still follows the Discord application name. |
+| Optional extra presence details | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC. Off by default; individual area/level/total-deaths/character-name/NG selections. Read-only game data and bounded refresh; omit unavailable fields. |
+
+Validation: 390 isolated checks in Debug and Release, 96 private 1.09 fingerprints and nine release-workflow checks. Live read-only character-name/area/data verification passed; Discord changes are tested and confirmed on Bloodborne PC.
+
+| v0.6.1 release automation | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Nexus Mods CI/CD | ✔️ | ⌛ | Official v3 uploader, stable GitHub release trigger, checksum/ownership checks, duplicate protection and read-only validation mode. 20 mocked release checks pass; live API validation and first upload are separate. |

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace BBTools;
 
-public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false, CameraControls? Camera = null, PhotoSettings? Photos = null,bool DiscordRichPresence=true)
+public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false, CameraControls? Camera = null, PhotoSettings? Photos = null,bool DiscordRichPresence=true,DiscordDetailPreferences? DiscordDetails=null)
 {
     public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BBTools", "settings.json");
     public void Validate()

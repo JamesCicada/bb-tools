@@ -208,7 +208,7 @@ internal static partial class Program
     }
     private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
     {
-        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints)) memory.Write(root+f.Offset,f.Bytes);
+        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints)) memory.Write(root+f.Offset,f.Bytes);
         memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
         var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
         var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
@@ -461,6 +461,15 @@ internal static partial class Program
             memory.Write(player.Component + 0x200, [0x85]); session.SetInfiniteStamina(true); session.RestoreStamina();
             Check(memory.Read(player.Component + 0x200, 1)[0] == 0x85, "preserve preexisting infinite stamina");
             var character = session.ReadCharacter();
+            foreach(var fingerprint in PlayerSession.PresenceFingerprints)memory.Write(root+fingerprint.Offset,fingerprint.Bytes);
+            var presenceManager=memory.Pointer(root+0x553B130);var presenceName=new byte[34];System.Text.Encoding.Unicode.GetBytes("Test Hunter").CopyTo(presenceName,0);
+            memory.Write(character.Address+0xA8,presenceName);memory.SetInt32(presenceManager+0x88,42);memory.SetInt32(presenceManager+0x68,2);
+            var oldPresenceMap=memory.Int32(player.Actor+0x3F8);memory.SetInt32(player.Actor+0x3F8,0x18010000);
+            var presenceMemory=new CountingWritesMemory(memory);var presenceSession=new PlayerSession(presenceMemory,root);
+            var details=presenceSession.ReadPresenceDetails(new(true,NgCycle:true));
+            Check(details==new DiscordGameDetails("Central Yharnam",character.Level,42,"Test Hunter",2)&&presenceMemory.Writes==0,"presence reads validated character, area and total counters without game writes");
+            Check(presenceSession.ReadPresenceDetails(new(true,false,false,false,false,false))==new DiscordGameDetails(),"deselected Discord fields are omitted from the snapshot");
+            memory.SetInt32(player.Actor+0x3F8,oldPresenceMap);
             session.SetEchoes(987654); Check(session.ReadCharacter().Values.Echoes == 987654, "set echoes");
             Reject<ArgumentException>(() => session.SetEchoes(-1), "reject negative echoes");
             Reject<ArgumentException>(() => session.SetEchoes(1000000000), "reject excessive echoes");
@@ -815,7 +824,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

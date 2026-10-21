@@ -60,7 +60,7 @@ jobs:
 
       - name: Check draft release automation
         if: matrix.configuration == 'Release'
-        run: node --test scripts/draft-release.test.cjs
+        run: node --test scripts/*.test.cjs
 
       - name: Package self-contained Windows x64 app
         if: matrix.configuration == 'Release'

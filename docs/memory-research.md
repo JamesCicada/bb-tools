@@ -491,3 +491,34 @@ reapplication after cleared flags/loads. Counted native-memory fixtures verify
 both protection modes plus stamina together, independent disable, preservation
 of unrelated engine edits and preexisting invincibility. Live stability remains
 unconfirmed; this optimization is not a demonstrated fix for the reported crash.
+
+
+## Optional Discord detail reader — 2026-10-21
+
+Extra sharing is off by default. Per-field choices read validated active character
+identity and GameDataMan ownership without game writes. Area uses actor+0x3F8
+and labels the loaded map; it does not claim the exact lamp/subarea. Level comes
+from the existing active-character reader. Total deaths is unsigned GameDataMan
++0x88, confirmed by the saturating increment routine at image+0x14EB660 and the
+primary bbhost engine/player_data.cpp source; NG cycle uses manager+0x68.
+The character-name setter at image+0x14F31D0 bounds the input to 16 UTF-16 code
+units, copies into record+0xA8 and writes its terminator. The reader checks that
+instruction fingerprint and reads a bounded 34-byte UTF-16 buffer, rejecting
+invalid encoding/controls and missing termination. New counters/name have extra
+fingerprints, independent of gameplay write validation. Live display/data tests
+remain pending.
+
+Presence assets use the existing public PNG at a pinned repository commit;
+no upload, token or account change is needed. A BBTools button links to the repo.
+status_display_type=2 requests Details in the member-list status; this does not
+rename the application on the profile card. Official protocol references:
+[Activity fields](https://docs.discord.com/developers/events/gateway-events#activity-object),
+[application-name restriction](https://docs.discord.com/developers/rich-presence/using-with-the-embedded-app-sdk).
+
+
+Read-only live verification: bb-probe.exe on 2026-10-21 returned the loaded
+character in Central Yharnam, with valid level/deaths/NG fields. The name matched
+the supplied in-game name; personal field values are not recorded here. The handle was opened read-only; no game writes or
+Discord publication occurred. This validates the reader, not the final Discord UI.
+
+Discord application selection updated to 1196921008809066616 at the user’s request. The external PNG override was removed: the activity omits assets so Discord can use that application’s configured Bloodborne icon. The BBTools repository button remains. Earlier pinned-emblem notes describe the superseded payload.
