@@ -260,10 +260,234 @@ fingerprinted before use; fixture checks are not live runtime confirmation.
 - Flight: module +0x20, component +0x200 bit 0x40; collision controller actor +0x58, +0x114 bit 2. Restore only owned actor/component state.
 - HUD: GameDataMan `0x553B130`, options +0x48, visible byte +9. Hides frontend as well as HUD.
 - Free camera: root `0x553E860`, owner +0x2830, camera +0x60; freeze verified follow update `0x143AC60`, restore code before attempting old-camera cleanup.
-- Poison: native removal `0x17E1D90`; only slow/rapid poison parameter states 2/5 are selected.
+- Poison: native removal `0x17E1D90`; the earlier 2/5 selector is superseded by verified slow/rapid states 2/6 below.
 - New revival profiles were checked against local event scripts. Moon Presence enables route flag 9900; ending-boss actions can alter story progression.
 - Chalice coordinate bookmarks capture character, connection token, altar UID and a bounded progress-flag snapshot. They intentionally expire across reconnect/progress changes.
 - shadPS4 discovery scans committed private/mapped allocation candidates and requires the same independent game-image fingerprints. Experimental opt-in does not establish compatibility with emulator calling or memory behavior.
 
 Independent action speed, global time scaling, direct weapon/gem mutation, jump height,
 and persistent cross-session dungeon identity remain unverified and unimplemented.
+
+
+## 0.6.0 standalone photo-mode path
+
+The earlier follow-camera freeze prototype is superseded. No camera code patch is
+applied by the new implementation. Independently verified against the private
+CUSA03173 1.09 ELF:
+
+- Correction: global 0x553E860 is the lock-on manager, not the map-step owner.
+  The +0x13AC8 store at 0x19295D9 belongs to a different native task. The active
+  0x5330480-vtable task stores its debug controller at +0x110 (0x193764B) and
+  camera output at +0x128 (0x19379F0), mirrored into lock-on-manager +0x2830.
+  Constructor 0x156FEC0 installs controller vtable 0x53267D0.
+- Controller +0xC4 selects debug output; +0xC8 holds native debug input updates;
+  +0xD0 is the camera frame. Native update 0x15729B6 skips its input-driven camera
+  step when held, while renderer selection 0x193BEC5 still copies its frame.
+- The ordinary camera owner's +0x10..+0x5F frame is copied by 0x193BE5A. Seed a
+  private 0x60-byte frame from that owner (root +0x2830), then install it in the
+  held debug output. Native output copy at 0x193BEE1 consumes projection and basis.
+- No need for follow mode 3, no displaced game instructions and no overwritten
+  debug-only constructors. Frame allocations are retained to avoid stale native readers.
+- Native SetCompletelyNoMove at 0x1337878 reads the packed field starting actor
+  +0x1E1 and sets bit 23: byte +0x1E3, mask 0x80. Photo mode optionally owns only
+  this bit; independently restores it even if camera restoration is blocked.
+
+Controller vtable, native instruction fingerprints, actor handle, map and camera
+owner must validate. External debug camera ownership is rejected/preserved. Fixture
+and static image checks cannot confirm renderer behavior on a running native port
+or emulator; live validation remains pending.
+
+
+## 0.6.0 read-only lock-on target inspection
+
+Independently checked against the private CUSA03173 1.09 ELF; no game assets
+are distributed. The target reader never writes process memory.
+
+- Game root global 0x553E860 +0x2820 is the current lock flag (0x188EC30),
+  +0x2830 owns the camera; camera +0x90 is only a mirror (0x1890F61) and was null on a live native-port
+  lock-on. The authoritative active point list starts at manager +8 (0x188F583),
+  links through point +0x80 (0x188F706) and marks selection at +0x90 bit 0x20
+  (0x1890ACD). Require one selected entry; reject cycles/ambiguity.
+- Point +0x90 bit 0x20 marks selection; point +0x88 points to a target record
+  with tagged handle +0x64 (0x1890E48). Only character tag 0x10000000 is accepted.
+- WorldChrMan 0x553E878 +0x850 + selector*8 resolves the set. Handle bits
+  14..19 select the set, low 14 index entries of stride 0x38; actor +0x18 must
+  refer back to the canonical entry (0x18908A9). Recheck context and identity.
+- Resistance module +0x28, vtable 0x5335900: current integers +0x10, limits +0x24,
+  five entries. Slow poison, legacy disease, rapid poison, frenzy, beasthood.
+  Private armor parameters independently confirm the native blood slot means
+  rapid poison, while disease is a legacy slot. Cure uses states 2 and 6.
+- Super-armor module +0x48, vtable 0x5335990: +0x10 current, +0x14 previous
+  limit, +0x18 reserve, +0x1C recovery, +0x20 broken (0x1A5D9D8/0x1A5DA77).
+  This is not a verified boss limb-health reader; sampled breaks can be missed.
+- Native effect entries: remaining time +0 (0x17EAA0D), flags +0x1C,
+  ID +0x40, parameter row +0x48, next +0x58; active exclusion mask 0x800C0003.
+  Parameter state is ushort +0x156. Negative time is labeled untimed, zero
+  trigger/expiring; unknown states retain native IDs. Lists are bounded/cycle checked.
+- HP +0xF8/+0xFC, stamina +0x134/+0x138 in the stats module. Internal model
+  name +0x158 is bounded UTF-16, not a localized enemy name. Optional distance
+  uses physics module +0x68, position +0x1E0.
+
+The UI samples on a serialized worker every 200 ms. Unlock keeps updating the
+validated retained actor; context loss freezes the last-known snapshot until a
+new explicit lock-on selection. Synthetic read-only fixtures verify identity,
+retention and corrupt-data rejection; live testing remains pending.
+
+
+## 0.6.0 parry-practice target protection and research limits
+
+- Independent private-ELF inspection: 0x1A2FDCF calls 0x1A577D0 before a lethal
+  HP result. The true path clamps HP to 1. The latter checks stats +0x200 mask
+  0x04 at 0x1A577E0, for both NPC and player actors. This differs from mask
+  0x02 at 0x1A2FD81, which skips incoming negative HP deltas altogether.
+- Target practice owns only mask 0x04, preserving other bits and the entry value.
+  Full identity, world/player/map, module ownership and living-HP checks precede
+  changes. Caller pauses game threads only for actual mutations; stable protected
+  targets do not require repeated suspension. Unlock keeps the same actor; a new
+  explicit lock-on restores the old actor where valid and protects the new one.
+- Manual HP restoration accepts only the current locked living target, writing
+  its validated max HP. It does not revive, reset boss flags or prevent scripts
+  from killing/despawning the target. Context loss drops stale ownership safely.
+- The private image contains native Parry AI action metadata and debug text for
+  target parry timing regions. These are not verified gun-parry success events.
+  Super-armor breaks, ordinary damage and paired throws are insufficient evidence
+  to count a firearm parry: other mechanics can produce those states.
+- Weapon parameter +0xC2 (parryDamageLife) and NPC +0x13E/+0x13F attack/defence
+  fields are research leads. Their generic parameter consumers do not establish
+  an adjustable firearm-parry window. No such parameter is changed by the tool.
+
+Auto-parry, window adjustment, success indicators and automatic statistics remain
+unimplemented pending reliable native event/timing attribution. No guessed
+stagger-based parry counter, timing slider or simulated gun input is shipped.
+
+
+## Live failure investigation — 2026-10-18
+
+User-provided session log showed successful existing player actions and practice
+setup, but FreeCamera.Resolve and ReadLockedEnemy failed through a generic pointer
+message. Read-only examination of the loaded native port confirmed:
+
+- Lock-on manager and player were valid; manager +0x2820 was 1. Camera output
+  +0x90 was null. The selected active-list entry yielded canonical character
+  c1170_0002, 123/123 HP, valid status/super-armor modules and native effect rows.
+- Manager +0x13AC8 was zero. The actual active task linked both the current camera
+  output and the 0x53267D0 controller. Its source frame had a finite orthonormal
+  basis, projection and the current 70-degree FOV. The corrected C# readers passed
+  with a read-only process handle; no feature was enabled or game data changed.
+- Camera discovery searches only writable committed data in the output owner's
+  allocation, bounded to 15 seconds with cancellation. Candidates require the
+  native task vtable, exact active output pointer and controller vtable. The result
+  is cached/revalidated; the lookup runs off the UI thread before enabling photo mode.
+
+The synthetic fixtures now leave the incorrect root field and camera target mirror
+null, covering the real failure rather than constructing the earlier assumed chain.
+Full photo movement/rendering/capture and target-write validation remains pending.
+
+
+## Photo studio movement gate correction
+
+The initial event-only hunter lock did not stop movement in the reported live
+build. It also returned early after claiming ownership, so game-cleared bits
+were not reapplied. The native DisableMove callback at 0x132F786 loads actor
++0x58 and writes its +0x111 byte; this gate is now used alongside the packed
+actor +0x1E3 mask 0x80. Both values are captured before changes and checked each
+tick, with mutations only when needed. Controller replacement stops reapplication;
+cleanup restores the event flag only on the same actor/handle and restores the
+controller byte only when that exact controller is still bound to the actor.
+Death/loading retain pending restoration where needed. Synthetic tests cover
+reapplication, toggling off, existing locks and replacement-controller avoidance.
+Full keyboard/controller movement behavior still requires live confirmation.
+
+## Photo/HUD regression follow-up — 2026-10-19
+
+The controller/event flags above still allowed movement in the reported live
+test. Hunter locking now also shares MovementSpeed's verified 14-byte result
+hook at 0x1A196BB. Its zero factor is applied per native execution rather than
+depending on UI polling. A captured-actor restriction prevents this factor from
+following a replacement player. Ordinary speed changes keep the photo guard;
+photo exit restores the selected speed, or the original code at normal speed.
+The debug-camera output itself still uses data only. No external addon is needed.
+Native execution fixtures check zero results, foreign/replacement actors and
+shared ownership. Actual keyboard/controller behavior remains pending a retest.
+
+HUD cleanup now runs in a separate finally path and retries when options are
+temporarily unavailable. The original visibility remains captured across options
+replacement instead of treating a cloned hidden value as the new baseline.
+Photo exit explicitly shows HUD unless the separate gameplay hide override is
+selected. Restore HUD clears both hide selections and repairs older hidden state.
+
+## Persistent native hit invincibility — 2026-10-19
+
+The EnableInvincible binding resolves to 0x1332EF0. Its setter at 0x1332F13
+sets bit 14 of the packed actor flags starting +0x1E1: byte +0x1E2, mask 0x40.
+The native hit/invincibility getter checks mask 0x04004000 at 0x18CBFC7 before
+animation invincibility. This persistent event bit avoids racing per-frame TAE
+flags. Ignore hits owns only that bit, validates the full actor handle, restores
+its captured value and participates in the existing preset/flag lifecycle.
+An isolated fixture executes the native getter with and without the event bit,
+independently of animation flags. Live hit reactions, grabs and scripts remain
+unconfirmed. This does not disable world collision or change ordinary God mode.
+
+## Parry investigation — 2026-10-19
+
+Read-only sampling captured c2700 attack/animation/effect transitions. The TAE
+module (+0x18, vtable 0x5335190) records recent animation IDs/times; these entries
+must not be treated as ten simultaneously active animations. The action-flag
+module is +0x08, vtable 0x53342C0. The native event dispatcher at 0x1A216B0 maps
+flag 5 to +0x1BD mask 4, flag 63 to controller state +0x40 mask 4, and flag 73 to
+state +0x41 mask 4. The flag-5 damage consumer at 0x1A2F2B0 explicitly checks
+attack type 64, so it is not sufficient evidence for automatic firearm shots.
+
+Primary format references: [DSAnimStudio Bloodborne TAE definitions](https://github.com/Meowmaritus/DSAnimStudio/blob/master/DSAnimStudioNETCore/Res/TAE.Template.BB.xml)
+and [SoulsFormats TAE reader](https://github.com/Meowmaritus/SoulsFormats/blob/master/SoulsFormats/Formats/TAE/TAE.cs).
+Private parameter inspection identifies effect 31 as thrust-counter damage,
+separate from firearm-related effects 50–53. Its observed attack transitions do
+not prove a firearm-parry timing gate. No public game strings/assets are bundled.
+Auto-parry, firearm-window adjustment and success attribution remain unimplemented;
+no generic parry flag, counter-damage effect or stagger is presented as completion.
+
+
+## 0.6.0 first-encounter revival and native death-penalty skip
+
+Current availability: photo/free camera and flight/noclip are disabled and hidden.
+Their implementation notes above remain research history, not current availability.
+
+First-encounter revival clears the ten-flag encounter family including the met
+flag; repeat mode retains the existing met flag (+2 for base-game profiles, +1
+for DLC profiles). Explicit door/access flags remain profile-specific. The local
+boss-rush source confirms the existing met/skip-intro policy. Journals now record
+FirstEncounter and requested Changes as well as original Flags. Fog and aggression
+still depend on original encounter scripts and user AI/visibility overrides.
+No new in-game revival confirmation is implied.
+
+The private prepared 1.09 image exposes the script binding IsDeathPenaltySkip
+(string at 0x492DF8A, registration at 0x134427E, getter at 0x13389B0).
+The getter loads GameDataMan through image+0x553B130 and returns whether byte
+manager+0xA8 is nonzero. A fingerprint checks the native getter instructions.
+NoEchoesLoss owns bit 0 of this bool field, rejects values above 1 before enabling,
+captures the original value, follows a validated replacement manager and never
+restores through a retired manager. It performs no balance snapshot/refund writes.
+Synthetic execution verifies the real getter false/true/restored behavior and
+preservation of an existing flag. Death, bloodstain recovery and any additional
+native penalty effects remain pending live tests on both runtimes.
+
+Discord uses local desktop IPC and SET_ACTIVITY with the user-supplied public
+application ID 1189594649954877620. Protocol reference:
+[Discord RPC documentation](https://docs.discord.com/developers/topics/rpc).
+The mock pipe checks handshake, nonce acknowledgement, ping/pong and activity clear;
+real desktop publication/restart still needs user testing. Only game/runtime and
+elapsed time are published, with no tokens or character/location payload.
+
+
+## 2026-10-21 combat polling stability follow-up
+
+Lag/intermittent crashes were reported with God mode and Ignore hits together.
+The available C:/Games/bb-testing/last_run.log contains renderer flush stalls and
+texture-cache pressure, and ends with Quit to Desktop. It does not establish a
+crash cause or implicate the invincibility flags. No game settings were changed.
+Combat and stamina polling now skips writes if the desired bits are already set,
+while retaining identity/instruction validation, original-state ownership and
+reapplication after cleared flags/loads. Counted native-memory fixtures verify
+both protection modes plus stamina together, independent disable, preservation
+of unrelated engine edits and preexisting invincibility. Live stability remains
+unconfirmed; this optimization is not a demonstrated fix for the reported crash.

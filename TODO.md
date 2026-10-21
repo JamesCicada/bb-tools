@@ -111,11 +111,11 @@ is recorded for the implemented additions except weapon durability.
 | Player movement multiplier | ✔️ | ⌛ | Player-only transient movement scale; one shared multiplier, not independent walk/run/sprint controls. |
 | World gravity | ✔️ | ⌛ | Affects all actors and physics; restores captured values. |
 | Active poison cure | ✔️ | ⌛ | Removes slow/rapid poison effects while preserving unrelated effects. |
-| Loaded-character inspector | ✔️ | ⌛ | Hidden pending realtime targeted-enemy updates. |
+| Loaded-character inspector | ✔️ | ⌛ | Live lock-on tracking and retained snapshots implemented; live validation pending. |
 | Micolash, Gehrman and Moon Presence revival | ✔️ | ⌛ | Experimental event profiles; ending bosses can alter story/NG progression. |
 | Game-owned item-name catalog import | ✔️ | ⌛ | Import English names from your own game files; search by name or ID. |
-| HUD visibility and detached free camera | ✔️ | ⌛ | HUD available; free camera disabled and hidden. |
-| Flight and noclip | ✔️ | ⌛ | Flight available; noclip disabled and hidden. |
+| HUD visibility and detached free camera | ✔️ | ⌛ | HUD available; photo mode disabled and hidden pending movement/HUD fixes. |
+| Flight and noclip | ✔️ | ⌛ | Flight/noclip disabled and hidden pending further fixes. |
 | Chalice coordinate bookmarks | ✔️ | ⌛ | Restricted to the same connection, character, altar and dungeon progress snapshot. |
 | Expanded advanced presets | ✔️ | ⌛ | Movement, world gravity and HUD; flight/free camera are explicit session actions. |
 | Official shadPS4 support | ✔️ | ✔️ | Tested and confirmed; no experimental opt-in. Image/player validation retained. |
@@ -131,7 +131,7 @@ Earlier live confirmations remain valid only for their recorded feature/configur
 - ⌛ Camera shake and shoulder offset.
 - ⌛ Jump-height control independent of world gravity.
 - ⌛ Persistent generated-dungeon bookmarks across reconnection/progress changes.
-- ⌛ Exact lock-on target inspection and full enemy defense statistics.
+- ✔️ Exact lock-on target inspection implemented; ⌛ live validation and full enemy defense/limb statistics.
 
 These need verified engine paths. They are not represented by placeholder controls.
 
@@ -162,7 +162,7 @@ and tested-and-confirmed status are tracked separately; pending live checks rema
 | Database backup and import/export     |     ✔️      |          ✔️          | Versioned JSON for presets, bookmarks and favorites, transactional validated imports and consistent SQLite backups.                                                                                            |
 | Boss retry workflow                   |     ✔️      |          ✔️          | 22 base-game/DLC profiles (three experimental). From any loaded area: journal original encounter flags, revive, reload area, place outside fog, refill health/stamina and start timer. Micolash/Gehrman/Moon Presence await live tests. |
 | Encounter timer                       |     ✔️      |          ✔️          | Manual start/finish or automatic retry start; pause while loading/dead; attempts, deaths and session best. Tested and confirmed.                                                                   |
-| Enemy information panel               |     ✔️      |          ⌛          | Snapshot panel hidden until realtime targeted-enemy updates are implemented.                                                                                                                                           |
+| Enemy information panel               |     ✔️      |          ⌛          | Dedicated live target page with retained data, status effects and super-armor readings; live validation pending.                                                                                                                                           |
 | Searchable common items and favorites |     ✔️      |          ✔️          | Search bundled common items and saved custom-ID favorites by name/ID; load favorites before explicit spawning. Optional full game-owned English name import implemented; live test pending.                                                |
 | Weapon setup editor                   |     ⌛      |          ⌛          | Inspect reinforcement and gem slots with valid-value checks and preview before applying.                                                                                                                       |
 | Unlimited weapon durability           |     ✔️      |          ⌛          | Native inventory repair replacement implemented; live both-hand validation pending. |
@@ -176,7 +176,7 @@ and tested-and-confirmed status are tracked separately; pending live checks rema
 | Camera distance and height            |     ✔️      |          ✔️          | Distance/look-at-height scales 0.5–2.0, original-value restoration, loading recovery and preset support. Shoulder offset remains unimplemented.                                                                |
 | Camera and screenshot tools           |     ⌛      |          ⌛          | Hide HUD, toggle camera shake and add a verified free camera with adjustable speed and restoration.                                                                                                            |
 | Gravity and jump controls             |     ⌛      |          ⌛          | Optional player gravity and jump-height settings for exploration; verify collision and restore normal values.                                                                                                  |
-| Flight and noclip exploration         |     ✔️      |          ⌛          | Flight available; noclip disabled and hidden pending further work.                                                                                                      |
+| Flight and noclip exploration         |     ✔️      |          ⌛          | Flight/noclip disabled and hidden pending further fixes.                                                                                                      |
 | Chalice-aware location bookmarks      |     ✔️      |          ⌛          | Connection/character/altar/progress snapshot required; reconnect expires the bookmark.                                                                                                                       |
 | Backup history and restore assistant  |     ✔️      |          ✔️          | List BB Tools ZIPs; verify paths/sizes/CRC, require game closed, retain prior folder and recovery ZIP before replacement.                                                                                      |
 | Diagnostics export                    |     ✔️      |          ✔️          | App/runtime versions and redacted status/config summary, excluding save contents and personal filesystem paths.                                                                                                |
@@ -187,3 +187,78 @@ and tested-and-confirmed status are tracked separately; pending live checks rema
 - ✔️ ZIP includes only `BBTools.exe` and `README.md`; packaging rejects unexpected files.
 - ✔️ Main version bumps create an annotated tag and draft release after both CI builds pass.
 - ✔️ First GitHub draft release run and manual asset review.
+
+
+## v0.6.0 local test candidate
+
+Current availability supersedes the photo/noclip implementation history below:
+photo mode/free camera and flight/noclip are disabled and hidden. Their retained
+code and automated checks do not establish live functionality.
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Top navigation and section tabs | ✔️ | ⌛ | Compact header; Combat/Travel/Camera/Settings section tabs. |
+| Search inside selection menus | ✔️ | ⌛ | Processes, items, lamps, locations and presets; IDs/categories retained. |
+| First-encounter boss revival | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC. Optional met/intro reset; journal records mode and requested changes. Multi-phase/ending profiles retain separate test status. |
+| Keep Blood Echoes on death | ✔️ | ⌛ | Native IsDeathPenaltySkip flag; no balance refill. Test respawn, bloodstains, loads and restoration. |
+| Discord Rich Presence | ✔️ | ⌛ | Default on; Settings opt-out; desktop IPC, reconnect and explicit activity clear. |
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Standalone photo mode/free camera | ✔️ | ⌛ | Disabled and hidden; movement/HUD fixes need further work. |
+| Configurable camera controls | ✔️ | ⌛ | WASD/EQ/arrows/ZC, Shift/Alt modifiers, reset/exit. Save/restart and custom bindings. |
+| Photo FOV, roll and camera speeds | ✔️ | ⌛ | Separate 10–120° photo FOV; reset restores entry composition. |
+| Photo HUD and hunter movement lock | ✔️ | ⌛ | Optional; restore original state on exit, death/loading and disconnect. World simulation remains running. |
+| Flight/noclip | ✔️ | ⌛ | Disabled and hidden pending further work. |
+
+Version 0.6.0 is approved for push. Unconfirmed features retain their individual test status.
+Enemy details is available for live testing; unknown effects keep native IDs.
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Live target details and retention | ✔️ | ⌛ | Real lock-on selection, HP/stamina, distance, buildup/limits, effect IDs/states/timers and super armor. Keeps last readings across unload/disconnect. |
+| Less crowded navigation | ✔️ | ⌛ | Top navigation replaces sidebar; section tabs replace crowded expanders; connections in Settings. |
+| Rapid-poison cure mapping | ✔️ | ⌛ | Select native states 2/6; preserve legacy disease state 5. |
+
+
+## Parry practice
+
+| Feature | Priority | Implemented | Tested and confirmed | Notes |
+| --- | --- | :---: | :---: | --- |
+| Practice setup / restore previous combat setup | First | ✔️ | ✔️ | Tested and confirmed. Protection, infinite bullets/stamina, 0.1× damage; conflicting overrides off; rewards unchanged. |
+| Keep targeted enemy alive / restore living target HP | First | ✔️ | ⌛ | Native cannot-die bit, preserve damage/reactions, transfer on new lock-on, disarm on context loss; no revival. |
+| Verified firearm-parry success / visceral-opening indicator | High | ⌛ | ➖ | Requires a verified native event, distinct from ordinary stagger, backstab and limb break. |
+| Automatic attempts/successes/streaks/visceral follow-ups | High | ⌛ | ➖ | Depends on reliable shot and parry attribution; no guessed counts. |
+| Auto-parry | High | ⌛ | ➖ | Independent normal-play toggle, separate from practice setup; no automatic protection/resources/damage changes. Verify firearm eligibility, attack timing and native shot request first. |
+| Adjustable firearm-parry window | High | ⌛ | ➖ | Trace the native firearm eligibility check; generic parry flags and thrust-counter effect 31 do not establish it. No guessed parameter slider. |
+
+New target controls are manual per session, excluded from startup presets, and
+remain unconfirmed until tested on Bloodborne PC and shadPS4.
+
+
+## Photo and targeting fixes / quality controls
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Native camera task/controller resolution | ✔️ | ⌛ | Wrong owning object fixed. Actual Bloodborne PC task, controller and frame read-only validation passed; movement/exit/load tests pending. |
+| Authoritative lock-on selection | ✔️ | ⌛ | Actual enemy identity, HP, effects and modules read successfully while the camera mirror was null. UI/protection writes still need live confirmation. |
+| PNG capture and output folder | ✔️ | ⌛ | Capture key/default F12, countdown, physical displayed client resolution; original always preserved. |
+| Photo filters and adjustments | ✔️ | ⌛ | Noir/Warm/Cool/Sepia, exposure, contrast, saturation, vignette, preview and separate edited PNGs. Defaults persist. |
+| Larger internal render resolution / supersampling | ⌛ | ➖ | Separate renderer research; resizing a saved photo is not a substitute. |
+| HDR photo export | ⌛ | ➖ | Current composed-client capture is SDR PNG. |
+
+
+| Photo studio follow-up | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Hunter movement lock repair | ✔️ | ⌛ | Flags alone still allowed movement. Added a captured-hunter per-frame movement hook shared with speed controls; preserve configured speed on exit. Live retest required. |
+| Photo HUD restoration repair | ✔️ | ⌛ | Restore independently of camera errors, retry missing options, retain baseline across option copies, explicit Restore HUD recovery. Live retest required. |
+| Ignore hits beneath God mode | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC, including with God mode. Grabs and scripted events retain separate test coverage. |
+| Dedicated, simpler Photo studio | ✔️ | ⌛ | Retained implementation; disabled and hidden in the current candidate. |
+
+
+## 2026-10-21 stability investigation
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| God mode + Ignore hits together | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC after the polling update. Earlier lag/crash report does not establish a renderer crash cause. |
+| Avoid redundant combat/stamina writes | ✔️ | ⌛ | Poll still validates/reapplies cleared flags and follows loading; stable flags produce no writes. Combined-toggle native regression checks pass; no claim of a crash fix. |

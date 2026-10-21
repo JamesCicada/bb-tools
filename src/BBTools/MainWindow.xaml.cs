@@ -60,6 +60,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitializeExploration();
+        InitializeTargetMonitor();
+        InitializePhotoCapture();
         var statusProperty = System.ComponentModel.DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock));
         statusProperty.AddValueChanged(Status, LogStatus);
         Closed += (_, _) => { statusProperty.RemoveValueChanged(Status, LogStatus); hotkeys?.Dispose(); };
@@ -85,7 +88,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Refresh(this, new RoutedEventArgs());
         updating = true; AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;
-        FovSlider.Value = settings.StartupFov; FovEnabled.IsChecked = settings.StartupFovEnabled; updating = false;
+        FovSlider.Value = settings.StartupFov; FovEnabled.IsChecked = settings.StartupFovEnabled;DiscordPresenceEnabled.IsChecked=settings.DiscordRichPresence; updating = false;
         UpdateStartupSummary();
         LoadHotkeyControls();
         autoTimer.Tick += async (_, _) => await TryAutoConnect();
@@ -191,6 +194,7 @@ public partial class MainWindow : Window
     private static bool IsExpected(Exception ex) => ex is JsonException or Microsoft.Data.Sqlite.SqliteException or IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException or OperationCanceledException;
     private void Poll(object? sender, EventArgs e)
     {
+        UpdateDiscordPresence();
         if (session == null || memory == null) return;
         if (!memory.IsAlive) { Disconnect(); Status.Text = "Game process exited. Refresh and reconnect after restarting."; return; }
         try
@@ -213,13 +217,7 @@ public partial class MainWindow : Window
                 try{movementSpeed??=new MovementSpeed(memory,session);worldGravity??=new WorldGravity(memory,session);if(MovementEnabled.IsChecked==true)movementSpeed.Apply((float)MovementSlider.Value);else movementSpeed.Restore();if(GravityEnabled.IsChecked==true)worldGravity.Apply((float)GravitySlider.Value);else worldGravity.Restore();}
                 catch(Exception ex)when(IsExpected(ex)){advancedPaused=true;App.LogError(ex);Status.Text=$"Movement/physics paused: {ex.Message} Toggle the setting to retry.";}
             }
-            if(FlightEnabled.IsChecked==true)
-            {
-                try{flight??=new ExplorationFlight(memory,session);flight.Apply(false);if(!actionBusy&&HotkeyManager.ForegroundProcess()==connectedPid&&HotkeyManager.IsDown(0x11)&&!HotkeyManager.IsDown(0x12))
-                    {var forward=(HotkeyManager.IsDown(0x26)?1:0)-(HotkeyManager.IsDown(0x28)?1:0);var right=(HotkeyManager.IsDown(0x27)?1:0)-(HotkeyManager.IsDown(0x25)?1:0);var up=(HotkeyManager.IsDown(0x21)?1:0)-(HotkeyManager.IsDown(0x22)?1:0);if(forward!=0||right!=0||up!=0)_=MoveFlight(flight.Step(forward,right,up,(float)FlightSpeed.Value*.2f));}}
-                catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);FlightEnabled.IsChecked=false;Status.Text=$"Flight stopped: {ex.Message}";}
-            }
-            try{hudVisibility??=new HudVisibility(memory,session);if(HideHud.IsChecked==true)hudVisibility.Apply();else hudVisibility.Restore();}
+            try{hudVisibility??=new HudVisibility(memory,session);if(HideHud.IsChecked==true || FreeCameraEnabled.IsChecked==true && PhotoHideHud.IsChecked==true)hudVisibility.Apply();else hudVisibility.Restore();}
             catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);HideHud.IsChecked=false;Status.Text=$"HUD override stopped: {ex.Message}";}
             cameraFov ??= new CameraFov(memory, session);
             if (!fovPaused)
@@ -253,6 +251,7 @@ public partial class MainWindow : Window
                 }
                 catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); Status.Text = $"Startup preset failed: {ex.Message}"; }
             }
+            UpdateEnemyPractice();
             PlayerControls.IsEnabled = true;
             PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
@@ -281,10 +280,11 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (IsExpected(ex))
         { App.LogError(ex);
+            try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);}
             if(retryTravelling || retryDestination!=null)retryLoadObserved=true;
             encounterTimer.Context(false,false);EncounterSummary.Text=encounterTimer.Summary;
             PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-            PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
+            ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
             HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—";
             HealthBar.Value = StaminaBar.Value = 0;
             statDraft = null;
@@ -302,7 +302,7 @@ public partial class MainWindow : Window
         DamageMultiplier.Text = EchoesMultiplier.Text = "1";
         FovEnabled.IsChecked = false;
         TuneCamera.IsChecked = false;
-        FreeCameraEnabled.IsChecked=false;FlightEnabled.IsChecked=false;HideHud.IsChecked=false;
+        FreeCameraEnabled.IsChecked=false;FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;HideHud.IsChecked=false;
         MovementEnabled.IsChecked=GravityEnabled.IsChecked=false;advancedPaused=false;
         var errors = new List<string>();
         try { freeCamera?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
@@ -312,6 +312,8 @@ public partial class MainWindow : Window
         try { worldGravity?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { cameraTuning?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { cameraFov?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
+        beforeParryPractice=null;
+        try { StopEnemyPractice(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { actions?.ResetMultipliers(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { session?.RestoreStamina(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { session?.RestorePracticeFlags(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
@@ -319,18 +321,20 @@ public partial class MainWindow : Window
     }
     private void Disconnect()
     {
+        targetGeneration++;targetMonitor.Unavailable("Disconnected");RenderTarget();
         encounterTimer.Context(false,false);EncounterSummary.Text=encounterTimer.Summary;
         retryDestination=null;retryGeneration++;
         timer.Stop(); var cleanupIssue = StopFeatures();
         try { actions?.Dispose(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); cleanupIssue = $"Request dispatcher cleanup: {ex.Message}"; }
         actions = null;
-        freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;
+        freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;photoHudRestorePending=false;
         cameraFov = null; fovPaused = false;cameraTuning=null;tuningPaused=false;
         memory?.Dispose(); memory = null; session = null; statDraft = null; connectedPid = 0;
+        UpdateDiscordPresence();
         lastActor = lastComponent = 0;
         ReleaseOwner();
         PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
-        PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
+        ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = true;
         ConnectButton.Content = "Connect"; ConnectionBadge.Text = "DISCONNECTED";
         ConnectionHint.Text = "Start Bloodborne PC and load a character, then connect.";
@@ -343,9 +347,10 @@ public partial class MainWindow : Window
         if (sessionOwner == null) return;
         sessionOwner.ReleaseMutex(); sessionOwner.Dispose(); sessionOwner = null;
     }
-    private bool waitingToClose;
+    private bool waitingToClose,finalizingClose;
     private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        if(finalizingClose){e.Cancel=true;return;}
         if (actionBusy || saveOperationBusy)
         {
             e.Cancel = true;
@@ -355,7 +360,9 @@ public partial class MainWindow : Window
             while (actionBusy || saveOperationBusy) await Task.Delay(50);
             waitingToClose = false; Close(); return;
         }
-        closing = true; updateLifetime.Cancel(); autoTimer.Stop(); Disconnect();
+        e.Cancel=true;finalizingClose=true;closing = true; updateLifetime.Cancel(); autoTimer.Stop(); Disconnect();
+        try{await discordPresence.StopAsync();}
+        finally{await Dispatcher.InvokeAsync(()=>{Closing-=OnClosing;Close();});}
     }
 
     private void OpenGitHub(object sender, RoutedEventArgs e) => OpenWeb(new Uri(AppInfo.RepositoryUrl));
@@ -414,7 +421,7 @@ public partial class MainWindow : Window
         try { session.SetInfiniteStamina(InfiniteStamina.IsChecked == true); Status.Text = InfiniteStamina.IsChecked == true ? "Infinite stamina enabled." : "Previous stamina-consumption setting restored."; }
         catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); Status.Text = $"{ex.Message} Selection retained; waiting for a valid player."; }
     }
-    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent, NoAi, NoFallDamage, InfiniteItems];
+    private CheckBox[] FlagControls => [GodMode, OneShot, Stealth, Silent, NoAi, NoFallDamage, InfiniteItems,IgnoreHits,KeepEchoesOnDeath];
     private void FlagChanged(object sender, RoutedEventArgs e)
     {
         if (updating || session == null || sender is not CheckBox control) return;
@@ -430,16 +437,20 @@ public partial class MainWindow : Window
     private void Navigate(object sender, RoutedEventArgs e)
     {
         var page = (string)((Button)sender).Tag;
+        if(page=="Photo")page="Player";
         App.Log?.Write("INFO", $"Page: {page}");
         PlayerPage.Visibility = page == "Player" ? Visibility.Visible : Visibility.Collapsed;
         PracticePage.Visibility = page == "Practice" ? Visibility.Visible : Visibility.Collapsed;
+        TargetPage.Visibility = page == "Target" ? Visibility.Visible : Visibility.Collapsed;
         ItemsPage.Visibility = page == "Items" ? Visibility.Visible : Visibility.Collapsed;
         TravelPage.Visibility = page == "Travel" ? Visibility.Visible : Visibility.Collapsed;
         WorkshopPage.Visibility = page == "Workshop" ? Visibility.Visible : Visibility.Collapsed;
+        PhotoPage.Visibility = page == "Photo" ? Visibility.Visible : Visibility.Collapsed;
         CameraPage.Visibility = page == "Camera" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
-        PageTitle.Text = page switch { "Practice" => "Combat & rewards", "Items" => "Item spawning", "Travel" => "Travel & locations", "Workshop" => "Workshop menus", "Camera" => "Camera settings", "Settings" => "Settings", _ => "The hunter" };
-        foreach (var nav in new[] {NavPlayer, NavPractice, NavItems, NavTravel, NavCamera, NavWorkshop, NavSettings})
+        PageSubtitle.Text=page=="Photo"?"Compose a shot, capture it, then edit the saved photo.":"Shape your next practice run.";
+        PageTitle.Text = page switch { "Practice" => "Combat & rewards", "Items" => "Item spawning", "Travel" => "Travel & locations", "Workshop" => "Workshop menus", "Target" => "Enemy details", "Camera" => "Gameplay camera", "Photo" => "Photo studio", "Settings" => "Settings", _ => "The hunter" };
+        foreach (var nav in new[] {NavPlayer, NavPractice, NavTarget, NavItems, NavTravel, NavCamera, NavPhoto, NavWorkshop, NavSettings})
             nav.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString((string)nav.Tag == page ? "#3B352A" : "#2B313B"));
         PageScroll.ScrollToTop();
     }
@@ -526,21 +537,7 @@ public partial class MainWindow : Window
         Library.Save(location); RefreshLibrary(); LocationPicker.SelectedItem = location;
     }, "Location saved. Saving with the same name replaces that bookmark.");
     private void ClearStatusBuildup(object sender,RoutedEventArgs e)=>Run(()=>{statusPaused=false;session!.ClearStatusBuildup();},"Status buildup gauges cleared. Existing active effects are unchanged.");
-    private void RefreshCharacters(object sender,RoutedEventArgs e)=>Run(()=>{CharacterPicker.ItemsSource=session!.ReadNearbyCharacters();CharacterPicker.SelectedIndex=0;},"Loaded character list refreshed.");
-    private void InspectCharacter(object sender,RoutedEventArgs e)=>Run(()=>{if(CharacterPicker.SelectedItem is not InspectableCharacter selected)throw new ArgumentException("Choose a loaded character.");CharacterDetails.Text=session!.InspectCharacter(selected).Summary;},"Character snapshot updated.");
     private async void CurePoison(object sender,RoutedEventArgs e)=>await RunGameAction(async engine=>{var count=await engine.CureActivePoisonAsync();App.Log?.Write("ACTION",$"Removed {count} active poison effects");},"Active slow/rapid poison removed and buildup cleared.");
-    private void FreeCameraChanged(object sender,RoutedEventArgs e)
-    {
-        if(FreeCameraEnabled==null)return;
-        if(FreeCameraEnabled.IsChecked==true){FreeCameraEnabled.IsChecked=false;return;}
-        try{freeCamera?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=$"Free camera restoration pending: {ex.Message}";}
-    }
-    private void FlightChanged(object sender,RoutedEventArgs e)
-    {
-        if(FlightEnabled==null)return;
-        if(FlightEnabled.IsChecked==true){FreeCameraEnabled.IsChecked=false;return;}
-        try{flight?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=$"Flight restoration pending: {ex.Message}";}
-    }
     private async Task MoveFlight(SavedLocation location)
     {
         if(actions==null||actionBusy)return;actionBusy=true;
@@ -576,9 +573,9 @@ public partial class MainWindow : Window
         await RunGameAction(async engine=>
         {
             if(BossPicker.SelectedItem is not PracticeDestination boss)throw new ArgumentException("Choose a boss first.");
-            var journal=engine.ReviveBoss(boss.Name);App.Log?.Write("ACTION",$"Revived {boss.Name}; original flags: {journal}");
+            var journal=engine.ReviveBoss(boss.Name,firstEncounter:BossFirstEncounter.IsChecked==true);App.Log?.Write("ACTION",$"Revived {boss.Name}; first encounter: {BossFirstEncounter.IsChecked==true}; original flags: {journal}");
             await engine.WarpAsync(GameActions.Lamps.Single(x=>x.Entity==boss.EntryLamp));
-        },"Boss flags reset and area reload requested. Enter the boss arena after loading. Changes can be saved by the game.");
+        },BossRevivalNotice());
     }
     private async void RetryBoss(object sender,RoutedEventArgs e)
     {
@@ -587,7 +584,7 @@ public partial class MainWindow : Window
         {
             if(BossPicker.SelectedItem is not PracticeDestination boss) throw new ArgumentException("Choose a boss first.");
             generation=++retryGeneration;retryDestination=null;retryLoadObserved=false;retryOriginActor=session!.ReadPlayer().Actor;
-            var journal=engine.ReviveBoss(boss.Name);App.Log?.Write("ACTION",$"Retry {boss.Name}; original flags: {journal}");
+            var journal=engine.ReviveBoss(boss.Name,firstEncounter:BossFirstEncounter.IsChecked==true);App.Log?.Write("ACTION",$"Retry {boss.Name}; first encounter: {BossFirstEncounter.IsChecked==true}; original flags: {journal}");
             retryTravelling=true;
             try{await engine.WarpAsync(GameActions.Lamps.Single(x=>x.Entity==boss.EntryLamp));}
             finally{retryTravelling=false;}
@@ -597,6 +594,7 @@ public partial class MainWindow : Window
         if(generation!=retryGeneration)Status.Text="Pending placement cancelled. Area travel already requested may still finish; revival flag changes are retained.";
         else if(retryDestination!=null)Status.Text="Boss revived. Waiting for area loading, then entrance placement and health/stamina refill.";
     }
+    private string BossRevivalNotice()=>"Boss revived; area reload requested. "+(BossFirstEncounter.IsChecked==true?"Enter using the original encounter trigger; its intro/fog follows first-visit rules. ":"Enter through the return-fight fog after loading. ")+(NoAi.IsChecked==true||Stealth.IsChecked==true?"Disable enemy AI/invisibility overrides if the boss remains passive. ":"")+"Flag changes can be saved by the game.";
     private Task FinishBossRetry(PracticeDestination boss)=>RunGameAction(async engine=>
     {
         await engine.RestoreLocationAsync(boss.Position);session!.RefillResources();encounterTimer.Context(true,true);encounterTimer.Start(boss.Name);EncounterSummary.Text=encounterTimer.Summary;
@@ -704,7 +702,10 @@ public partial class MainWindow : Window
             if (preset.Preferences != null)
             {
                 var next = preset.Preferences with { StartupPresetName = settings.StartupPresetName };
-                next.Save(); settings = next; updating=true;updating=false;AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;LoadHotkeyControls();hotkeys?.Apply(settings.Hotkeys??new());
+                next.Save(); settings = next;
+                AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;
+                DiscordPresenceEnabled.IsChecked=settings.DiscordRichPresence;UpdateDiscordPresence();
+                LoadHotkeyControls();LoadCameraControls();LoadPhotoControls();hotkeys?.Apply(settings.Hotkeys??new());
             }
             CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;
             var advanced=preset.Advanced??new();MovementSlider.Value=advanced.Movement;GravitySlider.Value=advanced.Gravity;MovementEnabled.IsChecked=advanced.MovementEnabled;GravityEnabled.IsChecked=advanced.GravityEnabled;HideHud.IsChecked=advanced.HideHud;advancedPaused=false;
@@ -762,7 +763,7 @@ public partial class MainWindow : Window
     private void UpdateHotkeySummary(HotkeyPreferences prefs)=>HotkeySummary.Text=$"{(prefs.Enabled?"On":"Off")} · Heal {prefs.Shortcut(prefs.Heal)} · God {prefs.Shortcut(prefs.God)} · Save {prefs.Shortcut(prefs.Save)} · Restore {prefs.Shortcut(prefs.Restore)} · Retry {prefs.Shortcut(prefs.Retry)}";
     private async void HotkeyPressed(int action)
     {
-        if(closing || connecting || actionBusy || session==null)return;
+        if(closing || connecting || actionBusy || session==null || FreeCameraEnabled.IsChecked==true)return;
         var foreground=HotkeyManager.ForegroundProcess();if(foreground!=connectedPid && foreground!=Environment.ProcessId)return;
         if(foreground==Environment.ProcessId && HotkeyManager.ForegroundWindow!=new System.Windows.Interop.WindowInteropHelper(this).Handle)return;
         if(foreground==Environment.ProcessId && (System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or ComboBox {IsDropDownOpen:true} or ComboBox {IsEditable:true}))return;

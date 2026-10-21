@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
     <ApplicationIcon>Assets\BBTools.ico</ApplicationIcon>
     <Authors>JamesCicada</Authors>
     <Description>Bloodborne PC practice companion for Windows.</Description>

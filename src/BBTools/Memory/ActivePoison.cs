@@ -17,7 +17,7 @@ public sealed partial class GameActions
         using var stream=new MemoryStream();using var w=new BinaryWriter(stream);var labels=new Dictionary<string,long>();var jumps=new List<(long At,string Label)>();
         void B(string hex)=>w.Write(Convert.FromHexString(hex));void L(string n)=>labels[n]=stream.Position;void J(string op,string n){B(op);jumps.Add((stream.Position,n));w.Write(0);}
         B("554889E5534154415541564889FB4C8B6308488B034C39A0C8010000");J("0F85","end");B("4939442418");J("0F85","end");B("4D8B6C240841BE00080000");
-        L("loop");B("4D85ED");J("0F84","end");B("41FFCE");J("0F88","end");B("498B45484885C0");J("0F84","next");B("0FB7885601000083F902");J("0F84","remove");B("83F905");J("0F85","next");
+        L("loop");B("4D85ED");J("0F84","end");B("41FFCE");J("0F88","end");B("498B45484885C0");J("0F84","next");B("0FB7885601000083F902");J("0F84","remove");B("83F906");J("0F85","next");
         L("remove");B("4C89E74C89EEBA0100000048B8");w.Write(imageBase+0x17E1D90);B("FFD04989C5FF4310");J("E9","loop");
         L("next");B("4D8B6D58");J("E9","loop");L("end");B("415E415D415C5B5DC3");
         var end=stream.Position;foreach(var j in jumps){stream.Position=j.At;w.Write((int)(labels[j.Label]-j.At-4));}stream.Position=end;return stream.ToArray();

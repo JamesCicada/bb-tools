@@ -1,51 +1,236 @@
 using System.IO;
 using System.Numerics;
+
 namespace BBTools.Memory;
-public sealed class FreeCamera(ProcessMemory memory,PlayerSession session)
+
+// Native debug-camera output; movement locking shares the tool's player movement hook.
+public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,MovementSpeed? movement=null)
 {
-    public const ulong Offset=0x143AC60;
-    public static readonly byte[] Prefix=Convert.FromHexString("554889E54157415641554154534881EC");
-    private ulong camera,owner,actor;private uint block;private byte[]? original;private bool patched;
-    private (ulong Owner,ulong Camera) Resolve()
+    private readonly MovementSpeed movementGuard=movement??new(memory,session);
+    public static readonly (ulong Offset, byte[] Bytes)[] Fingerprints =
+    [
+        (0x193764B, Convert.FromHexString("49899C2410010000")),
+        (0x19379F0, Convert.FromHexString("4989842428010000488D0D616EC003488B0948898130280000")),
+        (0x19295D9, Convert.FromHexString("498985C83A0100")),
+        (0x1929726, Convert.FromHexString("498B95C83A0100")),
+        (0x156FEE5, Convert.FromHexString("488D05E468DB03")),
+        (0x193BEC5, Convert.FromHexString("498B851001000083B8C4000000007464488B80D0000000")),
+        (0x15729B6, Convert.FromHexString("4183BC24C4000000010F85D00000004983BC24D0000000000F84C10000004183BC24C8000000000F85B2000000")),
+        (0x193BEE1, Convert.FromHexString("C5FA104050C4C17A114750C5FA104054C4C17A114754")),
+        (0x132F786, Convert.FromHexString("488B4058889811010000")),
+        (0x1337878, Convert.FromHexString("410FB6CE8B90E10100000FB6B0E5010000"))
+    ];
+    private ulong root, control, follow, frame, actor, cameraStep;
+    private uint block, handle;
+    private byte[]? initial;
+    private ulong previousFrame;
+    private int previousMode, previousHold;
+    private bool active, hunterLocked;
+    private byte hunterBit, originalMoveGate;
+    private ulong hunterController;
+    public bool IsActive => active;
+    public bool RestorationPending => active || hunterLocked || movementGuard.PhotoLocked;
+    public float InitialFov => initial == null ? 43 : BitConverter.ToSingle(initial, 0x50) * 180 / MathF.PI;
+
+    internal static bool MatchesCameraStep(IMemory source,ulong imageBase,ulong step,ulong owner)
     {
-        var root=memory.Pointer(session.ImageBase+0x553E860);var control=memory.Pointer(root+0x2830);
-        if(memory.Int32(control+0x84)!=3)throw new IOException("Free camera requires the extended follow camera (mode 3).");return(control,memory.Pointer(control+0x60));
+        try
+        {
+            if(source.Pointer(step,"camera task vtable")!=imageBase+0x5330480||source.Pointer(step+0x128,"camera task output")!=owner)return false;
+            var debug=source.Pointer(step+0x110,"debug-camera controller");
+            return source.Pointer(debug,"debug-camera vtable")==imageBase+0x53267D0;
+        }
+        catch(IOException){return false;}
+    }
+    public Task PrepareAsync(CancellationToken cancellationToken=default)=>Task.Run(()=>
+    {
+        ValidateInstructions();session.ReadPlayer();
+        var at=memory.Pointer(session.ImageBase+0x553E860,"lock-on manager");var owner=memory.Pointer(at+0x2830,"active camera output");
+        if(cameraStep==0||!MatchesCameraStep(memory,session.ImageBase,cameraStep,owner))cameraStep=memory.FindActiveCameraStep(owner,session.ImageBase,cancellationToken);
+        ValidateFrame(memory.Read(owner,0x60));
+    },cancellationToken);
+    private (ulong Root, ulong Control, ulong Follow) Resolve(bool restoring = false)
+    {
+        var at=memory.Pointer(session.ImageBase+0x553E860,"lock-on manager");
+        var owner=BitConverter.ToUInt64(memory.Read(at+0x2830,8));
+        if(restoring&&control!=0)
+        {
+            if(memory.Pointer(control,"captured debug-camera vtable")!=session.ImageBase+0x53267D0)throw new IOException("Captured native camera controller no longer validates.");
+            return(at,control,owner);
+        }
+        if(owner<0x10000||owner%8!=0)throw new IOException("Active camera output is unavailable; wait until the view has loaded.");
+        if(cameraStep==0)cameraStep=memory.FindActiveCameraStep(owner,session.ImageBase);
+        else if(!MatchesCameraStep(memory,session.ImageBase,cameraStep,owner))throw new IOException("The native camera changed during loading. Enable photo mode again once the view settles.");
+        return(at,memory.Pointer(cameraStep+0x110,"native debug-camera controller"),owner);
+    }
+    private void ValidateInstructions()
+    {
+        session.ValidateImage();
+        foreach (var f in Fingerprints)
+            if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))
+                throw new IOException("Photo-mode instructions differ from the supported 1.09 build.");
     }
     public void Enable()
     {
-        if(patched)return;session.ValidateImage();var player=session.ReadPlayer();if(player.Health==0)throw new IOException("Load a living character before free camera.");var current=Resolve();
-        var values=memory.Read(current.Camera+0x10,0x48);for(var i=0;i<values.Length;i+=4)if(!float.IsFinite(BitConverter.ToSingle(values,i)))throw new IOException("Camera frame failed validation.");
-        var fov=BitConverter.ToSingle(values,0x40);if(fov is <.01f or >3.14f)throw new IOException("Camera FOV failed validation.");
-        memory.Suspended(()=>{if(Resolve()!=current||session.ReadPlayer().Actor!=player.Actor)throw new IOException("Camera owner changed.");memory.FreezeFollowCamera(session.ImageBase,true);});
-        camera=current.Camera;owner=current.Owner;actor=player.Actor;block=unchecked((uint)memory.Int32(actor+0x3F8));original=values;patched=true;
+        if (active) return;
+        if (hunterLocked) Restore();
+        if (hunterLocked) throw new IOException("Wait for the previous hunter movement lock to restore before re-entering photo mode.");
+        ValidateInstructions();
+        var player = session.ReadPlayer();
+        if (player.Health == 0) throw new IOException("Load a living character before photo mode.");
+        var current = Resolve();
+        var mode = memory.Int32(current.Control + 0xC4);
+        var hold = memory.Int32(current.Control + 0xC8);
+        if (mode != 0 || hold is not (0 or 1)) throw new IOException("Another debug camera is active. Disable it before photo mode.");
+        var source = memory.Read(current.Follow, 0x60);
+        ValidateFrame(source);
+        var oldFrame = BitConverter.ToUInt64(memory.Read(current.Control + 0xD0, 8));
+        frame = frame == 0 ? memory.AllocateData(0x60) : frame;
+        memory.Write(frame, source);
+        root = current.Root; control = current.Control; follow = current.Follow;
+        actor = player.Actor; handle = unchecked((uint)memory.Int32(actor + 8));
+        block = unchecked((uint)memory.Int32(actor + 0x3F8));
+        previousMode = mode; previousHold = hold; previousFrame = oldFrame; initial = source;
+        memory.Suspended(() =>
+        {
+            if (Resolve() != current || session.ReadPlayer().Actor != actor || memory.Int32(control + 0xC4) != mode ||
+                memory.Int32(control + 0xC8) != hold || BitConverter.ToUInt64(memory.Read(control + 0xD0,8)) != oldFrame)
+                throw new IOException("Camera changed before photo-mode activation.");
+            // Set held state before enabling the renderer's debug output selection.
+            memory.SetInt32(control + 0xC8, 1);
+            memory.Write(control + 0xD0, BitConverter.GetBytes(frame));
+            memory.SetInt32(control + 0xC4, 1);
+            active = true;
+        });
     }
     public void ValidateContext()
     {
-        if(!patched)throw new IOException("Enable free camera first.");session.ValidateImage();var current=session.ReadPlayer();if(current.Actor!=actor||unchecked((uint)memory.Int32(actor+0x3F8))!=block||Resolve()!=(owner,camera))throw new IOException("Free camera context changed; disable before continuing.");
-        var expected=Prefix.ToArray();expected[0]=0xC3;if(!memory.Read(session.ImageBase+Offset,expected.Length).SequenceEqual(expected))throw new IOException("Free camera instructions changed externally.");
+        if (!active) throw new IOException("Enable photo mode first.");
+        var player = session.ReadPlayer();
+        if (player.Health == 0 || player.Actor != actor || unchecked((uint)memory.Int32(actor + 8)) != handle ||
+            unchecked((uint)memory.Int32(actor + 0x3F8)) != block || Resolve() != (root,control,follow))
+            throw new IOException("Photo mode stopped after a player, map or camera change.");
+        if (memory.Int32(control + 0xC4) != 1 || memory.Int32(control + 0xC8) != 1 || memory.Pointer(control + 0xD0) != frame)
+            throw new IOException("Another tool or the game changed the debug camera.");
     }
-    public void Step(float forward,float right,float up,float yaw,float pitch,float distance,float fov)
+    public void LockHunter(bool enabled)
     {
-        ValidateContext();if(!float.IsFinite(distance)||distance is <0 or >20||!float.IsFinite(fov)||fov is <38 or >120||new[]{forward,right,up,yaw,pitch}.Any(v=>!float.IsFinite(v)||Math.Abs(v)>1))throw new ArgumentException("Invalid free-camera step.");
-        var bytes=memory.Read(camera+0x10,0x48);Vector3 Read(int at)=>new(BitConverter.ToSingle(bytes,at),BitConverter.ToSingle(bytes,at+4),BitConverter.ToSingle(bytes,at+8));
-        var x=Read(0);var y=Read(16);var z=Read(32);var position=Read(48);
-        if(Math.Abs(x.Length()-1)>.1f||Math.Abs(y.Length()-1)>.1f||Math.Abs(z.Length()-1)>.1f)throw new IOException("Free-camera basis failed validation.");
-        var turn=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw*.05f);x=Vector3.Transform(x,turn);y=Vector3.Transform(y,turn);z=Vector3.Transform(z,turn);
-        turn=Quaternion.CreateFromAxisAngle(Vector3.Normalize(x),pitch*.05f);y=Vector3.Transform(y,turn);z=Vector3.Transform(z,turn);
-        var move=z*forward+x*right+Vector3.UnitY*up;if(move.Length()>1)move=Vector3.Normalize(move);position+=move*distance;
-        if(new[]{position.X,position.Y,position.Z}.Any(v=>!float.IsFinite(v)||Math.Abs(v)>100000))throw new IOException("Free-camera position is out of range.");
-        void Write(int at,Vector3 v){BitConverter.GetBytes(v.X).CopyTo(bytes,at);BitConverter.GetBytes(v.Y).CopyTo(bytes,at+4);BitConverter.GetBytes(v.Z).CopyTo(bytes,at+8);}
-        Write(0,x);Write(16,y);Write(32,z);Write(48,position);BitConverter.GetBytes(fov*MathF.PI/180).CopyTo(bytes,0x40);
-        memory.Suspended(()=>{ValidateContext();memory.Write(camera+0x10,bytes);});
+        ValidateContext();
+        if(!enabled&&!hunterLocked&&!movementGuard.PhotoLocked)return;
+        movementGuard.SetPhotoLock(enabled?actor:0);
+        var currentController=memory.Pointer(actor+0x58,"hunter movement controller");
+        if(hunterLocked&&currentController!=hunterController)throw new IOException("Hunter movement controller changed; photo mode must stop.");
+        var value=memory.Read(actor+0x1E3,1)[0];var gate=memory.Read(currentController+0x111,1)[0];
+        if(gate>1)throw new IOException("Hunter movement gate differs from the supported layout.");
+        if(enabled&&hunterLocked&&(value&0x80)!=0&&gate==1)return;
+        memory.Suspended(() =>
+        {
+            ValidateContext();
+            if(memory.Pointer(actor+0x58,"hunter movement controller")!=currentController)throw new IOException("Hunter movement controller changed before locking.");
+            value=memory.Read(actor+0x1E3,1)[0];gate=memory.Read(currentController+0x111,1)[0];
+            if(gate>1)throw new IOException("Hunter movement gate failed validation.");
+            if(enabled)
+            {
+                if(!hunterLocked){hunterBit=(byte)(value&0x80);originalMoveGate=gate;hunterController=currentController;hunterLocked=true;}
+                if((value&0x80)==0)memory.Write(actor+0x1E3,[(byte)(value|0x80)]);
+                if(gate!=1)memory.Write(currentController+0x111,[1]);
+            }
+            else RestoreHunterLock();
+        });
+    }
+    private void RestoreHunterLock()
+    {
+        // Release the per-frame lock even while the player/controller is unavailable.
+        movementGuard.SetPhotoLock(0);
+        if(!hunterLocked)return;
+        var player=session.ReadPlayer();
+        if(player.Actor==actor&&unchecked((uint)memory.Int32(actor+8))==handle)
+        {
+            // Restore only the controller still belonging to the captured actor.
+            var current=memory.Pointer(actor+0x58,"hunter movement controller");
+            if(current==hunterController)
+            {
+                var gate=memory.Read(current+0x111,1)[0];
+                if(gate>1)throw new IOException("Hunter movement gate changed externally; restoration is pending.");
+                memory.Write(current+0x111,[originalMoveGate]);
+            }
+            var flags=memory.Read(actor+0x1E3,1)[0];memory.Write(actor+0x1E3,[(byte)((flags&0x7F)|hunterBit)]);
+        }
+        hunterLocked=false;hunterController=0;
+    }
+    public void Step(float forward, float right, float up, float yaw, float pitch, float distance, float fov, float roll = 0, float angle = .05f)
+    {
+        ValidateContext();
+        if (!float.IsFinite(distance) || distance is <0 or >20 || !float.IsFinite(angle) || angle is <0 or >1 ||
+            !float.IsFinite(fov) || fov is <10 or >120 || new[]{forward,right,up,yaw,pitch,roll}.Any(v=>!float.IsFinite(v)||Math.Abs(v)>1))
+            throw new ArgumentException("Invalid photo-mode camera input.");
+        var bytes = memory.Read(frame,0x60); ValidateFrame(bytes);
+        if(forward==0&&right==0&&up==0&&yaw==0&&pitch==0&&roll==0&&BitConverter.ToSingle(bytes,0x50)==fov*MathF.PI/180)return;
+        Vector3 Read(int at) => new(BitConverter.ToSingle(bytes,at),BitConverter.ToSingle(bytes,at+4),BitConverter.ToSingle(bytes,at+8));
+        var x = Read(0x10); var y = Read(0x20); var z = Read(0x30); var position = Read(0x40);
+        var turn = Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw*angle);
+        x = Vector3.Transform(x,turn); y = Vector3.Transform(y,turn); z = Vector3.Transform(z,turn);
+        turn = Quaternion.CreateFromAxisAngle(Vector3.Normalize(x),pitch*angle);
+        y = Vector3.Transform(y,turn); z = Vector3.Transform(z,turn);
+        turn = Quaternion.CreateFromAxisAngle(Vector3.Normalize(z),roll*angle);
+        x = Vector3.Normalize(Vector3.Transform(x,turn)); y = Vector3.Normalize(Vector3.Transform(y,turn)); z = Vector3.Normalize(z);
+        var movement = -z*forward+x*right+Vector3.UnitY*up;
+        if (movement.LengthSquared()>1) movement = Vector3.Normalize(movement);
+        position += movement*distance;
+        void Write(int at,Vector3 value) { BitConverter.GetBytes(value.X).CopyTo(bytes,at);BitConverter.GetBytes(value.Y).CopyTo(bytes,at+4);BitConverter.GetBytes(value.Z).CopyTo(bytes,at+8); }
+        Write(0x10,x); Write(0x20,y); Write(0x30,z); Write(0x40,position);
+        BitConverter.GetBytes(fov*MathF.PI/180).CopyTo(bytes,0x50); ValidateFrame(bytes);
+        memory.Suspended(()=>{ValidateContext();memory.Write(frame+0x10,bytes[0x10..]);});
+    }
+    public void Reset()
+    {
+        ValidateContext();
+        memory.Suspended(()=>{ValidateContext();memory.Write(frame+0x10,initial![0x10..]);});
+    }
+    private static void ValidateFrame(byte[] data)
+    {
+        for (var i=0x10;i<0x60;i+=4)
+            if (!float.IsFinite(BitConverter.ToSingle(data,i))) throw new IOException("Camera frame contains non-finite values.");
+        Vector3 Read(int at)=>new(BitConverter.ToSingle(data,at),BitConverter.ToSingle(data,at+4),BitConverter.ToSingle(data,at+8));
+        var x=Read(0x10);var y=Read(0x20);var z=Read(0x30);var p=Read(0x40);
+        if (Math.Abs(x.Length()-1)>.1f||Math.Abs(y.Length()-1)>.1f||Math.Abs(z.Length()-1)>.1f||
+            Math.Abs(Vector3.Dot(x,y))>.1f||Math.Abs(Vector3.Dot(x,z))>.1f||Math.Abs(Vector3.Dot(y,z))>.1f||
+            Math.Abs(p.X)>100000||Math.Abs(p.Y)>100000||Math.Abs(p.Z)>100000||
+            BitConverter.ToSingle(data,0x50) is <.01f or >3.14f||BitConverter.ToSingle(data,0x54)<=0)
+            throw new IOException("Camera frame failed basis, position or projection validation.");
     }
     public void Restore()
     {
-        if(!patched)return;
-        memory.Suspended(()=>
+        if (!active && !hunterLocked && !movementGuard.PhotoLocked) return;
+        memory.Suspended(() =>
         {
-            memory.FreezeFollowCamera(session.ImageBase,false);patched=false;
-            // Resume the native update even if the old camera has unloaded.
-            try{if(Resolve()==(owner,camera)&&original!=null){memory.Write(camera+0x10,original);memory.Write(owner+0x80,[1]);}}catch(IOException){/* Old owner is unavailable; native update remains restored. */}
+            // Camera restoration does not require a living player or an unchanged map.
+            try
+            {
+                var current=Resolve(restoring:true);
+                if (current.Root!=root||current.Control!=control) { active=false; }
+                else if (active)
+                {
+                    if (BitConverter.ToUInt64(memory.Read(control+0xD0,8)) != frame)
+                        throw new IOException("Debug-camera owner changed externally; its new state was preserved.");
+                    if(memory.Int32(control+0xC4)==1)memory.SetInt32(control+0xC4,previousMode);
+                    memory.Write(control+0xD0,BitConverter.GetBytes(previousFrame));
+                    if(memory.Int32(control+0xC8)==1)memory.SetInt32(control+0xC8,previousHold);
+                    active=false;
+                }
+            }
+            finally
+            {
+                if(hunterLocked||movementGuard.PhotoLocked)
+                {
+                    try
+                    {
+                        RestoreHunterLock();
+                    }
+                    catch(IOException) { /* Retry hunter restoration once the player is available. */ }
+                }
+            }
         });
+        // Keep the private frame allocated: a native reader can retain the previous pointer briefly.
     }
 }

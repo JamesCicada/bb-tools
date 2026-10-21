@@ -1,0 +1,72 @@
+using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace BBTools;
+
+public sealed record PhotoAdjustments(string Filter="Original",float Exposure=0,float Contrast=1,float Saturation=1,float Vignette=0)
+{
+    public static string[] Filters=>["Original","Noir","Warm","Cool","Sepia"];
+    public void Validate()
+    {
+        if(!Filters.Contains(Filter)||!float.IsFinite(Exposure)||Exposure is <-2 or >2||!float.IsFinite(Contrast)||Contrast is <.5f or >1.5f||
+           !float.IsFinite(Saturation)||Saturation is <0 or >2||!float.IsFinite(Vignette)||Vignette is <0 or >.8f)
+            throw new ArgumentException("Choose valid photo adjustments.");
+    }
+}
+public sealed record PhotoSettings(string? Folder=null,PhotoAdjustments? Adjustments=null)
+{
+    public void Validate(){Adjustments?.Validate();if(Folder!=null&&(!Path.IsPathFullyQualified(Folder)||Folder.Length>1024))throw new ArgumentException("Choose a full photo folder path.");}
+    public string OutputFolder=>Folder??Path.Combine(AppContext.BaseDirectory,"photos");
+}
+internal sealed record PhotoImage(int Width,int Height,byte[] Pixels)
+{
+    public static int ByteCount(int width,int height)
+    {
+        if(width<1||height<1||width>16384||height>16384||(long)width*height>100000000)throw new ArgumentException("Unsupported photo dimensions.");
+        return checked(width*height*4);
+    }
+    public void Validate(){if(Pixels.Length!=ByteCount(Width,Height))throw new ArgumentException("Photo pixel buffer length differs from its dimensions.");}
+    public BitmapSource Bitmap()
+    {
+        Validate();var bitmap=BitmapSource.Create(Width,Height,96,96,PixelFormats.Bgra32,null,Pixels,Width*4);bitmap.Freeze();return bitmap;
+    }
+    public string SavePng(string folder,string suffix)
+    {
+        Validate();Directory.CreateDirectory(folder);var path=Path.Combine(folder,$"BBTools-{DateTime.UtcNow:yyyyMMddTHHmmssfffZ}-{Guid.NewGuid():N}-{suffix}.png");
+        var temporary=path+".tmp";
+        try
+        {
+            var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(Bitmap()));
+            using(var file=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write,FileShare.None))encoder.Save(file);
+            File.Move(temporary,path);return path;
+        }
+        finally{if(File.Exists(temporary))File.Delete(temporary);}
+    }
+}
+internal static class PhotoProcessing
+{
+    private static readonly float[] Linear=Enumerable.Range(0,256).Select(i=>{var v=i/255f;return v<=.04045f?v/12.92f:MathF.Pow((v+.055f)/1.055f,2.4f);}).ToArray();
+    private static byte Srgb(float value)
+    {value=Math.Clamp(value,0,1);return (byte)Math.Clamp((int)MathF.Round(255*(value<=.0031308f?12.92f*value:1.055f*MathF.Pow(value,1/2.4f)-.055f)),0,255);}
+    public static PhotoImage Apply(PhotoImage original,PhotoAdjustments settings,CancellationToken cancellationToken=default)
+    {
+        original.Validate();settings.Validate();var output=original.Pixels.ToArray();
+        if(settings==new PhotoAdjustments())return new(original.Width,original.Height,output);
+        var exposure=MathF.Pow(2,settings.Exposure);var saturation=settings.Filter=="Noir"?0:settings.Saturation;
+        for(var y=0;y<original.Height;y++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();var ny=(2f*y+1)/original.Height-1;
+            for(var x=0;x<original.Width;x++)
+            {
+                var at=(y*original.Width+x)*4;var r=Linear[output[at+2]];var g=Linear[output[at+1]];var b=Linear[output[at]];
+                if(settings.Filter=="Warm"){r*=1.12f;b*=.85f;}else if(settings.Filter=="Cool"){r*=.88f;b*=1.12f;}
+                else if(settings.Filter=="Sepia"){var nr=.393f*r+.769f*g+.189f*b;var ng=.349f*r+.686f*g+.168f*b;b=.272f*r+.534f*g+.131f*b;r=nr;g=ng;}
+                r=(r*exposure-.18f)*settings.Contrast+.18f;g=(g*exposure-.18f)*settings.Contrast+.18f;b=(b*exposure-.18f)*settings.Contrast+.18f;
+                var luminance=.2126f*r+.7152f*g+.0722f*b;var nx=(2f*x+1)/original.Width-1;var shade=1-settings.Vignette*Math.Clamp((nx*nx+ny*ny)/2,0,1);
+                output[at+2]=Srgb((luminance+(r-luminance)*saturation)*shade);output[at+1]=Srgb((luminance+(g-luminance)*saturation)*shade);output[at]=Srgb((luminance+(b-luminance)*saturation)*shade);
+            }
+        }
+        return new(original.Width,original.Height,output);
+    }
+}

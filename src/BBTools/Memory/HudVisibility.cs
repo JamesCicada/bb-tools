@@ -3,7 +3,8 @@ namespace BBTools.Memory;
 public sealed class HudVisibility(ProcessMemory memory,PlayerSession session)
 {
     public static readonly (ulong Offset,byte[] Bytes)[] Fingerprints=[(0x1BFBF6B,Convert.FromHexString("488D05BEF19303488B00488B40484885C0740A80780900"))];
-    private ulong owner;private byte original;
+    private bool owned;private byte original;
+    public bool RestorationPending=>owned;
     private ulong Resolve()
     {
         session.ValidateImage();foreach(var f in Fingerprints)if(!memory.Read(session.ImageBase+f.Offset,f.Bytes.Length).SequenceEqual(f.Bytes))throw new IOException("HUD visibility reader differs from the supported build.");
@@ -11,13 +12,22 @@ public sealed class HudVisibility(ProcessMemory memory,PlayerSession session)
     }
     public void Apply()
     {
-        var current=Resolve();if(owner!=current){owner=0;original=memory.Read(current+9,1)[0];}
-        if(owner==current&&memory.Read(current+9,1)[0]==0)return;
-        memory.Suspended(()=>{if(Resolve()!=current)throw new IOException("HUD options changed.");memory.Write(current+9,[0]);owner=current;});
+        var current=Resolve();
+        if(owned&&memory.Read(current+9,1)[0]==0)return;
+        memory.Suspended(()=>
+        {
+            if(Resolve()!=current)throw new IOException("HUD options changed.");
+            // Loading can clone the hidden option into a replacement object. Keep
+            // the session's original visibility rather than recapturing that zero.
+            if(!owned){original=memory.Read(current+9,1)[0];owned=true;}
+            memory.Write(current+9,[0]);
+        });
     }
     public void Restore()
     {
-        if(owner==0)return;
-        memory.Suspended(()=>{if(Resolve()!=owner){owner=0;return;}var value=memory.Read(owner+9,1)[0];if(value!=0&&value!=original)throw new IOException("HUD visibility changed externally.");memory.Write(owner+9,[original]);owner=0;});
+        if(!owned)return;
+        memory.Suspended(()=>{var current=Resolve();memory.Write(current+9,[original]);owned=false;});
     }
+    // Explicit recovery also repairs an option left hidden by an older build.
+    public void Show()=>memory.Suspended(()=>{var current=Resolve();memory.Write(current+9,[1]);owned=false;});
 }

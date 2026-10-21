@@ -19,9 +19,12 @@ public static class BossRevivalCatalog
         new("Moon Presence",12101850,2,[12101800,9900],[..Enumerable.Range(12104850,32).Select(x=>(uint)x)])
     ];
     public static BossRevival Find(string name) => All.SingleOrDefault(x=>x.Name==name) ?? throw new ArgumentException("Choose a catalogued boss revival profile.");
-    public static Dictionary<uint,bool> Changes(BossRevival boss)
+    public static Dictionary<uint,bool> Changes(BossRevival boss,bool firstEncounter=false)
     {
-        var changes=Enumerable.Range(0,10).ToDictionary(i=>boss.DefeatFlag+(uint)i,i=>i==boss.MetOffset);
+        if(boss.MetOffset is <1 or >9)throw new ArgumentException("Invalid boss encounter staging offset.");
+        // Clear the encounter-completed event for a first entrance. Keeping it
+        // set selects repeat-fight staging (fog and the return-entry AI trigger).
+        var changes=Enumerable.Range(0,10).ToDictionary(i=>boss.DefeatFlag+(uint)i,i=>!firstEncounter&&i==boss.MetOffset);
         foreach(var flag in boss.ClearFlags??[])changes[flag]=false;
         foreach(var flag in boss.EnableFlags??[])changes[flag]=true;
         return changes;
@@ -71,7 +74,7 @@ internal sealed class EventFlagStore(IMemory memory,ulong manager)
 
 public sealed partial class GameActions
 {
-    public string ReviveBoss(string name,string? journalFolder=null)
+    public string ReviveBoss(string name,string? journalFolder=null,bool firstEncounter=false)
     {
         var boss=BossRevivalCatalog.Find(name);session.ValidateImage();
         foreach(var f in ChaliceFingerprints)
@@ -82,10 +85,10 @@ public sealed partial class GameActions
             if(player.Health==0)throw new IOException("Load a living character before reviving a boss.");
         }
         Check();var character=session.ReadCharacter();var manager=memory.Pointer(session.ImageBase+0x553B100);var store=new EventFlagStore(memory,manager);
-        var changes=BossRevivalCatalog.Changes(boss);var original=changes.Keys.ToDictionary(x=>x,store.Read);
+        var changes=BossRevivalCatalog.Changes(boss,firstEncounter);var original=changes.Keys.ToDictionary(x=>x,store.Read);
         var folder=journalFolder??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"BBTools","boss-revival");Directory.CreateDirectory(folder);
         var journal=Path.Combine(folder,$"{DateTime.UtcNow:yyyyMMddTHHmmssfffffffZ}-{boss.DefeatFlag}-{Guid.NewGuid():N}.json");
-        File.WriteAllText(journal,JsonSerializer.Serialize(new {Boss=boss.Name,Version=AppInfo.DisplayVersion,CharacterAddress=character.Address,Flags=original},new JsonSerializerOptions{WriteIndented=true}));
+        File.WriteAllText(journal,JsonSerializer.Serialize(new {Boss=boss.Name,Version=AppInfo.DisplayVersion,CharacterAddress=character.Address,FirstEncounter=firstEncounter,Flags=original,Changes=changes},new JsonSerializerOptions{WriteIndented=true}));
         memory.Suspended(()=>
         {
             Check();var current=session.ReadCharacter();

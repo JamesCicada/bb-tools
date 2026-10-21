@@ -1,304 +1,984 @@
-<Window x:Class="BBTools.MainWindow"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="BB Tools · Hunter's Workshop" Icon="Assets/BBTools.png" Width="1040" Height="860" MinWidth="860" MinHeight="680"
- Background="#101216" Foreground="#E8E5DF" FontFamily="Segoe UI" FontSize="14">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:local="clr-namespace:BBTools" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="BBTools.MainWindow" Title="BB Tools · Hunter's Workshop" Icon="Assets/BBTools.png" Width="1040" Height="860" MinWidth="860" MinHeight="680" Background="#101216" Foreground="#E8E5DF" FontFamily="Segoe UI" FontSize="14">
  <Window.Resources>
-  <SolidColorBrush x:Key="Muted" Color="#A0A4AC"/>
-  <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-  <Style x:Key="Caption" TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Foreground" Value="{StaticResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
-  <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="#1A1E24"/><Setter Property="BorderBrush" Value="#303640"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="22"/></Style>
-  <Style TargetType="Button">
-   <Setter Property="Background" Value="#2B313B"/><Setter Property="Foreground" Value="#ECE8DF"/><Setter Property="BorderBrush" Value="#414956"/><Setter Property="Padding" Value="16,10"/><Setter Property="Cursor" Value="Hand"/>
-   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="#C5A56A"/></Trigger><Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="#E5C381"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
+  <SolidColorBrush x:Key="Muted" Color="#A0A4AC" />
+  <Style TargetType="TextBlock">
+   <Setter Property="TextWrapping" Value="Wrap" />
   </Style>
-  <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Background" Value="#C3A36A"/><Setter Property="Foreground" Value="#171719"/><Setter Property="BorderBrush" Value="#D7BA88"/><Setter Property="FontWeight" Value="SemiBold"/></Style>
-  <Style TargetType="TextBox"><Setter Property="Background" Value="#11151B"/><Setter Property="Foreground" Value="#E8E5DF"/><Setter Property="CaretBrush" Value="#D7BA88"/><Setter Property="BorderBrush" Value="#424A57"/><Setter Property="Padding" Value="12,9"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="FontSize" Value="16"/><Setter Property="SelectionBrush" Value="#66532F"/></Style>
-  <Style TargetType="CheckBox"><Setter Property="Foreground" Value="#E8E5DF"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="Margin" Value="0,16,0,0"/></Style>
-  <Style TargetType="ComboBoxItem"><Setter Property="Padding" Value="12,10"/><Setter Property="Foreground" Value="#E8E5DF"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="Item" Padding="{TemplateBinding Padding}" Background="#1A1E24"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="Item" Property="Background" Value="#3B352A"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="Item" Property="Background" Value="#353C47"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
-  <Style TargetType="ComboBox"><Setter Property="Foreground" Value="#E8E5DF"/><Setter Property="Background" Value="#11151B"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox"><Grid>
-   <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"><ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="#11151B" BorderBrush="#424A57" BorderThickness="1" CornerRadius="6"><TextBlock Text="⌄" Foreground="#C3A36A" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"/></Border></ControlTemplate></ToggleButton.Template></ToggleButton>
-   <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,34,0"/>
-   <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False"><Border Background="#1A1E24" BorderBrush="#424A57" BorderThickness="1" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"><ScrollViewer MaxHeight="260"><ItemsPresenter/></ScrollViewer></Border></Popup>
-  </Grid><ControlTemplate.Triggers><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.55"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
-  <Style TargetType="ScrollBar"><Setter Property="Width" Value="8"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar"><Grid Background="#15181D"><Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="Vertical"><Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"/></Track.DecreaseRepeatButton><Track.Thumb><Thumb><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="#414956" CornerRadius="4" Margin="1"/></ControlTemplate></Thumb.Template></Thumb></Track.Thumb><Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"/></Track.IncreaseRepeatButton></Track></Grid></ControlTemplate></Setter.Value></Setter></Style>
-  <Style TargetType="ProgressBar"><Setter Property="Background" Value="#101318"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Height" Value="5"/><Setter Property="Margin" Value="0,12,0,18"/></Style>
+  <Style x:Key="Caption" TargetType="TextBlock">
+   <Setter Property="TextWrapping" Value="Wrap" />
+   <Setter Property="Foreground" Value="{StaticResource Muted}" />
+   <Setter Property="FontSize" Value="12" />
+   <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+  <Style x:Key="Card" TargetType="Border">
+   <Setter Property="Background" Value="#1A1E24" />
+   <Setter Property="BorderBrush" Value="#303640" />
+   <Setter Property="BorderThickness" Value="1" />
+   <Setter Property="CornerRadius" Value="12" />
+   <Setter Property="Padding" Value="18" />
+  </Style>
+  <Style TargetType="Button">
+   <Setter Property="Background" Value="#2B313B" />
+   <Setter Property="Foreground" Value="#ECE8DF" />
+   <Setter Property="BorderBrush" Value="#414956" />
+   <Setter Property="Padding" Value="16,10" />
+   <Setter Property="Cursor" Value="Hand" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="Button">
+      <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+       <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Surface" Property="BorderBrush" Value="#C5A56A" />
+       </Trigger>
+       <Trigger Property="IsKeyboardFocused" Value="True">
+        <Setter TargetName="Surface" Property="BorderBrush" Value="#E5C381" />
+       </Trigger>
+       <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Opacity" Value="0.4" />
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+   <Setter Property="Background" Value="#C3A36A" />
+   <Setter Property="Foreground" Value="#171719" />
+   <Setter Property="BorderBrush" Value="#D7BA88" />
+   <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style TargetType="TextBox">
+   <Setter Property="Background" Value="#11151B" />
+   <Setter Property="Foreground" Value="#E8E5DF" />
+   <Setter Property="CaretBrush" Value="#D7BA88" />
+   <Setter Property="BorderBrush" Value="#424A57" />
+   <Setter Property="Padding" Value="12,9" />
+   <Setter Property="VerticalContentAlignment" Value="Center" />
+   <Setter Property="FontSize" Value="16" />
+   <Setter Property="SelectionBrush" Value="#66532F" />
+  </Style>
+  <Style TargetType="CheckBox">
+   <Setter Property="Foreground" Value="#E8E5DF" />
+   <Setter Property="VerticalContentAlignment" Value="Center" />
+   <Setter Property="Margin" Value="0,16,0,0" />
+  </Style>
+  <Style TargetType="ComboBoxItem">
+   <Setter Property="Padding" Value="12,10" />
+   <Setter Property="Foreground" Value="#E8E5DF" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ComboBoxItem">
+      <Border x:Name="Item" Padding="{TemplateBinding Padding}" Background="#1A1E24">
+       <ContentPresenter />
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsHighlighted" Value="True">
+        <Setter TargetName="Item" Property="Background" Value="#3B352A" />
+       </Trigger>
+       <Trigger Property="IsSelected" Value="True">
+        <Setter TargetName="Item" Property="Background" Value="#353C47" />
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="ComboBox">
+   <Setter Property="Foreground" Value="#E8E5DF" />
+   <Setter Property="Background" Value="#11151B" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ComboBox">
+      <Grid>
+       <ToggleButton Focusable="False" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+        <ToggleButton.Template>
+         <ControlTemplate TargetType="ToggleButton">
+          <Border Background="#11151B" BorderBrush="#424A57" BorderThickness="1" CornerRadius="6">
+           <TextBlock Text="⌄" Foreground="#C3A36A" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0" />
+          </Border>
+         </ControlTemplate>
+        </ToggleButton.Template>
+       </ToggleButton>
+       <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,34,0" />
+       <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
+        <Border Background="#1A1E24" BorderBrush="#424A57" BorderThickness="1" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+         <StackPanel>
+          <TextBox x:Name="PickerFilter" Text="{Binding Path=(local:PickerSearch.Text), RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Search choices" ToolTip="Search these choices" Margin="6" MinHeight="36" />
+          <ScrollViewer MaxHeight="260">
+           <ItemsPresenter />
+          </ScrollViewer>
+         </StackPanel>
+        </Border>
+       </Popup>
+      </Grid>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Opacity" Value="0.55" />
+       </Trigger>
+       <Trigger Property="local:PickerSearch.Target" Value="{x:Null}">
+        <Setter TargetName="PickerFilter" Property="Visibility" Value="Collapsed" />
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="ScrollBar">
+   <Setter Property="Width" Value="8" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="ScrollBar">
+      <Grid Background="#15181D">
+       <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="Vertical">
+        <Track.DecreaseRepeatButton>
+         <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" />
+        </Track.DecreaseRepeatButton>
+        <Track.Thumb>
+         <Thumb>
+          <Thumb.Template>
+           <ControlTemplate TargetType="Thumb">
+            <Border Background="#414956" CornerRadius="4" Margin="1" />
+           </ControlTemplate>
+          </Thumb.Template>
+         </Thumb>
+        </Track.Thumb>
+        <Track.IncreaseRepeatButton>
+         <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" />
+        </Track.IncreaseRepeatButton>
+       </Track>
+      </Grid>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="ProgressBar">
+   <Setter Property="Background" Value="#101318" />
+   <Setter Property="BorderThickness" Value="0" />
+   <Setter Property="Height" Value="5" />
+   <Setter Property="Margin" Value="0,12,0,18" />
+  </Style>
+  <Style TargetType="TabControl">
+   <Setter Property="Background" Value="Transparent" />
+   <Setter Property="BorderThickness" Value="0" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="TabControl">
+      <Grid KeyboardNavigation.TabNavigation="Local">
+       <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+       </Grid.RowDefinitions>
+       <TabPanel IsItemsHost="True" Margin="0,0,0,16" />
+       <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" />
+      </Grid>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
+  <Style TargetType="TabItem">
+   <Setter Property="Foreground" Value="#ADB5C2" />
+   <Setter Property="Padding" Value="14,9" />
+   <Setter Property="Template">
+    <Setter.Value>
+     <ControlTemplate TargetType="TabItem">
+      <Border x:Name="TabSurface" BorderBrush="Transparent" BorderThickness="0,0,0,2" Background="Transparent" Padding="{TemplateBinding Padding}" Margin="0,0,8,0">
+       <ContentPresenter ContentSource="Header" />
+      </Border>
+      <ControlTemplate.Triggers>
+       <Trigger Property="IsSelected" Value="True">
+        <Setter Property="Foreground" Value="#E5C381" />
+        <Setter TargetName="TabSurface" Property="BorderBrush" Value="#C3A36A" />
+        <Setter TargetName="TabSurface" Property="Background" Value="#1A1E24" />
+       </Trigger>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="TabSurface" Property="Background" Value="#242A33" />
+       </Trigger>
+      </ControlTemplate.Triggers>
+     </ControlTemplate>
+    </Setter.Value>
+   </Setter>
+  </Style>
  </Window.Resources>
  <Grid Background="#101216">
-  <Grid.ColumnDefinitions><ColumnDefinition Width="182"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-  <Border Background="#15181D" BorderBrush="#2B3038" BorderThickness="0,0,1,0" Padding="22,20">
-   <DockPanel LastChildFill="False">
-    <StackPanel DockPanel.Dock="Top"><Image Source="Assets/BBTools.png" Width="90" Height="90" Stretch="Uniform" Margin="0,-12,0,12" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="BB Tools emblem"/><TextBlock Text="BB TOOLS" Foreground="#D0B179" FontSize="21" FontWeight="Bold"/><TextBlock Text="HUNTER'S WORKSHOP" FontSize="10" Foreground="#8F949F" Margin="0,8,0,24"/>
-     <TextBlock Text="WORKSPACE" Style="{StaticResource Caption}"/>
-     <Button x:Name="NavPlayer" Content="Player" Tag="Player" Click="Navigate" Background="#3B352A" Margin="0,5,0,8"/>
-     <Button x:Name="NavPractice" Content="Combat" Tag="Practice" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavItems" Content="Items" Tag="Items" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavTravel" Content="Travel" Tag="Travel" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavCamera" Content="Camera" Tag="Camera" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavWorkshop" Content="Workshop" Tag="Workshop" Click="Navigate" Margin="0,0,0,8"/>
-     <Button x:Name="NavSettings" Content="Settings" Tag="Settings" Click="Navigate"/>
-     <TextBlock Text="Bloodborne PC" Margin="12,22,0,6" FontSize="12"/><TextBlock Text="CUSA03173 · 1.09" Margin="12,0,0,0" Foreground="#888F9B" FontSize="11"/>
-    </StackPanel>
-    <StackPanel DockPanel.Dock="Bottom"><TextBlock x:Name="VersionLabel" FontSize="10" Foreground="#888F9B"/><TextBlock Text="Local practice companion" FontSize="11" Foreground="#888F9B" Margin="0,6,0,0"/></StackPanel>
-   </DockPanel>
+  <Grid.RowDefinitions>
+   <RowDefinition Height="Auto" />
+   <RowDefinition Height="*" />
+  </Grid.RowDefinitions>
+  <Border Background="#15181D" BorderBrush="#2B3038" BorderThickness="0,0,0,1" Padding="24,12,24,0">
+   <StackPanel>
+    <Grid Margin="0,0,0,10">
+     <StackPanel Orientation="Horizontal">
+      <Image Source="Assets/BBTools.png" Width="36" Height="36" Margin="0,0,10,0" />
+      <StackPanel VerticalAlignment="Center">
+       <TextBlock Text="BB TOOLS" FontSize="18" FontWeight="Bold" Foreground="#D0B179" />
+       <TextBlock x:Name="VersionLabel" FontSize="10" Foreground="#969DA8" />
+      </StackPanel>
+      <TextBlock Text="Bloodborne PC · shadPS4" FontSize="12" Foreground="#969DA8" Margin="20,0,0,0" VerticalAlignment="Center" />
+     </StackPanel>
+     <Button Tag="Settings" Click="Navigate" ToolTip="Manage game connection in Settings" Padding="12,7" HorizontalAlignment="Right" VerticalAlignment="Top">
+      <StackPanel>
+       <TextBlock x:Name="ConnectionBadge" Text="DISCONNECTED" FontSize="11" Foreground="#C2B89E" />
+       <TextBlock Text="Manage connection ↗" FontSize="10" Foreground="#A0A4AC" Margin="0,3,0,0" />
+      </StackPanel>
+     </Button>
+    </Grid>
+    <UniformGrid Columns="8" Margin="0,0,0,10">
+     <Button x:Name="NavPlayer" FontSize="13" Padding="10,8" Content="Player" Tag="Player" Click="Navigate" Background="#3B352A" Margin="0,0,6,0" />
+     <Button x:Name="NavPractice" FontSize="13" Padding="10,8" Content="Combat" Tag="Practice" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavTarget" FontSize="13" Padding="10,8" Content="Enemies" Tag="Target" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavItems" FontSize="13" Padding="10,8" Content="Items" Tag="Items" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavTravel" FontSize="13" Padding="10,8" Content="Travel" Tag="Travel" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavCamera" FontSize="13" Padding="10,8" Content="Camera" Tag="Camera" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavWorkshop" FontSize="13" Padding="10,8" Content="Workshop" Tag="Workshop" Click="Navigate" Margin="0,0,6,0" />
+     <Button x:Name="NavSettings" FontSize="13" Padding="10,8" Content="Settings" Tag="Settings" Click="Navigate" Margin="0,0,6,0" />
+    </UniformGrid>
+    <Button x:Name="NavPhoto" FontSize="13" Padding="12,8" Content="Photo studio" Tag="Photo" Click="Navigate" Margin="0,0,0,6" Visibility="Collapsed" />
+   </StackPanel>
   </Border>
-  <Grid Grid.Column="1" Margin="30,26,30,20">
-   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-   <Grid Margin="0,0,0,24"><StackPanel><TextBlock x:Name="PageTitle" Text="The hunter" FontSize="30" FontWeight="SemiBold"/><TextBlock Text="Shape your next practice run." Foreground="{StaticResource Muted}" Margin="0,6,0,0"/></StackPanel><Border Background="#222831" CornerRadius="12" Padding="14,7" HorizontalAlignment="Right" VerticalAlignment="Top"><TextBlock x:Name="ConnectionBadge" Text="DISCONNECTED" FontSize="11" Foreground="#C2B89E"/></Border></Grid>
+  <Grid Margin="24,16,24,14" Grid.Row="1">
+   <Grid.RowDefinitions>
+    <RowDefinition Height="Auto" />
+    <RowDefinition Height="*" />
+    <RowDefinition Height="Auto" />
+    <RowDefinition Height="Auto" />
+   </Grid.RowDefinitions>
+   <Grid Margin="0,0,0,16">
+    <StackPanel>
+     <TextBlock x:Name="PageTitle" Text="The hunter" FontSize="25" FontWeight="SemiBold" />
+     <TextBlock x:Name="PageSubtitle" Text="Shape your next practice run." Foreground="{StaticResource Muted}" Margin="0,6,0,0" />
+    </StackPanel>
+   </Grid>
    <ScrollViewer x:Name="PageScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="0,0,8,0">
-     <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-      <TextBlock Text="GAME CONNECTION" Style="{StaticResource Caption}"/>
-      <TextBox x:Name="ProcessSearch" TextChanged="FilterProcesses" AutomationProperties.Name="Filter processes by name or PID" ToolTip="Filter by name, decimal PID or 0x-prefixed hexadecimal PID" FontSize="13" Padding="10,7" Margin="0,0,0,10"/>
-      <TextBlock Text="All processes · filter by name or PID · ★ likely Bloodborne" Style="{StaticResource Caption}"/>
-      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <ComboBox x:Name="Candidates" DisplayMemberPath="Label" MinHeight="40" Margin="0,0,10,0" VerticalContentAlignment="Center" FontSize="13"/>
-       <Button Grid.Column="1" x:Name="RefreshButton" Content="Refresh" Click="Refresh" Margin="0,0,10,0"/>
-       <Button Grid.Column="2" x:Name="ConnectButton" Content="Connect" Click="Connect" Style="{StaticResource Primary}"/>
-      </Grid><TextBlock x:Name="ConnectionHint" Text="Start Bloodborne PC and load a character, then connect." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0"/>
-     </StackPanel></Border>
      <StackPanel x:Name="PlayerPage">
-     <Grid x:Name="PlayerControls" IsEnabled="False" Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="HEALTH" Style="{StaticResource Caption}"/><TextBlock x:Name="HealthValue" Text="— / —" FontSize="28" FontWeight="SemiBold"/><ProgressBar x:Name="HealthBar" Maximum="1" Foreground="#AE615F"/><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="HealthInput" Text="1" Margin="0,0,8,0" AutomationProperties.Name="Health amount"/><Button Grid.Column="1" Content="Set HP" Click="SetHealth"/></Grid><Button Content="Restore full health" Click="Heal" Margin="0,10,0,0"/><CheckBox x:Name="KeepHealth" Content="Keep health full"/><TextBlock Text="Refills while alive. Does not prevent one-hit or scripted deaths." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0"/></StackPanel></Border>
-      <Border Grid.Column="2" Style="{StaticResource Card}"><StackPanel><TextBlock Text="STAMINA" Style="{StaticResource Caption}"/><TextBlock x:Name="StaminaValue" Text="— / —" FontSize="28" FontWeight="SemiBold"/><ProgressBar x:Name="StaminaBar" Maximum="1" Foreground="#739781"/><CheckBox x:Name="InfiniteStamina" Content="Infinite stamina" Checked="StaminaChanged" Unchecked="StaminaChanged" Margin="0,5,0,0"/><TextBlock Text="Uses the local player's stamina-consumption flag. Turning it off restores its previous setting." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,15,0,0"/><TextBlock Text="Health and stamina controls stop when player validation fails." Foreground="#C3AB7E" FontSize="11" Margin="0,20,0,0"/></StackPanel></Border>
-     </Grid>
-     <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel x:Name="EchoControls" IsEnabled="False"><Grid><TextBlock Text="BLOOD ECHOES" Style="{StaticResource Caption}"/><TextBlock x:Name="EchoValue" Text="—" HorizontalAlignment="Right" Foreground="#D0B179" FontWeight="SemiBold"/></Grid><Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="EchoInput" Text="100000" Margin="0,0,10,0" AutomationProperties.Name="Blood Echoes amount"/><Button Grid.Column="1" Content="Set echoes" Click="SetEchoes" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Grid.Column="2" Content="+10,000" Click="AddEchoes"/></Grid><TextBlock Text="0–999,999,999 · Changes the current balance. The game may save this value." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,12,0,0"/></StackPanel></Border>
-     <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel x:Name="StatControls" IsEnabled="False"><Grid><StackPanel><TextBlock Text="CHARACTER ATTRIBUTES" Style="{StaticResource Caption}"/><TextBlock x:Name="LevelValue" Text="Blood Level —" FontSize="20"/></StackPanel><Button Content="Reload current" Click="LoadStats" HorizontalAlignment="Right" VerticalAlignment="Top"/></Grid>
-      <UniformGrid Columns="3" Margin="0,20,0,0">
-       <StackPanel Margin="0,0,12,16"><TextBlock Text="Vitality" Style="{StaticResource Caption}"/><TextBox x:Name="Vitality" AutomationProperties.Name="Vitality"/></StackPanel>
-       <StackPanel Margin="0,0,12,16"><TextBlock Text="Endurance" Style="{StaticResource Caption}"/><TextBox x:Name="Endurance" AutomationProperties.Name="Endurance"/></StackPanel>
-       <StackPanel Margin="0,0,0,16"><TextBlock Text="Strength" Style="{StaticResource Caption}"/><TextBox x:Name="Strength" AutomationProperties.Name="Strength"/></StackPanel>
-       <StackPanel Margin="0,0,12,0"><TextBlock Text="Skill" Style="{StaticResource Caption}"/><TextBox x:Name="Skill" AutomationProperties.Name="Skill"/></StackPanel>
-       <StackPanel Margin="0,0,12,0"><TextBlock Text="Bloodtinge" Style="{StaticResource Caption}"/><TextBox x:Name="Bloodtinge" AutomationProperties.Name="Bloodtinge"/></StackPanel>
-       <StackPanel><TextBlock Text="Arcane" Style="{StaticResource Caption}"/><TextBox x:Name="Arcane" AutomationProperties.Name="Arcane"/></StackPanel>
-      </UniformGrid><TextBlock Text="1–99 per attribute. Blood Level follows the attribute change. Apply while idle, then quit to title and reload your character to refresh derived stats." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,18,0,16"/><Button Content="Apply attributes" Click="ApplyStats" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
-     </StackPanel></Border>
+      <Grid x:Name="PlayerControls" IsEnabled="False" Margin="0,0,0,18">
+       <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="18" />
+        <ColumnDefinition Width="*" />
+       </Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}">
+        <StackPanel>
+         <TextBlock Text="HEALTH" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="HealthValue" Text="— / —" FontSize="28" FontWeight="SemiBold" />
+         <ProgressBar x:Name="HealthBar" Maximum="1" Foreground="#AE615F" />
+         <Grid>
+          <Grid.ColumnDefinitions>
+           <ColumnDefinition Width="*" />
+           <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBox x:Name="HealthInput" Text="1" Margin="0,0,8,0" AutomationProperties.Name="Health amount" />
+          <Button Grid.Column="1" Content="Set HP" Click="SetHealth" />
+         </Grid>
+         <Button Content="Restore full health" Click="Heal" Margin="0,10,0,0" />
+         <CheckBox x:Name="KeepHealth" Content="Keep health full" />
+         <TextBlock Text="Refills while alive. Does not prevent one-hit or scripted deaths." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0" />
+        </StackPanel>
+       </Border>
+       <Border Grid.Column="2" Style="{StaticResource Card}">
+        <StackPanel>
+         <TextBlock Text="STAMINA" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="StaminaValue" Text="— / —" FontSize="28" FontWeight="SemiBold" />
+         <ProgressBar x:Name="StaminaBar" Maximum="1" Foreground="#739781" />
+         <CheckBox x:Name="InfiniteStamina" Content="Infinite stamina" Checked="StaminaChanged" Unchecked="StaminaChanged" Margin="0,5,0,0" />
+         <TextBlock Text="Uses the local player's stamina-consumption flag. Turning it off restores its previous setting." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,15,0,0" />
+         <TextBlock Text="Health and stamina controls stop when player validation fails." Foreground="#C3AB7E" FontSize="11" Margin="0,20,0,0" />
+        </StackPanel>
+       </Border>
+      </Grid>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel x:Name="EchoControls" IsEnabled="False">
+        <Grid>
+         <TextBlock Text="BLOOD ECHOES" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="EchoValue" Text="—" HorizontalAlignment="Right" Foreground="#D0B179" FontWeight="SemiBold" />
+        </Grid>
+        <Grid Margin="0,10,0,0">
+         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+         </Grid.ColumnDefinitions>
+         <TextBox x:Name="EchoInput" Text="100000" Margin="0,0,10,0" AutomationProperties.Name="Blood Echoes amount" />
+         <Button Grid.Column="1" Content="Set echoes" Click="SetEchoes" Style="{StaticResource Primary}" Margin="0,0,10,0" />
+         <Button Grid.Column="2" Content="+10,000" Click="AddEchoes" />
+        </Grid>
+        <TextBlock Text="0–999,999,999 · Changes the current balance. The game may save this value." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,12,0,0" />
+       </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel x:Name="StatControls" IsEnabled="False">
+        <Grid>
+         <StackPanel>
+          <TextBlock Text="CHARACTER ATTRIBUTES" Style="{StaticResource Caption}" />
+          <TextBlock x:Name="LevelValue" Text="Blood Level —" FontSize="20" />
+         </StackPanel>
+         <Button Content="Reload current" Click="LoadStats" HorizontalAlignment="Right" VerticalAlignment="Top" />
+        </Grid>
+        <UniformGrid Columns="3" Margin="0,20,0,0">
+         <StackPanel Margin="0,0,12,16">
+          <TextBlock Text="Vitality" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Vitality" AutomationProperties.Name="Vitality" />
+         </StackPanel>
+         <StackPanel Margin="0,0,12,16">
+          <TextBlock Text="Endurance" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Endurance" AutomationProperties.Name="Endurance" />
+         </StackPanel>
+         <StackPanel Margin="0,0,0,16">
+          <TextBlock Text="Strength" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Strength" AutomationProperties.Name="Strength" />
+         </StackPanel>
+         <StackPanel Margin="0,0,12,0">
+          <TextBlock Text="Skill" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Skill" AutomationProperties.Name="Skill" />
+         </StackPanel>
+         <StackPanel Margin="0,0,12,0">
+          <TextBlock Text="Bloodtinge" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Bloodtinge" AutomationProperties.Name="Bloodtinge" />
+         </StackPanel>
+         <StackPanel>
+          <TextBlock Text="Arcane" Style="{StaticResource Caption}" />
+          <TextBox x:Name="Arcane" AutomationProperties.Name="Arcane" />
+         </StackPanel>
+        </UniformGrid>
+        <TextBlock Text="1–99 per attribute. Blood Level follows the attribute change. Apply while idle, then quit to title and reload your character to refresh derived stats." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,18,0,16" />
+        <Button Content="Apply attributes" Click="ApplyStats" Style="{StaticResource Primary}" HorizontalAlignment="Left" />
+       </StackPanel>
+      </Border>
      </StackPanel>
      <StackPanel x:Name="PracticePage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><Expander Header="Encounter timer" Foreground="#E8E5DF"><StackPanel Margin="0,12,0,0">
-       <TextBlock x:Name="EncounterSummary" Text="No attempt"/>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Start attempt" Click="StartAttempt" Margin="0,0,10,10"/><Button Content="Pause / resume" Click="PauseAttempt" Margin="0,0,10,10"/><Button Content="Finish attempt" Click="FinishAttempt" Margin="0,0,10,10"/><Button Content="Reset timer" Click="ResetAttempt" Margin="0,0,0,10"/></WrapPanel>
-       <TextBlock Text="Select the boss in Travel, then start manually. Time pauses while the player is unavailable or dead. Finish manually to record a personal best; stats are for this app session." Style="{StaticResource Caption}"/>
-      </StackPanel></Expander></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><Expander x:Name="PresetExpander" Header="Saved practice presets" Foreground="#E8E5DF"><StackPanel Margin="0,16,0,0">
-       <TextBlock Text="Group" Style="{StaticResource Caption}"/><TextBox x:Name="PresetGroup" Text="General" MaxLength="80" AutomationProperties.Name="Preset group" Margin="0,0,0,10"/>
-       <TextBox x:Name="PresetName" Text="My practice setup" MaxLength="80" AutomationProperties.Name="Preset name"/>
-       <Button Content="Save current settings" Click="SavePreset" HorizontalAlignment="Left" Margin="0,10,0,16"/>
-       <TextBox x:Name="PresetSearch" TextChanged="SearchPresets" AutomationProperties.Name="Search presets by name or group" ToolTip="Search presets by name or group" Margin="0,0,0,10"/>
-       <ComboBox x:Name="PresetPicker" MinHeight="40" AutomationProperties.Name="Saved practice preset"/>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Apply selected preset" Click="ApplyPreset" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete preset" Click="DeletePreset"/></WrapPanel>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Rename selected" Click="RenamePreset" Margin="0,0,10,0"/><Button Content="Duplicate selected" Click="DuplicatePreset"/></WrapPanel>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Use selected preset on startup" Click="SetStartupPreset" Margin="0,0,10,0"/><Button Content="Clear startup preset" Click="ClearStartupPreset"/></WrapPanel>
-       <TextBlock Text="Stores FOV, app preferences, combat toggles, health refill, stamina and applied multipliers locally. Apply explicitly after connecting. Matching names replace saved presets; character stats and Echoes balances are excluded." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Expander></Border>
-      <Border Style="{StaticResource Card}"><StackPanel x:Name="PracticeControls" IsEnabled="False">
-       <TextBlock Text="COMBAT &amp; STEALTH" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="GodMode" Content="God mode" Tag="GodMode" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <TextBlock Text="Blocks damage and prevents ordinary health-based death." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
-       <CheckBox x:Name="OneShot" Content="One-shot kills" Tag="OneShot" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <TextBlock Text="Use the game's Player Exterminate flag. Boss phase transitions may still apply." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
-       <CheckBox x:Name="Stealth" Content="Invisible to enemies" Tag="Stealth" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <CheckBox x:Name="Silent" Content="Silent footsteps" Tag="Silence" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <CheckBox x:Name="NoAi" Content="Disable enemy AI" Tag="NoAi" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <TextBlock Text="Stops the engine's character AI updates. Enemies can still be affected by physics and scripted events." Style="{StaticResource Caption}" Margin="20,8,0,4"/>
-       <CheckBox x:Name="NoFallDamage" Content="No fall damage" Tag="NoFallDamage" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <CheckBox x:Name="InfiniteItems" Content="Infinite consumables &amp; bullets" Tag="InfiniteItems" Checked="FlagChanged" Unchecked="FlagChanged"/>
-       <Separator Margin="0,16"/>
-       <Expander x:Name="EntityInspectorPanel" Visibility="Collapsed" IsEnabled="False" Header="Inspect nearby characters" Foreground="#E8E5DF" Margin="0,0,0,16"><StackPanel>
-        <ComboBox x:Name="CharacterPicker" Margin="0,10,0,0"/><WrapPanel Margin="0,10,0,0"><Button Content="Refresh character list" Click="RefreshCharacters" Margin="0,0,10,0"/><Button Content="Inspect selected" Click="InspectCharacter"/></WrapPanel>
-        <TextBlock x:Name="CharacterDetails" Text="Read-only snapshot of a selected loaded character. No enemy memory is modified." TextWrapping="Wrap" Style="{StaticResource Caption}" Margin="0,10,0,0"/>
-       </StackPanel></Expander>
-       <TextBlock Text="STATUS BUILDUP" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="KeepStatusEmpty" Content="Keep status buildup empty"/>
-       <Button Content="Cure active slow/rapid poison" Click="CurePoison" HorizontalAlignment="Left" Margin="0,10,0,0"/>
-       <Button Content="Clear status buildup now" Click="ClearStatusBuildup" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock Text="Clears the five buildup gauges while the player validates. Cure poison removes only active slow/rapid poison effects through the native engine. Clear buildup resets meters; neither reverses damage already taken or guarantees one-hit immunity." Style="{StaticResource Caption}" Margin="0,12,0,16"/>
-       <TextBlock Text="MOVEMENT AND PHYSICS · EXPERIMENTAL" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="MovementEnabled" Content="Override player movement speed" Checked="AdvancedChanged" Unchecked="AdvancedChanged"/>
-       <TextBlock x:Name="MovementValue" Text="Movement 1.0×"/><Slider x:Name="MovementSlider" Minimum="0.1" Maximum="5" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged"/>
-       <CheckBox x:Name="GravityEnabled" Content="Override world gravity (all actors and objects)" Checked="AdvancedChanged" Unchecked="AdvancedChanged"/>
-       <TextBlock x:Name="GravityValue" Text="Gravity 1.0×"/><Slider x:Name="GravitySlider" Minimum="0.05" Maximum="2" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged"/>
-       <Button Content="Restore movement and gravity" Click="ResetAdvanced" HorizontalAlignment="Left" Margin="0,10,0,0"/>
-       <TextBlock Text="Movement scales player translation without speeding up enemies. Gravity affects the entire physics world. Use a practice save; extreme values can break collision and scripted movement. Disable or disconnect to restore owned changes." Style="{StaticResource Caption}" Margin="0,10,0,16"/>
-       <Expander Header="Flight · experimental" Foreground="#E8E5DF" Margin="0,0,0,16"><StackPanel>
-        <CheckBox x:Name="FlightEnabled" Content="Enable flight / no gravity" Checked="FlightChanged" Unchecked="FlightChanged"/>
-        <CheckBox x:Name="NoclipEnabled" Visibility="Collapsed" IsEnabled="False" Content="Disable player collision while flying" Checked="FlightChanged" Unchecked="FlightChanged"/>
-        <TextBlock Text="Flight speed (metres per second)" Style="{StaticResource Caption}" Margin="0,10,0,0"/><Slider x:Name="FlightSpeed" Minimum="1" Maximum="20" Value="5" TickFrequency="1" IsSnapToTickEnabled="True"/>
-        <Button Content="Return to flight start and disable" Click="ReturnFromFlight" HorizontalAlignment="Left" Margin="0,10,0,0"/>
-        <TextBlock Text="With the game focused, hold Ctrl + arrow keys to move, Ctrl + Page Up/Down to rise/descend. Uses repeated native coordinate relocation. Enable deliberately each session; not applied by startup presets. Disabling in midair can drop the player. Cross-map travel stops flight. Use a practice save." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
-       </StackPanel></Expander>
-       <TextBlock Text="WEAPON DURABILITY" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="KeepDurability" Content="Keep equipped weapons at full durability" Checked="DurabilityToggled" Unchecked="DurabilityToggled"/>
-       <CheckBox x:Name="AutoRepair" Content="Auto-repair equipped weapons below threshold" Checked="DurabilityToggled" Unchecked="DurabilityToggled"/>
-       <StackPanel Orientation="Horizontal" Margin="0,10,0,0"><TextBlock Text="Threshold %" VerticalAlignment="Center" Margin="0,0,10,0"/><TextBox x:Name="RepairThreshold" Text="30" Width="80" AutomationProperties.Name="Repair threshold percent"/></StackPanel>
-       <Button Content="Repair equipped weapons now" Click="RepairWeapons" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock x:Name="DurabilitySummary" Text="Repair uses the native equipped-weapon routine. Results for each slot appear here." TextWrapping="Wrap" Foreground="#D0B179" Margin="0,10,0,0"/>
-       <TextBlock Text="Refills equipped weapon durability while the character validates. Full-durability mode takes priority over the threshold. Disabling resumes normal wear; repairs can be saved by the game." Style="{StaticResource Caption}" Margin="0,12,0,16"/>
-       <TextBlock Text="PLAYER MULTIPLIERS" Style="{StaticResource Caption}"/>
-       <UniformGrid Columns="2" Margin="0,8,0,12">
-        <StackPanel Margin="0,0,12,0"><TextBlock Text="Outgoing damage" Style="{StaticResource Caption}"/><TextBox x:Name="DamageMultiplier" Text="1" AutomationProperties.Name="Damage multiplier"/></StackPanel>
-        <StackPanel><TextBlock Text="Echoes from enemies" Style="{StaticResource Caption}"/><TextBox x:Name="EchoesMultiplier" Text="1" AutomationProperties.Name="Echoes reward multiplier"/></StackPanel>
-       </UniformGrid>
-       <Button Content="Apply multipliers" Click="ApplyMultipliers" HorizontalAlignment="Left"/>
-       <TextBlock Text="0.1–100×. Set both to 1 to restore. Uses a player-only effect; does not scale spending or bloodstain recovery. Selections resume after loading." Style="{StaticResource Caption}" Margin="0,12,0,12"/>
-       <TextBlock Text="Selections stay on through loading screens and warps. They resume when the player validates. Disconnecting clears selections; turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16"/>
-       <Button Content="Turn off practice toggles" Click="TurnOffFeatures" HorizontalAlignment="Left"/>
-      </StackPanel></Border>
+      <TabControl x:Name="PracticeSections">
+       <TabItem Header="Controls">
+        <Border Style="{StaticResource Card}">
+         <StackPanel x:Name="PracticeControls" IsEnabled="False">
+          <TextBlock Text="COMBAT &amp; STEALTH" Style="{StaticResource Caption}" />
+          <UniformGrid Columns="2">
+           <StackPanel>
+            <CheckBox x:Name="GodMode" Content="God mode" Tag="GodMode" Checked="FlagChanged" Unchecked="FlagChanged" />
+            <CheckBox x:Name="IgnoreHits" Content="Ignore hits" Tag="NoHitReaction" Margin="18,0,0,4" ToolTip="Native invincibility: avoid normal attack hits and reactions. Scripted events and grabs need live testing." Checked="FlagChanged" Unchecked="FlagChanged" />
+           </StackPanel>
+           <CheckBox x:Name="OneShot" Content="One-shot kills" Tag="OneShot" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="Stealth" Content="Invisible to enemies" Tag="Stealth" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="Silent" Content="Silent footsteps" Tag="Silence" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="NoAi" Content="Disable enemy AI" Tag="NoAi" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="NoFallDamage" Content="No fall damage" Tag="NoFallDamage" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="InfiniteItems" Content="Infinite consumables &amp; bullets" Tag="InfiniteItems" Checked="FlagChanged" Unchecked="FlagChanged" />
+           <CheckBox x:Name="KeepEchoesOnDeath" Content="Keep Blood Echoes on death" Tag="NoEchoesLoss" ToolTip="Uses the native death-penalty skip flag. Does not refill Echoes or prevent spending. Live death/bloodstain testing pending." Checked="FlagChanged" Unchecked="FlagChanged" />
+          </UniformGrid>
+          <StackPanel Margin="0">
+           <TextBlock Text="PLAYER MULTIPLIERS" Style="{StaticResource Caption}" />
+           <UniformGrid Columns="2" Margin="0,8,0,12">
+            <StackPanel Margin="0,0,12,0">
+             <TextBlock Text="Outgoing damage" Style="{StaticResource Caption}" />
+             <TextBox x:Name="DamageMultiplier" Text="1" AutomationProperties.Name="Damage multiplier" />
+            </StackPanel>
+            <StackPanel>
+             <TextBlock Text="Echoes from enemies" Style="{StaticResource Caption}" />
+             <TextBox x:Name="EchoesMultiplier" Text="1" AutomationProperties.Name="Echoes reward multiplier" />
+            </StackPanel>
+           </UniformGrid>
+           <Button Content="Apply multipliers" Click="ApplyMultipliers" HorizontalAlignment="Left" />
+           <TextBlock Text="0.1–100×. Set both to 1 to restore. Uses a player-only effect; does not scale spending or bloodstain recovery. Selections resume after loading." Style="{StaticResource Caption}" Margin="0,12,0,12" />
+          </StackPanel>
+          <TextBlock Text="Selections stay on through loading screens and warps. They resume when the player validates. Disconnecting clears selections; turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16" />
+          <Button Content="Turn off practice toggles" Click="TurnOffFeatures" HorizontalAlignment="Left" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Practice" x:Name="ParryTab">
+        <Border Style="{StaticResource Card}" IsEnabled="{Binding IsEnabled, ElementName=PracticeControls}">
+         <StackPanel Margin="0">
+          <WrapPanel>
+           <Button Content="Apply practice setup" Click="ApplyParrySetup" Margin="0,0,10,10" />
+           <Button Content="Restore previous combat setup" Click="RestoreParrySetup" Margin="0,0,0,10" />
+          </WrapPanel>
+          <TextBlock Text="Enables protection, infinite bullets/stamina and 0.1× outgoing damage. Turns off one-shot, enemy AI disabling, invisibility and silence so enemies can attack. Leaves Echoes rewards unchanged. Equip a firearm and carry bullets first." Style="{StaticResource Caption}" />
+          <CheckBox x:Name="ProtectPracticeEnemy" Content="Keep practice enemy alive" Checked="EnemyPracticeChanged" Unchecked="EnemyPracticeChanged" />
+          <Button Content="Restore locked enemy HP" Click="RestorePracticeEnemyHealth" HorizontalAlignment="Left" Margin="0,12,0,0" />
+          <TextBlock x:Name="ParrySummary" Text="Lock onto a living enemy before enabling target protection or restoring its health." Foreground="#D0B179" Margin="0,12,0,0" />
+          <TextBlock Text="Target protection allows normal damage and reactions, preventing ordinary lethal HP damage. Scripted deaths and phase transitions can still occur. Loading/death or an invalid target stops protection; re-enable it deliberately. These target actions are never saved in startup presets." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Status" x:Name="StatusTab">
+        <Border Style="{StaticResource Card}" IsEnabled="{Binding IsEnabled, ElementName=PracticeControls}">
+         <StackPanel Margin="0">
+          <TextBlock Text="STATUS BUILDUP" Style="{StaticResource Caption}" />
+          <CheckBox x:Name="KeepStatusEmpty" Content="Keep status buildup empty" />
+          <Button Content="Cure active slow/rapid poison" Click="CurePoison" HorizontalAlignment="Left" Margin="0,10,0,0" />
+          <Button Content="Clear status buildup now" Click="ClearStatusBuildup" HorizontalAlignment="Left" Margin="0,12,0,0" />
+          <TextBlock Text="Clears the five buildup gauges while the player validates. Cure poison removes only active slow/rapid poison effects through the native engine. Clear buildup resets meters; neither reverses damage already taken or guarantees one-hit immunity." Style="{StaticResource Caption}" Margin="0,12,0,16" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Weapons" x:Name="DurabilityTab">
+        <Border Style="{StaticResource Card}" IsEnabled="{Binding IsEnabled, ElementName=PracticeControls}">
+         <StackPanel Margin="0">
+          <TextBlock Text="WEAPON DURABILITY" Style="{StaticResource Caption}" />
+          <CheckBox x:Name="KeepDurability" Content="Keep equipped weapons at full durability" Checked="DurabilityToggled" Unchecked="DurabilityToggled" />
+          <CheckBox x:Name="AutoRepair" Content="Auto-repair equipped weapons below threshold" Checked="DurabilityToggled" Unchecked="DurabilityToggled" />
+          <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+           <TextBlock Text="Threshold %" VerticalAlignment="Center" Margin="0,0,10,0" />
+           <TextBox x:Name="RepairThreshold" Text="30" Width="80" AutomationProperties.Name="Repair threshold percent" />
+          </StackPanel>
+          <Button Content="Repair equipped weapons now" Click="RepairWeapons" HorizontalAlignment="Left" Margin="0,12,0,0" />
+          <TextBlock x:Name="DurabilitySummary" Text="Repair uses the native equipped-weapon routine. Results for each slot appear here." TextWrapping="Wrap" Foreground="#D0B179" Margin="0,10,0,0" />
+          <TextBlock Text="Refills equipped weapon durability while the character validates. Full-durability mode takes priority over the threshold. Disabling resumes normal wear; repairs can be saved by the game." Style="{StaticResource Caption}" Margin="0,12,0,16" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Presets" x:Name="PresetsTab">
+        <Border Style="{StaticResource Card}">
+         <StackPanel Margin="0">
+          <TextBlock Text="Group" Style="{StaticResource Caption}" />
+          <TextBox x:Name="PresetGroup" Text="General" MaxLength="80" AutomationProperties.Name="Preset group" Margin="0,0,0,10" />
+          <TextBox x:Name="PresetName" Text="My practice setup" MaxLength="80" AutomationProperties.Name="Preset name" />
+          <Button Content="Save current settings" Click="SavePreset" HorizontalAlignment="Left" Margin="0,10,0,16" />
+          <TextBox x:Name="PresetSearch" TextChanged="SearchPresets" AutomationProperties.Name="Search presets by name or group" ToolTip="Search presets by name or group" Margin="0" Visibility="Collapsed" />
+          <ComboBox x:Name="PresetPicker" MinHeight="40" AutomationProperties.Name="Saved practice preset" local:PickerSearch.Target="PresetSearch" />
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Apply selected preset" Click="ApplyPreset" Style="{StaticResource Primary}" Margin="0,0,10,0" />
+           <Button Content="Delete preset" Click="DeletePreset" />
+          </WrapPanel>
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Rename selected" Click="RenamePreset" Margin="0,0,10,0" />
+           <Button Content="Duplicate selected" Click="DuplicatePreset" />
+          </WrapPanel>
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Use selected preset on startup" Click="SetStartupPreset" Margin="0,0,10,0" />
+           <Button Content="Clear startup preset" Click="ClearStartupPreset" />
+          </WrapPanel>
+          <TextBlock Text="Stores FOV, app preferences, combat toggles, health refill, stamina and applied multipliers locally. Apply explicitly after connecting. Matching names replace saved presets; character stats and Echoes balances are excluded." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Timer">
+        <Border Style="{StaticResource Card}">
+         <StackPanel Margin="0">
+          <TextBlock x:Name="EncounterSummary" Text="No attempt" />
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Start attempt" Click="StartAttempt" Margin="0,0,10,10" />
+           <Button Content="Pause / resume" Click="PauseAttempt" Margin="0,0,10,10" />
+           <Button Content="Finish attempt" Click="FinishAttempt" Margin="0,0,10,10" />
+           <Button Content="Reset timer" Click="ResetAttempt" Margin="0,0,0,10" />
+          </WrapPanel>
+          <TextBlock Text="Select the boss in Travel, then start manually. Time pauses while the player is unavailable or dead. Finish manually to record a personal best; stats are for this app session." Style="{StaticResource Caption}" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+      </TabControl>
+     </StackPanel>
+     <StackPanel x:Name="TargetPage" Visibility="Collapsed">
+      <Border x:Name="EntityInspectorPanel" Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel>
+        <Grid>
+         <TextBlock Text="TRACKED ENEMY" Style="{StaticResource Caption}" />
+         <CheckBox x:Name="TrackEnemy" Content="Live tracking" IsChecked="True" HorizontalAlignment="Right" Margin="0" />
+        </Grid>
+        <TextBlock x:Name="EnemyName" Text="No enemy targeted yet" FontSize="23" FontWeight="SemiBold" Margin="0,10,0,0" />
+        <TextBlock x:Name="EnemyTrackingState" Text="Lock onto an enemy in the game to begin." Foreground="#D0B179" Margin="0,8,0,0" />
+        <TextBlock x:Name="EnemyMeta" Style="{StaticResource Caption}" Margin="0,8,0,0" />
+        <TextBlock Text="Updates every 200 ms. Unlocking keeps the same enemy and continues reading it while valid. Loading, death/unloading or disconnect retains the last known data until another enemy is targeted." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+       </StackPanel>
+      </Border>
+      <Grid Margin="0,0,0,18">
+       <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="*" />
+       </Grid.ColumnDefinitions>
+       <Border Style="{StaticResource Card}">
+        <StackPanel>
+         <TextBlock Text="HEALTH" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="EnemyHealth" Text="— / —" FontSize="23" FontWeight="SemiBold" />
+         <ProgressBar x:Name="EnemyHealthBar" Maximum="100" Foreground="#AE615F" />
+         <TextBlock x:Name="EnemyStamina" Text="Stamina —" Style="{StaticResource Caption}" />
+        </StackPanel>
+       </Border>
+       <Border Grid.Column="2" Style="{StaticResource Card}">
+        <StackPanel>
+         <TextBlock Text="SUPER ARMOR / STAGGER" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="EnemyArmor" Text="No data" />
+         <ProgressBar x:Name="EnemyArmorBar" Maximum="100" Foreground="#D0B179" />
+         <TextBlock x:Name="EnemyBreaks" Text="Observed breaks: 0" Style="{StaticResource Caption}" />
+        </StackPanel>
+       </Border>
+      </Grid>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel>
+        <TextBlock Text="STATUS GAUGES / LIMIT" Style="{StaticResource Caption}" />
+        <ItemsControl x:Name="EnemyGauges">
+         <ItemsControl.ItemTemplate>
+          <DataTemplate>
+           <StackPanel Margin="0,4,0,0">
+            <Grid>
+             <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+             </Grid.ColumnDefinitions>
+             <TextBlock Text="{Binding Name}" Margin="0,0,12,0" />
+             <TextBlock Grid.Column="1" Text="{Binding Summary}" Foreground="#D0B179" />
+            </Grid>
+            <ProgressBar Value="{Binding Percent, Mode=OneWay}" Maximum="100" Foreground="#739781" Margin="0,6,0,8" />
+           </StackPanel>
+          </DataTemplate>
+         </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="A zero limit does not by itself prove immunity. Super armor is the native stagger system, not Elden Ring's stance meter or a boss's separate limb-health pool. Break count is sampled and can miss very brief transitions." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+       </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card}">
+       <StackPanel>
+        <TextBlock x:Name="EnemyEffectsHeader" Text="STATUS / SPECIAL EFFECTS" Style="{StaticResource Caption}" />
+        <TextBlock x:Name="EnemyEffectsEmpty" Text="No effects captured yet." Style="{StaticResource Caption}" />
+        <ItemsControl x:Name="EnemyEffects">
+         <ItemsControl.ItemTemplate>
+          <DataTemplate>
+           <TextBlock Text="{Binding Summary}" Margin="0,5,0,5" FontSize="12" />
+          </DataTemplate>
+         </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="All captured native effects are listed, including buffs and pending entries. Unknown effects retain their ID and native state number; no guessed names. Untimed entries do not expose a countdown." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+       </StackPanel>
+      </Border>
      </StackPanel>
      <StackPanel x:Name="ItemsPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="SPAWN ITEM" Style="{StaticResource Caption}"/>
-       <TextBlock Text="Choose a common item, or enter a base item ID and category." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,16"/>
-       <TextBlock Margin="0,0,0,12"><Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Bloodborne Wiki · Datamined item IDs ↗</Hyperlink></TextBlock>
-       <TextBlock Margin="0,0,0,12"><Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-weapon-model-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Weapon IDs ↗</Hyperlink></TextBlock>
-       <StackPanel x:Name="ItemControls" IsEnabled="False">
-       <CheckBox x:Name="WikiHexId" Content="Wiki hexadecimal Item ID (includes category)" Margin="0,0,0,12"/>
-       <TextBlock Text="Decimal mode: base ID + selected category. Wiki mode: paste the full hexadecimal Item ID, e.g. 400003E8. A 0x prefix also selects hexadecimal mode." Style="{StaticResource Caption}"/>
-       <Button Content="Import all item names from game files" Click="ImportGameCatalog" HorizontalAlignment="Left" Margin="0,0,0,10"/>
-       <TextBox x:Name="ItemSearch" TextChanged="SearchItems" AutomationProperties.Name="Search item catalog" ToolTip="Search common item names or IDs" Margin="0,0,0,10"/>
-       <ComboBox x:Name="ItemPicker" DisplayMemberPath="Label" MinHeight="40" SelectionChanged="ItemSelected"/>
-       <Grid Margin="0,16,0,16"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
-        <StackPanel Margin="0,0,12,0"><TextBlock Text="Base item ID" Style="{StaticResource Caption}"/><TextBox x:Name="ItemId" Text="1000" AutomationProperties.Name="Base item ID"/></StackPanel>
-        <StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="Category" Style="{StaticResource Caption}"/><ComboBox x:Name="ItemCategory" SelectedIndex="0" MinHeight="42"><ComboBoxItem Content="Goods" Tag="1073741824"/><ComboBoxItem Content="Weapon" Tag="0"/><ComboBoxItem Content="Armor" Tag="268435456"/><ComboBoxItem Content="Accessory" Tag="536870912"/></ComboBox></StackPanel>
-        <StackPanel Grid.Column="2"><TextBlock Text="Quantity" Style="{StaticResource Caption}"/><TextBox x:Name="ItemQuantity" Text="1" AutomationProperties.Name="Item quantity"/></StackPanel>
-       </Grid><Button Content="Spawn item" Click="SpawnItem" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
-       <TextBox x:Name="FavoriteName" Text="Favorite item" MaxLength="80" AutomationProperties.Name="Favorite item name" Margin="0,16,0,0"/>
-       <Button Content="Save item as favorite" Click="SaveFavorite" HorizontalAlignment="Left" Margin="0,10,0,10"/>
-       <ComboBox x:Name="FavoritePicker" MinHeight="40" AutomationProperties.Name="Favorite items"/>
-       <WrapPanel Margin="0,10,0,0"><Button Content="Load favorite" Click="LoadFavorite" Margin="0,0,10,0"/><Button Content="Delete favorite" Click="DeleteFavorite"/></WrapPanel>
-       <TextBlock Text="Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
-      </StackPanel></StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel>
+        <TextBlock Text="SPAWN ITEM" Style="{StaticResource Caption}" />
+        <TextBlock Text="Choose a common item, or enter a base item ID and category." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,16" />
+        <TextBlock Margin="0,0,0,12">
+         <Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Bloodborne Wiki · Datamined item IDs ↗</Hyperlink>
+        </TextBlock>
+        <TextBlock Margin="0,0,0,12">
+         <Hyperlink NavigateUri="https://www.bloodborne-wiki.com/2018/01/datamined-weapon-model-item-ids.html" RequestNavigate="OpenReference" Foreground="#D0B179">Weapon IDs ↗</Hyperlink>
+        </TextBlock>
+        <StackPanel x:Name="ItemControls" IsEnabled="False">
+         <CheckBox x:Name="WikiHexId" Content="Wiki hexadecimal Item ID (includes category)" Margin="0,0,0,12" />
+         <TextBlock Text="Decimal mode: base ID + selected category. Wiki mode: paste the full hexadecimal Item ID, e.g. 400003E8. A 0x prefix also selects hexadecimal mode." Style="{StaticResource Caption}" />
+         <Button Content="Import all item names from game files" Click="ImportGameCatalog" HorizontalAlignment="Left" Margin="0,0,0,10" />
+         <TextBox x:Name="ItemSearch" TextChanged="SearchItems" AutomationProperties.Name="Search item catalog" ToolTip="Search common item names or IDs" Margin="0" Visibility="Collapsed" />
+         <ComboBox x:Name="ItemPicker" DisplayMemberPath="Label" MinHeight="40" SelectionChanged="ItemSelected" local:PickerSearch.Target="ItemSearch" />
+         <Grid Margin="0,16,0,16">
+          <Grid.ColumnDefinitions>
+           <ColumnDefinition Width="*" />
+           <ColumnDefinition Width="*" />
+           <ColumnDefinition Width="100" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Margin="0,0,12,0">
+           <TextBlock Text="Base item ID" Style="{StaticResource Caption}" />
+           <TextBox x:Name="ItemId" Text="1000" AutomationProperties.Name="Base item ID" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Margin="0,0,12,0">
+           <TextBlock Text="Category" Style="{StaticResource Caption}" />
+           <ComboBox x:Name="ItemCategory" SelectedIndex="0" MinHeight="42">
+            <ComboBoxItem Content="Goods" Tag="1073741824" />
+            <ComboBoxItem Content="Weapon" Tag="0" />
+            <ComboBoxItem Content="Armor" Tag="268435456" />
+            <ComboBoxItem Content="Accessory" Tag="536870912" />
+           </ComboBox>
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+           <TextBlock Text="Quantity" Style="{StaticResource Caption}" />
+           <TextBox x:Name="ItemQuantity" Text="1" AutomationProperties.Name="Item quantity" />
+          </StackPanel>
+         </Grid>
+         <Button Content="Spawn item" Click="SpawnItem" Style="{StaticResource Primary}" HorizontalAlignment="Left" />
+         <TextBox x:Name="FavoriteName" Text="Favorite item" MaxLength="80" AutomationProperties.Name="Favorite item name" Margin="0,16,0,0" />
+         <Button Content="Save item as favorite" Click="SaveFavorite" HorizontalAlignment="Left" Margin="0,10,0,10" />
+         <ComboBox x:Name="FavoritePicker" MinHeight="40" AutomationProperties.Name="Favorite items" />
+         <WrapPanel Margin="0,10,0,0">
+          <Button Content="Load favorite" Click="LoadFavorite" Margin="0,0,10,0" />
+          <Button Content="Delete favorite" Click="DeleteFavorite" />
+         </WrapPanel>
+         <TextBlock Text="Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0" />
+        </StackPanel>
+       </StackPanel>
+      </Border>
      </StackPanel>
      <StackPanel x:Name="WorkshopPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel x:Name="MenuControls" IsEnabled="False">
-       <TextBlock Text="WORKSHOP MENUS" Style="{StaticResource Caption}"/>
-       <ComboBox x:Name="MenuPicker" DisplayMemberPath="Label" MinHeight="40"/>
-       <Button Content="Open selected menu" Click="OpenRemoteMenu" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock Text="Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Normal Echoes and material costs apply. Close normally in the game." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel x:Name="MenuControls" IsEnabled="False">
+        <TextBlock Text="WORKSHOP MENUS" Style="{StaticResource Caption}" />
+        <ComboBox x:Name="MenuPicker" DisplayMemberPath="Label" MinHeight="40" />
+        <Button Content="Open selected menu" Click="OpenRemoteMenu" HorizontalAlignment="Left" Margin="0,12,0,0" />
+        <TextBlock Text="Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Normal Echoes and material costs apply. Close normally in the game." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+       </StackPanel>
+      </Border>
      </StackPanel>
      <StackPanel x:Name="TravelPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}"><StackPanel x:Name="WarpControls" IsEnabled="False"><TextBlock Text="WARP TO LAMP" Style="{StaticResource Caption}"/>
-       <TextBox x:Name="LampSearch" TextChanged="FilterLamps" ToolTip="Filter lamps by name or DLC" AutomationProperties.Name="Search lamps" Margin="0,8,0,0"/>
-       <ComboBox x:Name="LampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,16"/>
-       <Button Content="Warp to selected lamp" Click="Warp" Style="{StaticResource Primary}" HorizontalAlignment="Left"/>
-       <TextBlock Text="All 45 named base-game and DLC destinations. Boss-arena lamps do not reset bosses or unlock quest flags. Use the chalice altar controls below for generated dungeons. Warp while idle." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="ChaliceControls" IsEnabled="False">
-       <TextBlock Text="CHALICE DUNGEON TRAVEL" Style="{StaticResource Caption}"/>
-       <ComboBox x:Name="ChalicePicker" DisplayMemberPath="Label" MinHeight="40"/>
-       <ComboBox x:Name="ChaliceLampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,0"/>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Refresh altars" Click="RefreshChalices" Margin="0,0,10,0"/><Button Content="Travel to chalice lamp" Click="OpenChaliceTravel" Style="{StaticResource Primary}"/></WrapPanel>
-       <TextBlock Text="Start from Hunter's Dream. Choose an existing altar and one of its unlocked layer lamps. Uses that character's generated dungeon and progress. Empty rituals and locked lamps are rejected; this does not create dungeons or unlock lamps." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel><StackPanel x:Name="BossControls" IsEnabled="False">
-       <TextBlock Text="BOSS ENTRANCES" Style="{StaticResource Caption}"/>
-       <ComboBox x:Name="BossPicker" DisplayMemberPath="Label" MinHeight="40"/>
-       <WrapPanel Margin="0,12,0,0"><Button Content="1 · Travel to area" Click="TravelBossArea" Margin="0,0,10,0"/><Button Content="2 · Go to entrance" Click="GoToBoss" Style="{StaticResource Primary}"/></WrapPanel>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Revive + reload boss area" Click="ReviveBoss" Margin="0,0,10,0"/><Button Content="Revive + travel for retry" Click="RetryBoss" Margin="0,0,10,0"/></WrapPanel>
-       <TextBlock Text="One click resets saved encounter flags and reloads the selected boss area. Can be used from any area, including mid-fight; this can disrupt the encounter or story progress. Supports all 22 boss destinations including DLC. New Micolash and ending-boss profiles are experimental. Moon Presence enables its encounter route; defeating ending bosses may advance NG/story state. Original flags are journaled locally. Use a separate practice save." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-       <TextBlock Text="22 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. Travel/entrance buttons relocate you; revival controls reset supported encounters separately. Doors and story prerequisites are unchanged." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
-      </StackPanel><Button x:Name="CancelRetryButton" Content="Cancel pending entrance placement" Click="CancelBossRetry" HorizontalAlignment="Left" Margin="0,12,0,0" ToolTip="Stops pending placement. Travel already requested and revival flag changes are retained."/></StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,18,0,0"><StackPanel x:Name="LocationControls" IsEnabled="False">
-       <TextBlock Text="SAVED LOCATIONS" Style="{StaticResource Caption}"/>
-       <TextBlock Text="Group" Style="{StaticResource Caption}"/><TextBox x:Name="LocationGroup" Text="General" MaxLength="80" AutomationProperties.Name="Location group" Margin="0,0,0,10"/>
-       <TextBox x:Name="LocationName" Text="Practice spot" MaxLength="80" AutomationProperties.Name="Location name"/>
-       <Button Content="Save current location" Click="SaveLocation" HorizontalAlignment="Left" Margin="0,10,0,16"/>
-       <TextBlock Text="Search saved locations" Style="{StaticResource Caption}"/>
-       <TextBox x:Name="LocationSearch" TextChanged="SearchLocations" AutomationProperties.Name="Search saved locations" ToolTip="Search by name or map" Margin="0,0,0,10"/>
-       <ComboBox x:Name="LocationPicker" DisplayMemberPath="Label" MinHeight="40"/>
-       <WrapPanel Margin="0,12,0,0"><Button Content="Restore location" Click="RestoreLocation" Style="{StaticResource Primary}" Margin="0,0,10,0"/><Button Content="Delete selected" Click="DeleteLocation"/></WrapPanel>
-       <TextBlock Text="Stores named positions in the local library between app sessions. Search by name or map. Restore within the same loaded map; travel to its lamp first when elsewhere. Chalice bookmarks are bound to this connection, character, altar, dungeon and progress snapshot; reconnecting or changing that state requires a fresh bookmark." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0"/>
-      </StackPanel></Border>
+      <TabControl x:Name="TravelSections">
+       <TabItem Header="Lamps">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel x:Name="WarpControls" IsEnabled="False">
+          <TextBlock Text="WARP TO LAMP" Style="{StaticResource Caption}" />
+          <TextBox x:Name="LampSearch" TextChanged="FilterLamps" ToolTip="Filter lamps by name or DLC" AutomationProperties.Name="Search lamps" Margin="0" Visibility="Collapsed" />
+          <ComboBox x:Name="LampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,16" local:PickerSearch.Target="LampSearch" />
+          <Button Content="Warp to selected lamp" Click="Warp" Style="{StaticResource Primary}" HorizontalAlignment="Left" />
+          <TextBlock Text="All 45 named base-game and DLC destinations. Boss-arena lamps do not reset bosses or unlock quest flags. Use the chalice altar controls below for generated dungeons. Warp while idle." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Chalices">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel x:Name="ChaliceControls" IsEnabled="False">
+          <TextBlock Text="CHALICE DUNGEON TRAVEL" Style="{StaticResource Caption}" />
+          <ComboBox x:Name="ChalicePicker" DisplayMemberPath="Label" MinHeight="40" />
+          <ComboBox x:Name="ChaliceLampPicker" DisplayMemberPath="Label" MinHeight="40" Margin="0,10,0,0" />
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Refresh altars" Click="RefreshChalices" Margin="0,0,10,0" />
+           <Button Content="Travel to chalice lamp" Click="OpenChaliceTravel" Style="{StaticResource Primary}" />
+          </WrapPanel>
+          <TextBlock Text="Start from Hunter's Dream. Choose an existing altar and one of its unlocked layer lamps. Uses that character's generated dungeon and progress. Empty rituals and locked lamps are rejected; this does not create dungeons or unlock lamps." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Bosses" x:Name="BossesTab">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel>
+          <StackPanel x:Name="BossControls" IsEnabled="False">
+           <TextBlock Text="BOSS ENTRANCES" Style="{StaticResource Caption}" />
+           <ComboBox x:Name="BossPicker" DisplayMemberPath="Label" MinHeight="40" />
+           <CheckBox x:Name="BossFirstEncounter" Content="Revive as first encounter" Margin="0,12,0,0" />
+           <TextBlock Text="Replays the original encounter trigger and intro. Fog follows first-visit rules; enter the arena to begin. Leave off for a repeat fight. AI/invisibility overrides can keep bosses passive." Style="{StaticResource Caption}" Margin="0,8,0,0" />
+           <WrapPanel Margin="0,12,0,0">
+            <Button Content="1 · Travel to area" Click="TravelBossArea" Margin="0,0,10,0" />
+            <Button Content="2 · Go to entrance" Click="GoToBoss" Style="{StaticResource Primary}" />
+           </WrapPanel>
+           <WrapPanel Margin="0,12,0,0">
+            <Button Content="Revive + reload boss area" Click="ReviveBoss" Margin="0,0,10,0" />
+            <Button Content="Revive + travel for retry" Click="RetryBoss" Margin="0,0,10,0" />
+           </WrapPanel>
+           <TextBlock Text="One click resets saved encounter flags and reloads the selected boss area. Can be used from any area, including mid-fight; this can disrupt the encounter or story progress. Supports all 22 boss destinations including DLC. New Micolash and ending-boss profiles are experimental. Moon Presence enables its encounter route; defeating ending bosses may advance NG/story state. Original flags are journaled locally. Use a separate practice save." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+           <TextBlock Text="22 boss entrances, including all five DLC bosses. Travel to the area, wait for loading, then go to the entrance. Travel/entrance buttons relocate you; revival controls reset supported encounters separately. Doors and story prerequisites are unchanged." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0" />
+          </StackPanel>
+          <Button x:Name="CancelRetryButton" Content="Cancel pending entrance placement" Click="CancelBossRetry" HorizontalAlignment="Left" Margin="0,12,0,0" ToolTip="Stops pending placement. Travel already requested and revival flag changes are retained." />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Saved locations">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel x:Name="LocationControls" IsEnabled="False">
+          <TextBlock Text="SAVED LOCATIONS" Style="{StaticResource Caption}" />
+          <TextBlock Text="Group" Style="{StaticResource Caption}" />
+          <TextBox x:Name="LocationGroup" Text="General" MaxLength="80" AutomationProperties.Name="Location group" Margin="0,0,0,10" />
+          <TextBox x:Name="LocationName" Text="Practice spot" MaxLength="80" AutomationProperties.Name="Location name" />
+          <Button Content="Save current location" Click="SaveLocation" HorizontalAlignment="Left" Margin="0,10,0,16" />
+          <TextBlock Text="Search saved locations" Style="{StaticResource Caption}" />
+          <TextBox x:Name="LocationSearch" TextChanged="SearchLocations" AutomationProperties.Name="Search saved locations" ToolTip="Search by name or map" Margin="0" Visibility="Collapsed" />
+          <ComboBox x:Name="LocationPicker" DisplayMemberPath="Label" MinHeight="40" local:PickerSearch.Target="LocationSearch" />
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Restore location" Click="RestoreLocation" Style="{StaticResource Primary}" Margin="0,0,10,0" />
+           <Button Content="Delete selected" Click="DeleteLocation" />
+          </WrapPanel>
+          <TextBlock Text="Stores named positions in the local library between app sessions. Search by name or map. Restore within the same loaded map; travel to its lamp first when elsewhere. Chalice bookmarks are bound to this connection, character, altar, dungeon and progress snapshot; reconnecting or changing that state requires a fresh bookmark." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,16,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+      </TabControl>
      </StackPanel>
      <StackPanel x:Name="CameraPage" Visibility="Collapsed">
-      <Border x:Name="FreeCameraPanel" Visibility="Collapsed" IsEnabled="False" Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <CheckBox x:Name="FreeCameraEnabled" Content="Enable detached free camera · experimental" Checked="FreeCameraChanged" Unchecked="FreeCameraChanged"/>
-       <TextBlock Text="Camera speed" Style="{StaticResource Caption}"/><Slider x:Name="FreeCameraSpeed" Minimum="1" Maximum="20" Value="5" TickFrequency="1" IsSnapToTickEnabled="True"/>
-       <TextBlock Text="Game focus: hold Ctrl + arrows / Page Up / Page Down to translate; Ctrl + I/K pitches and Ctrl + J/L turns. Uses the FOV slider below. Disables flight; enable deliberately, not through startup presets. Extended follow-camera mode only; modified update routines are rejected. Disable to restore native follow and request a camera reset." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
-      </StackPanel></Border>
-      <CheckBox x:Name="HideHud" Content="Hide HUD / front-end UI" Margin="0,0,0,10"/>
-      <TextBlock Text="Hiding front-end UI may hide game menus too. Uncheck here to restore; disconnect also restores the captured value." Style="{StaticResource Caption}" Margin="0,0,0,14"/>
-      <TextBlock Text="⚠ FOV and camera overrides are experimental and unstable. They can reduce performance and cause visual issues. Restore defaults if problems occur." Foreground="#D0B179" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16"/>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><Expander x:Name="TuningExpander" Header="Camera distance and height" Foreground="#E8E5DF"><StackPanel Margin="0,12,0,0">
-       <TextBlock x:Name="CameraTuningSummary" Text="Distance 1.0× · Height 1.0×" Margin="0,0,0,12"/>
-       <TextBlock Text="Distance multiplier · 0.5–2.0" Style="{StaticResource Caption}"/><Slider x:Name="CameraDistance" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged"/>
-       <TextBlock Text="Height multiplier · 0.5–2.0" Style="{StaticResource Caption}" Margin="0,12,0,8"/><Slider x:Name="CameraHeight" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged"/>
-       <CheckBox x:Name="TuneCamera" Content="Override camera distance and height" Checked="CameraTuningToggled" Unchecked="CameraTuningToggled"/>
-       <TextBlock Text="Scales each camera row's original distance and look-at height. Disable to restore; included in saved and startup presets." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Expander></Border>
-      <Border Style="{StaticResource Card}"><StackPanel>
-       <TextBlock Text="FIELD OF VIEW" Style="{StaticResource Caption}"/>
-       <TextBlock Text="Vertical FOV" FontSize="20"/>
-       <TextBlock x:Name="FovValue" Text="43°" Foreground="#D0B179" FontSize="26" Margin="0,12,0,8"/>
-       <Slider x:Name="FovSlider" Minimum="38" Maximum="120" Value="43" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FovChanged" AutomationProperties.Name="Vertical field of view"/>
-       <CheckBox x:Name="FovEnabled" Content="Override camera FOV" Checked="FovToggled" Unchecked="FovToggled"/>
-       <Button Content="Restore original FOV" Click="ResetFov" HorizontalAlignment="Left" Margin="0,16,0,0"/>
-       <TextBlock x:Name="FovHint" Text="Connect to a loaded character. 38–120° vertical. Wide angles automatically remove the camera clamp in memory; no external patch is required. Disabling restores the clamp if this app changed it." Style="{StaticResource Caption}" Margin="0,16,0,0"/>
-       <TextBlock Text="Uses camera parameter rows and preserves their individual original values. Changes ease in through the game camera and resume after loads. Disable or disconnect to restore. Camera angles are vertical, not horizontal." Style="{StaticResource Caption}"/>
-      </StackPanel></Border>
+      <TextBlock Text="⚠ FOV and camera overrides are experimental and unstable. They can reduce performance and cause visual issues. Restore defaults if problems occur." Foreground="#D0B179" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16" />
+      <TabControl x:Name="CameraSections">
+       <TabItem Header="FOV">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel>
+          <TextBlock Text="FIELD OF VIEW" Style="{StaticResource Caption}" />
+          <TextBlock Text="Vertical FOV" FontSize="20" />
+          <TextBlock x:Name="FovValue" Text="43°" Foreground="#D0B179" FontSize="26" Margin="0,12,0,8" />
+          <Slider x:Name="FovSlider" Minimum="38" Maximum="120" Value="43" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FovChanged" AutomationProperties.Name="Vertical field of view" />
+          <CheckBox x:Name="FovEnabled" Content="Override camera FOV" Checked="FovToggled" Unchecked="FovToggled" />
+          <Button Content="Restore original FOV" Click="ResetFov" HorizontalAlignment="Left" Margin="0,16,0,0" />
+          <TextBlock x:Name="FovHint" Text="Connect to a loaded character. 38–120° vertical. Wide angles automatically remove the camera clamp in memory; no external patch is required. Disabling restores the clamp if this app changed it." Style="{StaticResource Caption}" Margin="0,16,0,0" />
+          <TextBlock Text="Uses camera parameter rows and preserves their individual original values. Changes ease in through the game camera and resume after loads. Disable or disconnect to restore. Camera angles are vertical, not horizontal." Style="{StaticResource Caption}" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Distance &amp; height" x:Name="CameraTuningTab">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel Margin="0">
+          <TextBlock x:Name="CameraTuningSummary" Text="Distance 1.0× · Height 1.0×" Margin="0,0,0,12" />
+          <TextBlock Text="Distance multiplier · 0.5–2.0" Style="{StaticResource Caption}" />
+          <Slider x:Name="CameraDistance" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged" />
+          <TextBlock Text="Height multiplier · 0.5–2.0" Style="{StaticResource Caption}" Margin="0,12,0,8" />
+          <Slider x:Name="CameraHeight" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged" />
+          <CheckBox x:Name="TuneCamera" Content="Override camera distance and height" Checked="CameraTuningToggled" Unchecked="CameraTuningToggled" />
+          <TextBlock Text="Scales each camera row's original distance and look-at height. Disable to restore; included in saved and startup presets." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="HUD">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel Margin="0">
+          <CheckBox x:Name="HideHud" Content="Hide HUD / front-end UI" Margin="0,0,0,10" />
+          <TextBlock Text="Hiding front-end UI may hide game menus too. Uncheck here to restore; disconnect also restores the captured value." Style="{StaticResource Caption}" Margin="0,0,0,14" />
+         </StackPanel>
+        </Border>
+       </TabItem>
+       <TabItem Header="Movement">
+        <Border Style="{StaticResource Card}" Margin="0">
+         <StackPanel x:Name="ExplorationControls" IsEnabled="False" Margin="0">
+          <TextBlock Text="MOVEMENT AND PHYSICS · EXPERIMENTAL" Style="{StaticResource Caption}" />
+          <CheckBox x:Name="MovementEnabled" Content="Override player movement speed" Checked="AdvancedChanged" Unchecked="AdvancedChanged" />
+          <TextBlock x:Name="MovementValue" Text="Movement 1.0×" />
+          <Slider x:Name="MovementSlider" Minimum="0.1" Maximum="5" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged" />
+          <CheckBox x:Name="GravityEnabled" Content="Override world gravity (all actors and objects)" Checked="AdvancedChanged" Unchecked="AdvancedChanged" />
+          <TextBlock x:Name="GravityValue" Text="Gravity 1.0×" />
+          <Slider x:Name="GravitySlider" Minimum="0.05" Maximum="2" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged" />
+          <Button Content="Restore movement and gravity" Click="ResetAdvanced" HorizontalAlignment="Left" Margin="0,10,0,0" />
+          <TextBlock Text="Movement scales player translation without speeding up enemies. Gravity affects the entire physics world. Use a practice save; extreme values can break collision and scripted movement. Disable or disconnect to restore owned changes." Style="{StaticResource Caption}" Margin="0,10,0,16" />
+          <Expander Header="Flight and noclip · experimental" Foreground="#E8E5DF" Margin="0,0,0,16" Visibility="Collapsed">
+           <StackPanel>
+            <CheckBox x:Name="FlightEnabled" Content="Enable flight / no gravity" Checked="FlightChanged" Unchecked="FlightChanged" />
+            <CheckBox x:Name="NoclipEnabled" Content="Enable noclip (includes flight)" Checked="FlightChanged" Unchecked="FlightChanged" />
+            <TextBlock Text="Flight speed (metres per second)" Style="{StaticResource Caption}" Margin="0,10,0,0" />
+            <Slider x:Name="FlightSpeed" Minimum="1" Maximum="20" Value="5" TickFrequency="1" IsSnapToTickEnabled="True" />
+            <Button Content="Return to flight start and disable" Click="ReturnFromFlight" HorizontalAlignment="Left" Margin="0,10,0,0" />
+            <TextBlock Text="With the game focused, hold Ctrl + the configured camera movement keys (WASD, E/Q by default). Uses repeated native coordinate relocation. Enable deliberately each session; not applied by startup presets. Disabling in midair can drop the player. Cross-map travel stops flight. Use a practice save." Style="{StaticResource Caption}" Margin="0,10,0,0" />
+           </StackPanel>
+          </Expander>
+         </StackPanel>
+        </Border>
+       </TabItem>
+      </TabControl>
+     </StackPanel>
+     <StackPanel x:Name="PhotoPage" Visibility="Collapsed" IsEnabled="False">
+      <ItemsControl x:Name="CameraBindingList" Visibility="Collapsed"/>
+      <Border x:Name="FreeCameraPanel" Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel>
+        <TextBlock x:Name="PhotoModeState" Text="Ready to compose" FontSize="20" FontWeight="SemiBold" />
+        <TextBlock Text="Start photo mode, focus the game to move the camera, then capture. The world keeps running." Style="{StaticResource Caption}" Margin="0,8,0,12" />
+        <WrapPanel>
+         <Button x:Name="PhotoToggleButton" Content="Start photo mode" Click="TogglePhotoMode" Style="{StaticResource Primary}" Margin="0,0,10,10" />
+         <Button Content="Capture in 3 seconds" Click="CapturePhotoCountdown" Margin="0,0,10,10" />
+         <Button Content="Open photos" Click="OpenPhotoFolder" Margin="0,0,0,10" />
+        </WrapPanel>
+        <CheckBox x:Name="FreeCameraEnabled" Content="Photo mode active" Visibility="Collapsed" Checked="FreeCameraChanged" Unchecked="FreeCameraChanged" Margin="0,12,0,0" />
+        <WrapPanel Margin="0,0,0,12">
+         <CheckBox x:Name="PhotoLockHunter" Content="Freeze hunter movement" IsChecked="True" Checked="PhotoOptionsChanged" Unchecked="PhotoOptionsChanged" Margin="0,4,24,0" />
+         <CheckBox x:Name="PhotoHideHud" Content="Hide HUD" IsChecked="True" Checked="PhotoOptionsChanged" Unchecked="PhotoOptionsChanged" Margin="0,4,12,0" />
+         <Button Content="Restore HUD" Click="ShowHudNow" Padding="10,3" Margin="0,0,0,0" />
+        </WrapPanel>
+        <TextBlock x:Name="PhotoControlsSummary" TextWrapping="Wrap" Foreground="#D0B179" Margin="0,0,0,14" />
+        <TextBlock x:Name="PhotoFovLabel" Text="Photo zoom · 43° FOV" Style="{StaticResource Caption}" />
+        <Slider x:Name="PhotoFov" Minimum="10" Maximum="120" Value="43" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="PhotoFovChanged" />
+        <Expander x:Name="PhotoOptionsExpander" Header="Camera speed and reset" Foreground="#E8E5DF" Margin="0,14,0,0">
+         <StackPanel>
+          <TextBlock Text="Camera speed (metres per second)" Style="{StaticResource Caption}" Margin="0,12,0,0" />
+          <Slider x:Name="FreeCameraSpeed" Minimum="0.1" Maximum="20" Value="3" TickFrequency="0.1" IsSnapToTickEnabled="True" />
+          <TextBlock Text="Turn speed (degrees per second)" Style="{StaticResource Caption}" />
+          <Slider x:Name="PhotoTurnSpeed" Minimum="5" Maximum="180" Value="45" TickFrequency="5" IsSnapToTickEnabled="True" />
+          <Button Content="Reset camera to photo-mode start" Click="ResetPhotoCamera" HorizontalAlignment="Left" Margin="0,12,0,0" />
+         </StackPanel>
+        </Expander>
+        <Expander x:Name="PhotoCaptureExpander" Header="Edit captured photo · filters" Foreground="#E8E5DF" Margin="0,14,0,0">
+         <StackPanel Margin="0,12,0,0">
+          <TextBlock Text="Filters apply to saved photos. Capture an image to preview adjustments and save a separate edited copy. The original PNG stays unchanged." Style="{StaticResource Caption}" />
+          <ComboBox x:Name="PhotoFilter" MinHeight="40" SelectionChanged="PhotoFilterChanged" AutomationProperties.Name="Photo filter" />
+          <TextBlock Text="Exposure · −2 to +2 EV" Style="{StaticResource Caption}" Margin="0,12,0,0" />
+          <Slider x:Name="PhotoExposure" Minimum="-2" Maximum="2" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="PhotoAdjustmentChanged" />
+          <TextBlock Text="Contrast" Style="{StaticResource Caption}" />
+          <Slider x:Name="PhotoContrast" Minimum="0.5" Maximum="1.5" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="PhotoAdjustmentChanged" />
+          <TextBlock Text="Saturation" Style="{StaticResource Caption}" />
+          <Slider x:Name="PhotoSaturation" Minimum="0" Maximum="2" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="PhotoAdjustmentChanged" />
+          <TextBlock Text="Vignette" Style="{StaticResource Caption}" />
+          <Slider x:Name="PhotoVignette" Minimum="0" Maximum="0.8" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="PhotoAdjustmentChanged" />
+          <TextBlock x:Name="PhotoAdjustmentsSummary" Style="{StaticResource Caption}" Margin="0,10,0,10" />
+          <WrapPanel>
+           <Button x:Name="SavePhotoEditsButton" IsEnabled="False" Content="Save filtered copy" Click="SavePhotoEdits" Margin="0,0,10,10" />
+           <Button Content="Reset filters" Click="ResetPhotoAdjustments" Margin="0,0,0,10" />
+          </WrapPanel>
+          <Image x:Name="PhotoPreview" MaxHeight="260" Stretch="Uniform" HorizontalAlignment="Left" />
+          <TextBlock x:Name="PhotoCaptureSummary" Text="No photo captured this session." Foreground="#D0B179" Margin="0,12,0,0" />
+         </StackPanel>
+        </Expander>
+        <Expander Header="Save folder and defaults" Foreground="#E8E5DF" Margin="0,14,0,0">
+         <StackPanel>
+          <TextBlock x:Name="PhotoFolderLabel" Style="{StaticResource Caption}" Margin="0,12,0,0" />
+          <WrapPanel Margin="0,12,0,0">
+           <Button Content="Choose photo folder" Click="ChoosePhotoFolder" Margin="0,0,10,10" />
+           <Button Content="Save photo defaults" Click="SavePhotoDefaults" Margin="0,0,0,10" />
+          </WrapPanel>
+         </StackPanel>
+        </Expander>
+        <TextBlock Text="Lossless PNG at the displayed game resolution. Rebind controls in Settings. Exit restores camera, hunter movement and HUD; loading/death ends photo mode." Style="{StaticResource Caption}" Margin="0,16,0,0" />
+       </StackPanel>
+      </Border>
      </StackPanel>
      <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="SUPPORTED RUNTIMES" Style="{StaticResource Caption}"/>
-       <TextBlock Text="Bloodborne PC and shadPS4 · CUSA03173 1.09. Tested and confirmed. Select the game process or use automatic connection. Game-image and player validation remain required." Style="{StaticResource Caption}" Margin="0,10,0,0"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="ABOUT &amp; UPDATES" Style="{StaticResource Caption}"/>
-       <Button Content="Export diagnostics" Click="ExportDiagnostics" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-       <TextBlock x:Name="AboutVersion" FontSize="22" FontWeight="SemiBold"/>
-       <TextBlock x:Name="UpdateStatus" Text="Use Check for updates below to look for a newer stable GitHub release." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0"/>
-       <TextBlock Text="Checks run only when requested. Downloads open on GitHub; nothing is installed automatically." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,0"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel><TextBlock Text="CONNECTION" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="AutoConnect" Content="Find the best game process and connect automatically" Checked="AutoConnectChanged" Unchecked="AutoConnectChanged" Margin="0,8,0,16"/>
-       <TextBlock Text="Checks every three seconds while disconnected. Prefers a loaded character after verifying the game image. Reconnects when the engine restarts. Manual disconnect pauses automatic connection until you reconnect or toggle this setting." Foreground="{StaticResource Muted}" FontSize="12"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="PRACTICE HOTKEYS" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="HotkeysEnabled" Content="Enable practice hotkeys"/>
-       <TextBlock Text="Shortcut modifier (choose None for F-keys alone)" Style="{StaticResource Caption}" Margin="0,12,0,4"/><ComboBox x:Name="HotkeyModifiers" MinHeight="40"/>
-       <TextBlock x:Name="HotkeySummary" TextWrapping="Wrap" Foreground="#D0B179" Margin="0,8,0,0"/>
-       <UniformGrid Columns="5" Margin="0,12,0,12">
-        <StackPanel Margin="0,0,8,0"><TextBlock Text="Heal" Style="{StaticResource Caption}"/><ComboBox x:Name="HotkeyHeal" MinHeight="40"/></StackPanel>
-        <StackPanel Margin="0,0,8,0"><TextBlock Text="God mode" Style="{StaticResource Caption}"/><ComboBox x:Name="HotkeyGod" MinHeight="40"/></StackPanel>
-        <StackPanel Margin="0,0,8,0"><TextBlock Text="Save spot" Style="{StaticResource Caption}"/><ComboBox x:Name="HotkeySave" MinHeight="40"/></StackPanel>
-        <StackPanel Margin="0,0,8,0"><TextBlock Text="Restore" Style="{StaticResource Caption}"/><ComboBox x:Name="HotkeyRestore" MinHeight="40"/></StackPanel>
-        <StackPanel><TextBlock Text="Boss retry" Style="{StaticResource Caption}"/><ComboBox x:Name="HotkeyRetry" MinHeight="40"/></StackPanel>
-       </UniformGrid>
-       <Button Content="Apply hotkeys" Click="SaveHotkeys" HorizontalAlignment="Left"/>
-       <TextBlock Text="Active only while the connected game or BB Tools has focus; ignored while typing in the app. Save/restore uses a Quick bookmark. Retry resets and reloads the selected boss from any area. Press the modifier shown above plus the chosen F-key. These keys also reach the game; avoid conflicting game bindings. Duplicate shortcuts are rejected." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="SAVED LIBRARY" Style="{StaticResource Caption}"/>
-       <WrapPanel><Button Content="Export library" Click="ExportLibrary" Margin="0,0,10,10"/><Button Content="Import library" Click="ImportLibrary" Margin="0,0,10,10"/><Button Content="Back up database" Click="BackupLibrary" Margin="0,0,0,10"/></WrapPanel>
-       <TextBlock Text="Exports presets, locations and item favorites. Import validates everything before committing; matching names are replaced. Importing never applies presets, spawns items or warps. Database backup is a consistent SQLite snapshot." Style="{StaticResource Caption}"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="STARTUP SETTINGS" Style="{StaticResource Caption}"/>
-       <CheckBox x:Name="StartupFov" Content="Apply saved FOV automatically when a character loads"/>
-       <Button Content="Save current FOV as startup default" Click="SaveStartupFov" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock x:Name="StartupSummary" Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-       <TextBlock Text="Startup presets apply once per connection when a living character is ready. Choose the preset in Combat. Stats, Echoes balances, spawning, warps and boss revival never run automatically." Style="{StaticResource Caption}"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,0,0,18"><StackPanel>
-       <TextBlock Text="SAVE BACKUP HISTORY &amp; RESTORE" Style="{StaticResource Caption}"/>
-       <Button Content="Choose backup folder" Click="ChooseBackupFolder" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-       <ComboBox x:Name="BackupHistory" MinHeight="40" AutomationProperties.Name="Save backup history"/>
-       <Button x:Name="RestoreBackupButton" Content="Restore selected backup to save folder…" Click="RestoreSaveBackup" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-       <TextBlock Text="Close the game and launcher first. Restore verifies paths, sizes and CRC checksums, then keeps a recovery ZIP and the previous save folder before replacing the selected folder. Select the actual save folder, not the game installation." Style="{StaticResource Caption}" Margin="0,12,0,0"/>
-      </StackPanel></Border>
-     <Border Style="{StaticResource Card}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Margin="0,0,18,0"><TextBlock Text="SAVE BACKUP" Style="{StaticResource Caption}"/><TextBlock Text="Keep a copy before changing your character."/><TextBlock Text="Close the game before creating a backup." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0"/></StackPanel><Button Grid.Column="1" x:Name="BackupButton" Content="Back up saves…" Click="Backup" VerticalAlignment="Center"/></Grid></Border>
+      <TabControl x:Name="SettingsSections">
+       <TabItem Header="Connection">
+        <StackPanel>
+         <Border x:Name="ConnectionPanel" Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="GAME CONNECTION" Style="{StaticResource Caption}" />
+           <TextBox x:Name="ProcessSearch" TextChanged="FilterProcesses" AutomationProperties.Name="Filter processes by name or PID" ToolTip="Filter by name, decimal PID or 0x-prefixed hexadecimal PID" FontSize="13" Padding="10,7" Margin="0" Visibility="Collapsed" />
+           <TextBlock Text="All processes · filter by name or PID · ★ likely Bloodborne" Style="{StaticResource Caption}" />
+           <Grid>
+            <Grid.ColumnDefinitions>
+             <ColumnDefinition Width="*" />
+             <ColumnDefinition Width="Auto" />
+             <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="Candidates" DisplayMemberPath="Label" MinHeight="40" Margin="0,0,10,0" VerticalContentAlignment="Center" FontSize="13" local:PickerSearch.Target="ProcessSearch" />
+            <Button Grid.Column="1" x:Name="RefreshButton" Content="Refresh" Click="Refresh" Margin="0,0,10,0" />
+            <Button Grid.Column="2" x:Name="ConnectButton" Content="Connect" Click="Connect" Style="{StaticResource Primary}" />
+           </Grid>
+           <TextBlock x:Name="ConnectionHint" Text="Start Bloodborne PC and load a character, then connect." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0" />
+          </StackPanel>
+         </Border>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="SUPPORTED RUNTIMES" Style="{StaticResource Caption}" />
+           <TextBlock Text="Bloodborne PC and shadPS4 · CUSA03173 1.09. Tested and confirmed. Select the game process or use automatic connection. Game-image and player validation remain required." Style="{StaticResource Caption}" Margin="0,10,0,0" />
+          </StackPanel>
+         </Border>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="CONNECTION" Style="{StaticResource Caption}" />
+           <CheckBox x:Name="AutoConnect" Content="Find the best game process and connect automatically" Checked="AutoConnectChanged" Unchecked="AutoConnectChanged" Margin="0,8,0,16" />
+           <TextBlock Text="Checks every three seconds while disconnected. Prefers a loaded character after verifying the game image. Reconnects when the engine restarts. Manual disconnect pauses automatic connection until you reconnect or toggle this setting." Foreground="{StaticResource Muted}" FontSize="12" />
+          </StackPanel>
+         </Border>
+        </StackPanel>
+       </TabItem>
+       <TabItem Header="Preferences">
+        <StackPanel>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="DISCORD RICH PRESENCE" Style="{StaticResource Caption}" />
+           <CheckBox x:Name="DiscordPresenceEnabled" Content="Show Bloodborne activity on Discord" IsChecked="True" Checked="DiscordPresenceChanged" Unchecked="DiscordPresenceChanged" Margin="0,4,0,0" />
+           <TextBlock Text="Shares only that Bloodborne is running and its runtime. No character name, location or stats. Clears when disconnected or disabled. Discord desktop must be running." Style="{StaticResource Caption}" Margin="0,10,0,0" />
+           <TextBlock x:Name="DiscordPresenceStatus" Text="Waiting for a connected game." Foreground="#D0B179" />
+          </StackPanel>
+         </Border>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="STARTUP SETTINGS" Style="{StaticResource Caption}" />
+           <CheckBox x:Name="StartupFov" Content="Apply saved FOV automatically when a character loads" />
+           <Button Content="Save current FOV as startup default" Click="SaveStartupFov" HorizontalAlignment="Left" Margin="0,12,0,0" />
+           <TextBlock x:Name="StartupSummary" Style="{StaticResource Caption}" Margin="0,12,0,0" />
+           <TextBlock Text="Startup presets apply once per connection when a living character is ready. Choose the preset in Combat. Stats, Echoes balances, spawning, warps and boss revival never run automatically." Style="{StaticResource Caption}" />
+          </StackPanel>
+         </Border>
+        </StackPanel>
+       </TabItem>
+       <TabItem Header="Hotkeys">
+        <StackPanel>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="PRACTICE HOTKEYS" Style="{StaticResource Caption}" />
+           <CheckBox x:Name="HotkeysEnabled" Content="Enable practice hotkeys" />
+           <TextBlock Text="Shortcut modifier (choose None for F-keys alone)" Style="{StaticResource Caption}" Margin="0,12,0,4" />
+           <ComboBox x:Name="HotkeyModifiers" MinHeight="40" />
+           <TextBlock x:Name="HotkeySummary" TextWrapping="Wrap" Foreground="#D0B179" Margin="0,8,0,0" />
+           <UniformGrid Columns="5" Margin="0,12,0,12">
+            <StackPanel Margin="0,0,8,0">
+             <TextBlock Text="Heal" Style="{StaticResource Caption}" />
+             <ComboBox x:Name="HotkeyHeal" MinHeight="40" />
+            </StackPanel>
+            <StackPanel Margin="0,0,8,0">
+             <TextBlock Text="God mode" Style="{StaticResource Caption}" />
+             <ComboBox x:Name="HotkeyGod" MinHeight="40" />
+            </StackPanel>
+            <StackPanel Margin="0,0,8,0">
+             <TextBlock Text="Save spot" Style="{StaticResource Caption}" />
+             <ComboBox x:Name="HotkeySave" MinHeight="40" />
+            </StackPanel>
+            <StackPanel Margin="0,0,8,0">
+             <TextBlock Text="Restore" Style="{StaticResource Caption}" />
+             <ComboBox x:Name="HotkeyRestore" MinHeight="40" />
+            </StackPanel>
+            <StackPanel>
+             <TextBlock Text="Boss retry" Style="{StaticResource Caption}" />
+             <ComboBox x:Name="HotkeyRetry" MinHeight="40" />
+            </StackPanel>
+           </UniformGrid>
+           <Button Content="Apply hotkeys" Click="SaveHotkeys" HorizontalAlignment="Left" />
+           <TextBlock Text="Active only while the connected game or BB Tools has focus; ignored while typing in the app. Save/restore uses a Quick bookmark. Retry resets and reloads the selected boss from any area. Press the modifier shown above plus the chosen F-key. These keys also reach the game; avoid conflicting game bindings. Duplicate shortcuts are rejected." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+          </StackPanel>
+         </Border>
+        </StackPanel>
+       </TabItem>
+       <TabItem Header="Library">
+        <StackPanel>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="SAVED LIBRARY" Style="{StaticResource Caption}" />
+           <WrapPanel>
+            <Button Content="Export library" Click="ExportLibrary" Margin="0,0,10,10" />
+            <Button Content="Import library" Click="ImportLibrary" Margin="0,0,10,10" />
+            <Button Content="Back up database" Click="BackupLibrary" Margin="0,0,0,10" />
+           </WrapPanel>
+           <TextBlock Text="Exports presets, locations and item favorites. Import validates everything before committing; matching names are replaced. Importing never applies presets, spawns items or warps. Database backup is a consistent SQLite snapshot." Style="{StaticResource Caption}" />
+          </StackPanel>
+         </Border>
+        </StackPanel>
+       </TabItem>
+       <TabItem Header="Backups">
+        <StackPanel>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="SAVE BACKUP HISTORY &amp; RESTORE" Style="{StaticResource Caption}" />
+           <Button Content="Choose backup folder" Click="ChooseBackupFolder" HorizontalAlignment="Left" Margin="0,0,0,12" />
+           <ComboBox x:Name="BackupHistory" MinHeight="40" AutomationProperties.Name="Save backup history" />
+           <Button x:Name="RestoreBackupButton" Content="Restore selected backup to save folder…" Click="RestoreSaveBackup" HorizontalAlignment="Left" Margin="0,12,0,0" />
+           <TextBlock Text="Close the game and launcher first. Restore verifies paths, sizes and CRC checksums, then keeps a recovery ZIP and the previous save folder before replacing the selected folder. Select the actual save folder, not the game installation." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+          </StackPanel>
+         </Border>
+         <Border Style="{StaticResource Card}">
+          <Grid>
+           <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+           </Grid.ColumnDefinitions>
+           <StackPanel Margin="0,0,18,0">
+            <TextBlock Text="SAVE BACKUP" Style="{StaticResource Caption}" />
+            <TextBlock Text="Keep a copy before changing your character." />
+            <TextBlock Text="Close the game before creating a backup." Foreground="{StaticResource Muted}" FontSize="11" Margin="0,6,0,0" />
+           </StackPanel>
+           <Button Grid.Column="1" x:Name="BackupButton" Content="Back up saves…" Click="Backup" VerticalAlignment="Center" />
+          </Grid>
+         </Border>
+        </StackPanel>
+       </TabItem>
+       <TabItem Header="About">
+        <StackPanel>
+         <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+          <StackPanel>
+           <TextBlock Text="ABOUT &amp; UPDATES" Style="{StaticResource Caption}" />
+           <Button Content="Export diagnostics" Click="ExportDiagnostics" HorizontalAlignment="Left" Margin="0,0,0,12" />
+           <TextBlock x:Name="AboutVersion" FontSize="22" FontWeight="SemiBold" />
+           <TextBlock x:Name="UpdateStatus" Text="Use Check for updates below to look for a newer stable GitHub release." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0" />
+           <TextBlock Text="Checks run only when requested. Downloads open on GitHub; nothing is installed automatically." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,0" />
+          </StackPanel>
+         </Border>
+        </StackPanel>
+       </TabItem>
+      </TabControl>
      </StackPanel>
     </StackPanel>
    </ScrollViewer>
-   <Border Grid.Row="2" Background="#1A1E24" CornerRadius="6" Padding="12" Margin="0,16,8,0"><TextBlock x:Name="Status" Text="Ready. Connect to a loaded Bloodborne PC 1.09 session." Foreground="#BBC1CB" FontSize="12"/></Border>
+   <Border Grid.Row="2" Background="#1A1E24" CornerRadius="6" Padding="12" Margin="0,16,8,0">
+    <TextBlock x:Name="Status" Text="Ready. Connect to a loaded Bloodborne PC 1.09 session." Foreground="#BBC1CB" FontSize="12" />
+   </Border>
    <Border Grid.Row="3" BorderBrush="#2B3038" BorderThickness="0,1,0,0" Margin="0,12,8,0" Padding="0,10,0,0">
-    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-     <TextBlock FontSize="12" Foreground="#A0A4AC" VerticalAlignment="Center" Margin="0,0,8,0"><Run Text="Made with "/><Run Text="🖤" FontFamily="Segoe UI Emoji"/><Run Text=" By James Cicada"/></TextBlock>
+    <Grid>
+     <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+     </Grid.ColumnDefinitions>
+     <TextBlock FontSize="12" Foreground="#A0A4AC" VerticalAlignment="Center" Margin="0,0,8,0">
+      <Run Text="Made with " />
+      <Run Text="🖤" FontFamily="Segoe UI Emoji" />
+      <Run Text=" By James Cicada" />
+     </TextBlock>
      <StackPanel Grid.Column="1" Orientation="Horizontal">
-      <Button Content="GitHub ↗" Click="OpenGitHub" Padding="10,7" FontSize="12" Margin="0,0,8,0"/>
-      <Button x:Name="CheckUpdatesButton" Content="Check for updates" Click="CheckForUpdates" Padding="10,7" FontSize="12"/>
-      <Button x:Name="UpdateReleaseButton" Content="View release ↗" Click="OpenUpdateRelease" Style="{StaticResource Primary}" Visibility="Collapsed" Padding="10,7" FontSize="12" Margin="8,0,0,0"/>
+      <Button Content="GitHub ↗" Click="OpenGitHub" Padding="10,7" FontSize="12" Margin="0,0,8,0" />
+      <Button x:Name="CheckUpdatesButton" Content="Check for updates" Click="CheckForUpdates" Padding="10,7" FontSize="12" />
+      <Button x:Name="UpdateReleaseButton" Content="View release ↗" Click="OpenUpdateRelease" Style="{StaticResource Primary}" Visibility="Collapsed" Padding="10,7" FontSize="12" Margin="8,0,0,0" />
      </StackPanel>
     </Grid>
    </Border>

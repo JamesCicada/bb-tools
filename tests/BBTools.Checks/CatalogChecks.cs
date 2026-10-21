@@ -20,6 +20,20 @@ internal static partial class Program
             new BBTools.Memory.ItemChoice("Shared number",1000,0) });
         Check(search.Search("CLEAVER").Length==1 && search.Search("alias").Single().Name=="Cleaver alias", "cached item search keeps case-insensitive aliases and removes duplicate identities after matching");
         Check(search.Search("1000").Length==2 && search.Search("").Length==3, "cached item search preserves matching IDs in separate categories and empty-query results");
+        var controls = new CameraControls();controls.Validate();
+        var pressed=new HashSet<int>{0x57,0x44,0x45};var input=controls.Read(pressed.Contains);
+        Check(input.Forward==1&&input.Right==1&&input.Up==1&&input.Yaw==0,"default photo controls read WASD and E/Q without a modifier");
+        pressed.Add(0x10);Check(controls.Read(pressed.Contains).Speed==4,"photo controls provide a held Shift speed boost");pressed.Remove(0x10);pressed.Add(0x12);Check(controls.Read(pressed.Contains).Speed==.2f,"photo controls provide held Alt precision movement");
+        Reject<ArgumentException>(()=>(controls with{Forward="S"}).Validate(),"duplicate photo bindings are rejected");
+        Reject<ArgumentException>(()=>(controls with{Forward="LeftShift"}).Validate(),"camera speed modifiers cannot be rebound as movement actions");
+        var config=Path.Combine(Path.GetTempPath(),"BBTools-camera-"+Guid.NewGuid().ToString("N")+".json");
+        try
+        {
+            var custom=controls with{Forward="I"};new AppSettings(Camera:custom).Save(config);
+            Check(AppSettings.Load(config).Camera==custom,"custom camera bindings survive settings save and restart");
+            File.WriteAllText(config,"{\"AutoConnect\":false}");Check(AppSettings.Load(config).Camera==null,"legacy settings retain safe default camera controls without enabling photo mode");
+        }
+        finally{File.Delete(config);}
         var advanced=new AdvancedSettings(true,2,true,.5f,true);advanced.Validate();Reject<ArgumentException>(()=>new AdvancedSettings(Movement:float.NaN).Validate(),"advanced preset rejects invalid movement values");
     }
 }

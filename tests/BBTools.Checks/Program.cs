@@ -20,6 +20,14 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if(args.Contains("--sample-parry"))return SampleParry(int.Parse(args[1]),Convert.ToUInt64(args[2],16));
+        if(args.Contains("--inspect-live"))
+        {
+            using var process=new ProcessMemory(int.Parse(args[1]),false);var imageBase=Convert.ToUInt64(args[2],16);
+            var live=new PlayerSession(new ReadOnlyInspectionMemory(process),imageBase);live.ValidateImage();
+            var selected=live.ReadLockedEnemy();Console.WriteLine(selected==null?"No locked character":JsonSerializer.Serialize(live.ReadEnemySnapshot(selected)));
+            var camera=new FreeCamera(process,live);camera.PrepareAsync().GetAwaiter().GetResult();Console.WriteLine("PASS read-only native camera task, controller and frame validation");return 0;
+        }
         if (args.Contains("--fixture")) return Fixture();
         if (args.Contains("--render")) return Render(args[1], args.Length > 2 ? int.Parse(args[2]) : 1040, args.Length > 3 ? int.Parse(args[3]) : 860, args.Length > 4 ? args[4] : "Player", args.Length > 5 ? double.Parse(args[5], System.Globalization.CultureInfo.InvariantCulture) : 0);
         if(args.Contains("--verify-catalog")){var items=GameItemCatalog.Load(args.Last());Check(items.Any(x=>x.Id==7000000&&x.Category==0&&x.Name.Contains("Saw Cleaver")),"private game catalog resolves the Saw Cleaver name and weapon ID");Check(items.Any(x=>x.Id==1000&&x.Category==0x40000000&&x.Name=="Blood Vial"),"private game catalog separates goods and weapon categories");Console.WriteLine($"PASS {items.Length} item-name entries read from private game files.");return 0;}
@@ -31,7 +39,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { CatalogChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -139,6 +147,8 @@ internal static partial class Program
         Check(!BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Micolash, Host of the Nightmare"))[12604879],"Micolash revival resets its chase phase and room flags");
         var profile=BossRevivalCatalog.Find("Cleric Beast");var changes=BossRevivalCatalog.Changes(profile);
         Check(changes.Count==10 && changes.Count(x=>x.Value)==1 && changes[profile.DefeatFlag+2],"boss reset clears encounter family while preserving repeat-entrance staging");
+        Check(BossRevivalCatalog.All.All(b=>!BossRevivalCatalog.Changes(b,true)[b.DefeatFlag+(uint)b.MetOffset]),"first-encounter mode clears each boss's own base-game or DLC staging event");
+        Check(BossRevivalCatalog.All.All(b=>(b.EnableFlags??[]).All(f=>BossRevivalCatalog.Changes(b,true)[f])),"first-encounter revival preserves required doors and encounter routes");
         var manager=memory.AllocateData(0x100);var head=memory.AllocateData(0x100);var node=memory.AllocateData(0x100);var data=memory.AllocateData(0x100);
         void Ptr(ulong at,ulong value)=>memory.Write(at,BitConverter.GetBytes(value));
         memory.SetInt32(manager+0x1C,1000);Ptr(manager+0x38,head);Ptr(head+8,node);memory.Write(head+0x19,[1]);Ptr(node,head);Ptr(node+0x10,head);memory.SetInt32(node+0x20,(int)(profile.DefeatFlag/1000));memory.SetInt32(node+0x28,2);Ptr(node+0x30,data);
@@ -158,6 +168,8 @@ internal static partial class Program
                 using var saved=JsonDocument.Parse(File.ReadAllText(journal));Check(saved.RootElement.GetProperty("Flags").GetProperty(profile.DefeatFlag.ToString()).GetBoolean(),"boss flag journal retains original defeated state");
                 store.Set(changes.ToDictionary(x=>x.Key,x=>false));
                 Check(File.Exists(actions.ReviveBoss(profile.Name,journals))&&store.Read(profile.DefeatFlag+2),"revival permits an unencountered boss without a story-progress gate");
+                var firstJournal=actions.ReviveBoss(profile.Name,journals,true);using var firstSaved=JsonDocument.Parse(File.ReadAllText(firstJournal));
+                Check(!store.Read(profile.DefeatFlag+2)&&firstSaved.RootElement.GetProperty("FirstEncounter").GetBoolean()&&!firstSaved.RootElement.GetProperty("Changes").GetProperty((profile.DefeatFlag+2).ToString()).GetBoolean(),"first-encounter revival journals its mode and desired state before clearing the intro event");
             }
             finally{memory.SetInt32(actor+0x3F8,oldBlock);if(Directory.Exists(journals))Directory.Delete(journals,true);}
         }
@@ -267,7 +279,7 @@ internal static partial class Program
             Check(new UserLibrary(path,legacy).Locations().Single() == changed, "SQLite reopen does not repeat migration or overwrite newer bookmarks");
             library.Delete("location",changed.Name);
             Check(new UserLibrary(path,legacy).Locations().Length == 0,"deleted migrated bookmarks are not resurrected");
-            var preset = new PracticePreset("Boss practice",true,true,["GodMode","InfiniteItems"],2,.5f);
+            var preset = new PracticePreset("Boss practice",true,true,["GodMode","InfiniteItems","NoHitReaction","NoEchoesLoss"],2,.5f);
             var expanded=preset with {Fov=110,OverrideFov=true,Preferences=new AppSettings(true,true,100,"Boss practice"),KeepDurability=true,AutoRepair=true,RepairThreshold=25};
             library.Save(expanded);var expandedRead=library.Presets().Single();
             Check(expandedRead.Fov==110 && expandedRead.OverrideFov && expandedRead.Preferences?.StartupFov==100 && expandedRead.KeepDurability && expandedRead.RepairThreshold==25,"expanded presets roundtrip camera, startup preferences and durability settings");
@@ -474,6 +486,15 @@ internal static partial class Program
             Check(memory.Read(player.Component + 0x201, 1)[0] == 0x42, "infinite consumables and bullets preserve adjacent player flags");
             session.RestorePracticeFlag(PracticeFlag.InfiniteItems);
             Check(memory.Read(player.Component + 0x201, 1)[0] == 0x40, "restore original item consumption bit");
+            var savedHitFlags=memory.Read(player.Actor+0x1E2,1);var savedHandle=memory.Int32(player.Actor+8);
+            memory.Write(player.Actor+0x1E2,[0x81]);session.SetPracticeFlag(PracticeFlag.NoHitReaction,true);
+            Check(memory.Read(player.Actor+0x1E2,1)[0]==0xC1,"Ignore hits preserves adjacent actor event flags");
+            session.RestorePracticeFlag(PracticeFlag.NoHitReaction);Check(memory.Read(player.Actor+0x1E2,1)[0]==0x81,"Ignore hits disable restores its captured event bit");
+            memory.Write(player.Actor+0x1E2,[0xC1]);session.SetPracticeFlag(PracticeFlag.NoHitReaction,true);session.RestorePracticeFlag(PracticeFlag.NoHitReaction);
+            Check(memory.Read(player.Actor+0x1E2,1)[0]==0xC1,"Ignore hits preserves preexisting event invincibility");
+            session.SetPracticeFlag(PracticeFlag.NoHitReaction,true);memory.SetInt32(player.Actor+8,savedHandle+1);memory.Write(player.Actor+0x1E2,[0x88]);session.RestorePracticeFlag(PracticeFlag.NoHitReaction);
+            Check(memory.Read(player.Actor+0x1E2,1)[0]==0x88,"Ignore hits cleanup never writes an actor whose full handle changed");
+            memory.SetInt32(player.Actor+8,savedHandle);memory.Write(player.Actor+0x1E2,savedHitFlags);
             var spot = session.ReadLocation("Practice spot");
             Check(spot == new SavedLocation("Practice spot", 0x18010000, 10, -20, 30, 1.5f), "capture loaded map, position and heading from the player transform");
             var spotPayload = spot.Payload();
@@ -677,16 +698,35 @@ internal static partial class Program
     {
         _ = new Application();
         var window = new MainWindow();
-        Check(((FrameworkElement)window.FindName("FreeCameraPanel")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("FreeCameraPanel")).IsEnabled,"free camera controls are hidden and disabled");
-        Check(((FrameworkElement)window.FindName("NoclipEnabled")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("NoclipEnabled")).IsEnabled,"noclip control is hidden and disabled");
-        Check(((FrameworkElement)window.FindName("EntityInspectorPanel")).Visibility==Visibility.Collapsed && !((UIElement)window.FindName("EntityInspectorPanel")).IsEnabled,"entity snapshot panel stays hidden pending realtime targeting");
+        Check(!((UIElement)window.FindName("FreeCameraPanel")).IsVisible,"photo-mode controls remain hidden");
+        Check(!((UIElement)window.FindName("NoclipEnabled")).IsVisible,"noclip control remains hidden");
+        Check(((FrameworkElement)window.FindName("EntityInspectorPanel")).Visibility==Visibility.Visible,"realtime enemy detail panel is available on its own page");
+        ((System.Windows.Controls.ItemsControl)window.FindName("EnemyGauges")).ItemsSource=new[]{new EnemyGauge("Slow poison",20,100)};
+        ((System.Windows.Controls.Button)window.FindName("NavTarget")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        ((FrameworkElement)window.Content).Measure(new Size(860,680));
+        Check(((System.Windows.Controls.ItemsControl)window.FindName("EnemyGauges")).Items.Count==1,"read-only enemy gauges render without TwoWay binding failures");
+
+        ((System.Windows.Controls.Button)window.FindName("NavItems")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        var content=(FrameworkElement)window.Content;content.Measure(new Size(860,680));content.Arrange(new Rect(0,0,860,680));content.UpdateLayout();
+        var itemPicker=(System.Windows.Controls.ComboBox)window.FindName("ItemPicker");itemPicker.ApplyTemplate();
+        var search=(System.Windows.Controls.TextBox)itemPicker.Template.FindName("PickerFilter",itemPicker);
+        search.Text="Blood Vial";search.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+        Check(itemPicker.Items.Count>0&&itemPicker.Items.Cast<ItemChoice>().All(x=>x.Label.Contains("Blood Vial",StringComparison.OrdinalIgnoreCase)),"in-dropdown item search filters the real catalog through its template binding");
+        search.Text="no-such-item-4987654321";search.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+        Check(itemPicker.Items.Count==0,"dropdown search handles no matching items without selecting another ID");
+        search.Text="";search.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
+        Check(itemPicker.Items.Count>1&&((System.Windows.Controls.TextBox)window.FindName("ItemSearch")).Visibility==Visibility.Collapsed,"clearing dropdown search restores choices with no separate search field");
+
+        ((System.Windows.Controls.Button)window.FindName("NavPhoto")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        Check(((FrameworkElement)window.FindName("PhotoPage")).Visibility==Visibility.Collapsed&&((FrameworkElement)window.FindName("NavPhoto")).Visibility==Visibility.Collapsed,"disabled photo mode is hidden and cannot be reached by navigation");
+        Check(((System.Windows.Controls.CheckBox)window.FindName("PhotoLockHunter")).IsChecked==true&&((System.Windows.Controls.Button)window.FindName("PhotoToggleButton")).Content.ToString()=="Start photo mode","photo studio exposes a clear start action and enables hunter movement lock by default");
         ((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked=true;
-        Check(((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked==false,"hidden free camera cannot be activated programmatically");
+        Check(((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked==false,"photo mode cannot start without a connected loaded game");
 
         var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         void Field(string name, object? value) => typeof(MainWindow).GetField(name, binding)!.SetValue(window, value);
         void Poll() => typeof(MainWindow).GetMethod("Poll", binding)!.Invoke(window, [null, EventArgs.Empty]);
-        string[] names = ["KeepHealth", "InfiniteStamina", "GodMode", "OneShot", "Stealth", "Silent", "NoAi", "NoFallDamage", "InfiniteItems"];
+        string[] names = ["KeepHealth", "InfiniteStamina", "GodMode", "OneShot", "Stealth", "Silent", "NoAi", "NoFallDamage", "InfiniteItems","IgnoreHits","KeepEchoesOnDeath"];
         var toggles = names.Select(name => (System.Windows.Controls.CheckBox)window.FindName(name)).ToArray();
         Field("updating", true);
         foreach (var toggle in toggles) toggle.IsChecked = true;
@@ -738,8 +778,24 @@ internal static partial class Program
     {
         var app = new Application();
         var window = new MainWindow { Width = width, Height = height };
-        if(page=="Presets"){((System.Windows.Controls.Expander)window.FindName("PresetExpander")).IsExpanded=true;page="Practice";}
-        if(page=="CameraTuning"){((System.Windows.Controls.Expander)window.FindName("TuningExpander")).IsExpanded=true;page="Camera";}
+        if(page=="Presets"){((System.Windows.Controls.TabItem)window.FindName("PresetsTab")).IsSelected=true;page="Practice";}
+        if(page=="PhotoCapture"){((System.Windows.Controls.Expander)window.FindName("PhotoCaptureExpander")).IsExpanded=true;page="Photo";}
+        if(page=="Parry"){((System.Windows.Controls.TabItem)window.FindName("ParryTab")).IsSelected=true;page="Practice";}
+        if(page=="Bosses"){((System.Windows.Controls.TabItem)window.FindName("BossesTab")).IsSelected=true;page="Travel";}
+        if(page=="CameraTuning"){((System.Windows.Controls.TabItem)window.FindName("CameraTuningTab")).IsSelected=true;page="Camera";}
+        if(page=="Preferences"){((System.Windows.Controls.TabControl)window.FindName("SettingsSections")).SelectedIndex=1;page="Settings";}
+        if(page=="TargetPreview")
+        {
+            ((System.Windows.Controls.TextBlock)window.FindName("EnemyName")).Text="c2200 · handle 0x8001";
+            ((System.Windows.Controls.TextBlock)window.FindName("EnemyTrackingState")).Text="Unlocked · still updating the retained enemy";
+            ((System.Windows.Controls.TextBlock)window.FindName("EnemyMeta")).Text="Type 1 · team 2 · 5.0 m away · sampled 14:32:10";
+            ((System.Windows.Controls.TextBlock)window.FindName("EnemyHealth")).Text="12,450 / 20,000";
+            ((System.Windows.Controls.ProgressBar)window.FindName("EnemyHealthBar")).Value=62;
+            ((System.Windows.Controls.TextBlock)window.FindName("EnemyArmor")).Text="80 / 150 · recovery 2.4 s · reserve 0";
+            ((System.Windows.Controls.ItemsControl)window.FindName("EnemyGauges")).ItemsSource=new[]{new EnemyGauge("Slow poison",40,180),new EnemyGauge("Rapid poison",15,240),new EnemyGauge("Frenzy",0,300),new EnemyGauge("Beasthood",0,100)};
+            ((System.Windows.Controls.ItemsControl)window.FindName("EnemyEffects")).ItemsSource=new[]{new EnemyEffect(8800,2,25,0),new EnemyEffect(12345,777,-1,0)};
+            page="Target";
+        }
         var nav = (System.Windows.Controls.Button)window.FindName("Nav" + page);
         nav.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         var content = (FrameworkElement)window.Content;
@@ -759,7 +815,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original),(Offset:FreeCamera.Offset,Bytes:FreeCamera.Prefix)}).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
+        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

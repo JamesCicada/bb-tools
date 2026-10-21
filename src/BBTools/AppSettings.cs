@@ -3,12 +3,14 @@ using System.Text.Json;
 
 namespace BBTools;
 
-public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false)
+public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false, CameraControls? Camera = null, PhotoSettings? Photos = null,bool DiscordRichPresence=true)
 {
     public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BBTools", "settings.json");
     public void Validate()
     {
         Hotkeys?.Validate();
+        Camera?.Validate();
+        Photos?.Validate();
         if (!float.IsFinite(StartupFov) || StartupFov is < 38 or > 120) throw new ArgumentException("Startup FOV must be between 38 and 120.");
         if (StartupPresetName != null) UserLibrary.ValidateName(StartupPresetName);
     }

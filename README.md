@@ -1,9 +1,9 @@
-> **Version 0.5.0:** continued development toward 1.0.
+> **Version 0.6.0:** God mode + Ignore hits and first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
 > **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
 > Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
-> Noclip and free camera are disabled and hidden for now. Entity inspection is hidden
-> pending live updates for the targeted enemy. Other development features still follow the test checklist.
+> Photo mode/free camera and flight/noclip are disabled and hidden for this version.
+> Enemy details now has its own live tracking page; awaiting live validation.
 
 
 # BB Tools
@@ -16,20 +16,67 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
-## v0.5.0
+## What changed in v0.6.0
 
-Official shadPS4 support, native inventory repair, movement/gravity controls,
-HUD visibility, poison cure, game-owned item-name import, advanced presets and
-chalice bookmarks. Noclip/free camera are disabled and hidden; entity inspection
-is hidden pending realtime targeted-enemy updates. See the [changelog](CHANGELOG.md)
-and [test checklist](TODO.md).
+**Combat → Practice** provides a one-click drill setup: hunter protection,
+infinite bullets/stamina and 0.1× outgoing damage, with conflicting one-shot,
+AI-disable and stealth selections switched off. Equip a firearm and carry bullets
+first. Restore the previous combat setup with its button when finished.
 
-shadPS4 is tested and confirmed. The native repair replacement still needs live
-confirmation on both hands. Ending-boss revival profiles are experimental; camera
-and exploration overrides can cause visual or performance issues.
+Lock onto a living enemy, then enable **Keep practice enemy alive**. Ordinary HP
+damage still applies, but the native cannot-die flag prevents ordinary lethal HP
+damage. Unlocking retains protection; targeting a different enemy transfers it.
+Loading, hunter death or invalid identity disarms protection. **Restore locked
+enemy HP** heals a living target; it does not revive bosses or reset encounters.
+Scripted deaths/phase transitions can still occur. These target actions never
+activate through startup presets. Live testing is pending on both runtimes.
 
-The download link points to the latest published release. v0.5.0 is prepared as a
-GitHub draft after CI passes, ready for manual review and publication.
+Automatic parry success detection/statistics, auto-parry and adjustable gun-parry
+windows remain research tasks; no timing assistance is enabled by this build.
+
+Compact top navigation replaces the sidebar. Combat, Travel, Camera and Settings
+use section tabs, and process/item/lamp/preset/location searches sit inside their
+selection menus. Connection selection lives in Settings → Connection.
+
+**Enemy details** tracks the actual lock-on target every 200 ms. Unlocking retains
+that enemy and continues updating while its identity remains valid. Loading or
+unloading retains a clearly labeled last-known snapshot; another targeted enemy
+replaces it. Includes HP/stamina, status buildup/limits, native effect IDs/states
+and remaining durations, distance, and super-armor health/recovery/break state.
+Unknown effects keep native IDs. Super armor is separate from boss limb health;
+brief breaks can be missed by sampling. These additions await in-game testing.
+
+
+**Travel → Bosses → Revive as first encounter** resets the encounter's met flag
+alongside its defeat/start flags. Leave it off for repeat encounters. The boss
+still follows its normal first-visit trigger and intro; fog may appear only after
+that trigger. Disable No AI and invisibility when checking boss behavior. Revival
+journals record the original flags, chosen mode and requested changes. First-
+encounter revival is tested and confirmed on Bloodborne PC. Multi-phase and ending
+boss profiles retain their individual test status.
+
+**Combat → Controls → Keep Blood Echoes on death** enables the game's native
+death-penalty skip flag. It does not refill the balance or change spending. The
+selection survives loading and is included in presets; disabling restores the
+captured flag. Death/respawn and bloodstain recovery still need live confirmation.
+
+**Settings → Preferences → Discord Rich Presence** is on by default and can be
+turned off. With Discord desktop running and a connected game, it shows Bloodborne,
+the runtime and elapsed time. It sends no character stats or location. Disconnect,
+disabling and app close clear the activity; Discord restarts are retried. The
+public application ID is `1189594649954877620`; no bot token is used.
+
+Photo mode/free camera and flight/noclip are disabled and hidden while movement
+and HUD restoration issues are investigated. Ordinary FOV, camera distance/height,
+movement speed, gravity and HUD controls remain available on Camera. FOV/camera
+overrides can cause visual and performance issues. Other new features retain their
+individual live-test status; see [the test plan](docs/1.0-test-plan.md).
+
+Combat now includes **Ignore hits** beneath God mode. It uses native event
+invincibility to avoid normal attack hits/reactions, separately from health
+protection. It is included in combat presets and restores its original flag on
+disable. God mode and Ignore hits together are tested and confirmed on Bloodborne
+PC after the polling update. Grabs and scripted damage need separate testing.
 
 The app also includes its emblem, Windows icon, **Made with 🖤 By James Cicada**
 footer, GitHub shortcut and manual **Check for updates**.
@@ -38,7 +85,7 @@ Update checks run only when requested and use this project's public GitHub lates
 stable release endpoint. A newer version exposes **View release**; the app does
 not download or install updates automatically. Connection failures and GitHub rate
 limits are shown without reporting a successful check. Details remain visible in
-**Settings → About & updates**.
+**Settings → About**.
 
 ## Compatibility
 
@@ -130,7 +177,7 @@ Settings live in `%LOCALAPPDATA%\BBTools\settings.json`; named locations live in
 The features below have individual implementation and confirmation statuses in
 [TODO.md](TODO.md). The latest published download may differ from the current source.
 
-- **Combat → Player multipliers:** enter 0.1–100 for outgoing damage and enemy
+- **Combat → Damage and Echoes multipliers:** enter 0.1–100 for outgoing damage and enemy
   Echoes rewards, then Apply. Set both to 1 or Turn off practice toggles to restore.
   Loading screens retain the desired values. Spending and bloodstain retrieval
   are not treated as rewards. Avoid other mods that use SpEffect 9999.
@@ -229,7 +276,7 @@ It is a community project and is not affiliated with FromSoftware or Sony.
 
 ### Saved library and practice presets (v0.3.0)
 
-The current source adds separate Player, Combat, Items, Travel, Camera, Workshop and Settings
+The current source adds separate Player, Combat, Enemy details, Items, Travel, Camera, Workshop and Settings
 pages. Combat includes named presets for toggles, health refill, stamina and applied
 multipliers. Save current settings, then select a preset and apply it explicitly while
 connected. Saving under the same name replaces that entry; presets do not edit stats

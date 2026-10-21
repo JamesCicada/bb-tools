@@ -14,11 +14,11 @@ public interface IMemory
 public static class MemoryValues
 {
     public static int Int32(this IMemory memory, ulong address) => BitConverter.ToInt32(memory.Read(address, 4));
-    public static ulong Pointer(this IMemory memory, ulong address)
+    public static ulong Pointer(this IMemory memory, ulong address, string context = "game object")
     {
         var value = BitConverter.ToUInt64(memory.Read(address, 8));
         if (value < 0x10000 || value >= 0x0000800000000000 || value % 8 != 0)
-            throw new IOException("Player is unavailable. Load a character and try again.");
+            throw new IOException($"Unavailable {context} pointer at 0x{address:X} (value 0x{value:X}).");
         return value;
     }
     public static void SetInt32(this IMemory memory, ulong address, int value) => memory.Write(address, BitConverter.GetBytes(value));
@@ -81,6 +81,41 @@ public sealed class ProcessMemory : IMemory, IDisposable
         }
     }
     public void Dispose() => handle.Dispose();
+    internal ulong FindActiveCameraStep(ulong owner,ulong imageBase,CancellationToken cancellationToken=default)
+    {
+        if(VirtualQueryEx(handle,(nuint)owner,out var ownerRegion,(nuint)Marshal.SizeOf<MemoryInfo>())==0)
+            throw new IOException("Active camera allocation is unavailable.");
+        var allocation=(ulong)ownerRegion.AllocationBase;var at=allocation;
+        var deadline=System.Diagnostics.Stopwatch.StartNew();
+        var needle=BitConverter.GetBytes(imageBase+0x5330480);
+        while(at<0x0000800000000000&&deadline.Elapsed<TimeSpan.FromSeconds(15))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if(VirtualQueryEx(handle,(nuint)at,out var region,(nuint)Marshal.SizeOf<MemoryInfo>())==0||(ulong)region.AllocationBase!=allocation)break;
+            var end=(ulong)region.BaseAddress+(ulong)region.RegionSize;if(end<=at)break;
+            if(region.State==0x1000&&(region.Protect&0x100)==0&&(region.Protect&0xff) is 0x04 or 0x08)
+            {
+                for(var block=at;block<end;)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if(deadline.Elapsed>=TimeSpan.FromSeconds(15))break;
+                    var size=(int)Math.Min(1024UL*1024,end-block);byte[] data;
+                    try{data=Read(block,size);}catch(IOException){block+=(ulong)size;continue;}
+                    var offset=0;
+                    while(offset<=data.Length-8)
+                    {
+                        var found=data.AsSpan(offset).IndexOf(needle);if(found<0)break;
+                        offset+=found;var candidate=block+(ulong)offset;
+                        if(candidate%8==0&&FreeCamera.MatchesCameraStep(this,imageBase,candidate,owner))return candidate;
+                        offset+=8;
+                    }
+                    block+=(ulong)size;
+                }
+            }
+            at=end;
+        }
+        throw new IOException("The active native camera task was not found in its game allocation. Photo mode was not enabled.");
+    }
     public ulong AllocateData(int size)
     {
         var address = VirtualAllocEx(handle, 0, (nuint)size, 0x3000, 4);
@@ -133,14 +168,6 @@ public sealed class ProcessMemory : IMemory, IDisposable
         if(!VirtualProtectEx(handle,(nuint)at,14,0x40,out var protection))throw new IOException("Movement code is unavailable.");
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
-    }
-    internal void FreezeFollowCamera(ulong imageBase,bool freeze)
-    {
-        var at=imageBase+FreeCamera.Offset;var expected=FreeCamera.Prefix.ToArray();if(!freeze)expected[0]=0xC3;
-        if(!Read(at,expected.Length).SequenceEqual(expected))throw new IOException("Follow camera update changed externally; no patch was applied.");
-        if(!VirtualProtectEx(handle,(nuint)at,1,0x40,out var protection))throw new IOException("Follow camera update is unavailable.");
-        try{if(!WriteProcessMemory(handle,(nuint)at,[freeze?(byte)0xC3:FreeCamera.Prefix[0]],1,out var count)||count!=1)throw new IOException("Follow camera patch failed.");}
-        finally{var flushed=FlushInstructionCache(handle,(nuint)at,1);var restored=VirtualProtectEx(handle,(nuint)at,1,protection,out _);if(!flushed||!restored)throw new IOException("Follow camera cache/protection restoration failed.");}
     }
     public void Suspended(Action operation)
     {

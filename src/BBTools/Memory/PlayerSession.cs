@@ -90,8 +90,8 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
     }
     public PlayerState ReadPlayer()
     {
-        var world = memory.Pointer(imageBase + WorldPointer);
-        var actor = memory.Pointer(world + 0x60);
+        var world = memory.Pointer(imageBase + WorldPointer,"world character manager");
+        var actor = memory.Pointer(world + 0x60,"loaded player");
         var modules = memory.Pointer(actor + 0x3B0);
         var component = memory.Pointer(modules + 0x20);
         if (memory.Pointer(component + 8) != actor) throw new IOException("Player component owner does not match.");
@@ -135,7 +135,7 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         var flags = memory.Read(player.Component + 0x200, 1)[0];
         if (staminaOwner == 0) originalStaminaBit = (byte)(flags & 0x80);
         EnsureSamePlayer(player);
-        memory.Write(player.Component + 0x200, [(byte)(flags | 0x80)]);
+        if((flags&0x80)==0)memory.Write(player.Component + 0x200, [(byte)(flags | 0x80)]);
         staminaOwner = player.Component;
     }
     public void RestoreStamina()
@@ -145,7 +145,8 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         if (current.Component != staminaOwner) { staminaOwner = 0; return; }
         var flags = memory.Read(staminaOwner + 0x200, 1)[0];
         EnsureSamePlayer(current);
-        memory.Write(staminaOwner + 0x200, [(byte)((flags & ~0x80) | originalStaminaBit)]);
+        var desired=(byte)((flags&~0x80)|originalStaminaBit);
+        if(flags!=desired)memory.Write(staminaOwner+0x200,[desired]);
         staminaOwner = 0;
     }
     private void EnsureSamePlayer(PlayerState expected)

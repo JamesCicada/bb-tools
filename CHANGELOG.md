@@ -1,14 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-21
 
-- Fix v0.5.0 draft-release CI by supplying its version-specific release notes and checking required notes before artifact or GitHub operations.
+Tested and confirmed on Bloodborne PC: God mode + Ignore hits together, and first-encounter boss revival. Other additions retain their individual live-test status.
+Validation: 377 isolated checks in Debug and Release, 94 private 1.09 instruction fingerprints and nine release-workflow checks.
 
-- Cache item search data between library changes, avoiding SQLite reads and catalog deserialization for each keystroke while preserving names, aliases and category-specific IDs.
-- Move auto-connect process enumeration off the UI thread and avoid per-region candidate-array allocations during emulator image scanning.
-- Automatically remove publish staging folders after success or failure; add a previewable workspace cleanup script that retains release archives and research sources.
-- Refresh contributor guidance to reflect supported runtimes.
-
+- Replace the sidebar with compact top navigation and section tabs for Combat, Travel, Camera and Settings. Move search inside process, item, lamp, location and preset menus.
+- Add optional first-encounter boss revival: reset the met/intro flag and record mode, original flags and requested changes in the revival journal. Normal first-visit triggers still apply. Tested and confirmed on Bloodborne PC.
+- Add Keep Blood Echoes on death through the native death-penalty skip flag, with loading persistence, presets and original-state restoration. No balance refund loop.
+- Add optional Discord Rich Presence, on by default, using the supplied application ID. Show only game/runtime and elapsed time; clear on disable/disconnect/close and retry Discord restarts.
+- Add Ignore hits beneath God mode using native event invincibility, with presets and original-state restoration. God mode + Ignore hits together are tested and confirmed after the polling update; no general renderer-crash fix is claimed.
+- Avoid rewriting unchanged combat/stamina flags on each poll; continue validation and reapply if the game clears a flag. Combined-toggle checks cover independent restoration and unrelated-bit preservation.
+- Add live target details with retained readings after unlocking and clearly marked stale snapshots after unloading. Show resources, status buildup, native effect IDs/durations, distance and super-armor state.
+- Correct target selection when the camera mirror is empty by reading the authoritative lock-on selection. Improve pointer diagnostics and logging.
+- Add parry practice setup/restore and manual target protection/HP restore. Practice setup is tested and confirmed; new target actions await testing. Auto-parry and adjustable firearm-parry windows remain research tasks.
+- Disable and hide photo mode/free camera and flight/noclip while movement/HUD issues remain unresolved. Retain implementation and isolated regression coverage for future work.
+- Correct rapid-poison cure mapping to native states 2/6, preserving legacy disease state 5; live retest pending.
+- Update the app icon artwork.
 
 ## 0.5.0 - 2026-10-18 (draft)
 
