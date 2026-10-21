@@ -29,7 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
           ref: ${{ github.event.release.tag_name || inputs.tag }}
+          path: release-source
           persist-credentials: false
       - name: Verify release and Nexus destination
         id: prepare
@@ -38,10 +44,10 @@ jobs:
           NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
         with:
           script: |
-            const result = await require('./scripts/nexus-release.cjs')({ github, context, core });
+            const result = await require('./automation/scripts/nexus-release.cjs')({ github, context, core, root: require('node:path').resolve('release-source') });
             for (const [key, value] of Object.entries(result)) core.setOutput(key, value);
       - name: Verify archive contents
-        if: steps.prepare.outputs.configured == 'true'
+        if: steps.prepare.outputs.assets_verified == 'true'
         env:
           ARCHIVE_PATH: ${{ steps.prepare.outputs.filename }}
         run: |

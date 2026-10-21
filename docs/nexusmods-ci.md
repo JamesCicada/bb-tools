@@ -37,8 +37,11 @@ changelog twice. Concurrent Nexus jobs are serialized.
 ## Validate or retry
 
 Run **Actions → Publish to Nexus Mods → Run workflow**, enter the release tag,
-and leave **validate_only** checked to verify credentials, the target file and
-release assets without changing Nexus. Validation can inspect a draft release.
+and leave **validate_only** checked to verify credentials and the target file
+without changing Nexus. The workflow keeps contents:read permissions. If GitHub
+hides a private draft from that token, validation explicitly defers asset/checksum
+checks until publication; it never authorizes upload without those checks.
+Published release assets are validated in the same run.
 Uncheck it only to retry an already published stable GitHub release. An existing
 Nexus version is skipped; metadata from a partially successful upload may need
 manual correction rather than creating a duplicate version.

@@ -79,6 +79,19 @@ test('a manual upload still cannot publish a draft', async t => {
   f.context = { ...f.context, eventName: 'workflow_dispatch', payload: { inputs: { tag: 'v0.6.1', validate_only: 'false' } } };
   await assert.rejects(prepare(f), /published stable/);
 });
+test('read-only validation can check Nexus when GitHub hides draft metadata', async t => {
+  const f = fixture(t);
+  f.context = { ...f.context, eventName: 'workflow_dispatch', payload: { inputs: { tag: 'v0.6.1', validate_only: 'true' } } };
+  f.github.rest.repos.getReleaseByTag = async () => { throw Object.assign(new Error('Not Found'), { status: 404 }); };
+  const result = await prepare(f);
+  assert.equal(result.upload, 'false'); assert.equal(result.configured, 'true'); assert.equal(result.assets_verified, 'false');
+  assert.equal(f.calls.length, 4);
+});
+test('an inaccessible release never falls back when upload is requested', async t => {
+  const f = fixture(t);
+  f.github.rest.repos.getReleaseByTag = async () => { throw Object.assign(new Error('Not Found'), { status: 404 }); };
+  await assert.rejects(prepare(f), /Not Found/); assert.equal(f.calls.length, 0);
+});
 test('existing Nexus versions skip duplicate files and changelog appends', async t => {
   const result = await prepare(fixture(t, { duplicate: true }));
   assert.equal(result.upload, 'false'); assert.equal(result.duplicate, 'true');

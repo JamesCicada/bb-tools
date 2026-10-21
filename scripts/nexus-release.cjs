@@ -8,8 +8,10 @@ module.exports = async function prepare({ github, context, core, root = process.
   const dryRun = context.eventName === 'workflow_dispatch' && context.payload.inputs?.validate_only !== 'false';
   const tag = context.eventName === 'release' ? context.payload.release?.tag_name : context.payload.inputs?.tag;
   if (!/^v\d+\.\d+\.\d+$/.test(tag || '')) throw new Error('Select a version tag such as v0.6.1.');
-  const { data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
-  if (release.prerelease || (release.draft && !dryRun)) throw new Error('Nexus uploads require a published stable GitHub release.');
+  let release;
+  try { release = (await github.rest.repos.getReleaseByTag({ ...context.repo, tag })).data; }
+  catch (error) { if (!dryRun || error.status !== 404) throw error; }
+  if (release && (release.prerelease || (release.draft && !dryRun))) throw new Error('Nexus uploads require a published stable GitHub release.');
   const metadata = require('./release-metadata.cjs')(root);
   if (metadata.tag !== tag) throw new Error('Checked-out source does not match the selected release version.');
   if (!env.NEXUSMODS_API_KEY) {
@@ -40,6 +42,10 @@ module.exports = async function prepare({ github, context, core, root = process.
   const versions = await get(`/mod-files/${fileId}/versions`);
   if (!Array.isArray(versions.versions)) throw new Error('Nexus version history is unavailable. No upload was attempted.');
   const duplicate = versions.versions.some(entry => entry.version === metadata.version);
+  if (!release) {
+    core.notice('Nexus credentials and destination verified. This read-only GitHub token cannot see a draft release; asset/checksum verification will run after publication. No Nexus changes were made.');
+    return { upload: 'false', configured: 'true', assets_verified: 'false', validation_only: 'true', version: metadata.version };
+  }
   const archiveName = `BBTools-${tag}-win-x64.zip`;
   const assets = release.assets || [];
   const find = name => {
@@ -62,6 +68,6 @@ module.exports = async function prepare({ github, context, core, root = process.
   if (duplicate) core.notice(`Nexus already contains version ${metadata.version}; skipping duplicate upload and changelog append.`);
   if (dryRun) core.notice('Validation-only run: destination and release checksum verified; no Nexus changes will be made.');
   const changelog = metadata.notes.replace(/^#+\s*/gm, '').replace(/\*\*/g, '');
-  return { upload: String(!dryRun && !duplicate), configured: 'true', file_id: fileId, mod_id: modId,
+  return { upload: String(!dryRun && !duplicate), configured: 'true', assets_verified: 'true', file_id: fileId, mod_id: modId,
     filename, version: metadata.version, changelog, duplicate: String(duplicate), validation_only: String(dryRun) };
 };
