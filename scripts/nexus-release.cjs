@@ -37,8 +37,8 @@ module.exports = async function prepare({ github, context, core, root = process.
   const mod = await get('/games/bloodborne/mods/614');
   const seed = await get('/games/bloodborne/mod-file-versions/3154');
   const modId = id(mod.id), fileId = id(seed.file?.id);
-  const file = await get(`/mod-files/${fileId}`);
-  if (file.mod?.id !== modId) throw new Error('The selected Nexus file does not belong to Bloodborne mod 614.');
+  const files = await get(`/mods/${modId}/files`);
+  if (!Array.isArray(files.mod_files) || !files.mod_files.some(file => file.id === fileId)) throw new Error('The selected Nexus file does not belong to Bloodborne mod 614.');
   const versions = await get(`/mod-files/${fileId}/versions`);
   if (!Array.isArray(versions.versions)) throw new Error('Nexus version history is unavailable. No upload was attempted.');
   const duplicate = versions.versions.some(entry => entry.version === metadata.version);

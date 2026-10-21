@@ -35,7 +35,7 @@ function fixture(t, options = {}) {
       const responses = {
         '/games/bloodborne/mods/614': { id: 'bbtools-mod' },
         '/games/bloodborne/mod-file-versions/3154': { file: { id: 'bbtools-file' } },
-        '/mod-files/bbtools-file': { mod: { id: options.wrongMod ? 'another-mod' : 'bbtools-mod' } },
+        '/mods/bbtools-mod/files': { mod_files: [{ id: options.wrongMod ? 'another-file' : 'bbtools-file', name: 'BB Tools' }] },
         '/mod-files/bbtools-file/versions': { versions: options.duplicate ? [{ version: '0.6.1' }] : [{ version: '0.5.0' }] },
       };
       assert.ok(responses[endpoint], `Unexpected endpoint ${endpoint}`);
