@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.2 — 2026-10-22
 
 **Feedback requested:** these fixes have not been thoroughly tested in-game. Automated validation passes (404 checks in Debug and Release, plus 96 supported-game instruction fingerprints), but Ludwig revival and multiplier cleanup/recovery still need user feedback on Bloodborne PC and shadPS4. Please report the runtime/version, reproduction steps and session log for any remaining issues.
 

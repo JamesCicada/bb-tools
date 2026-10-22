@@ -4,7 +4,7 @@
 marked tested and confirmed only after explicit live confirmation of that specific feature in Bloodborne PC 1.09.
 New features remain pending live validation even when automated checks pass.
 
-## Reported regressions — next patch
+## Reported regressions — v0.6.2
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |

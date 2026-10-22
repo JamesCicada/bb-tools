@@ -1,4 +1,5 @@
-> **Version 0.6.1:** God mode + Ignore hits and first-encounter boss revival are tested and confirmed on Bloodborne PC.
+> **Version 0.6.2:** Ludwig revival and multiplier cleanup fixes need user feedback; they have not been thoroughly tested in-game.
+> God mode + Ignore hits and earlier first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
 > **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
 > Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
@@ -15,6 +16,16 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.2 patch
+
+- Correct Ludwig's separate defeat flag and reset his encounter/phase state.
+- Add timed multiplier cleanup and recovery of recognizable effects left by older BB Tools sessions. Set both multipliers to **1** and click **Apply multipliers** to recover.
+
+**Feedback requested:** these changes have not been thoroughly tested in-game.
+Automated checks pass, but both fixes need live feedback on Bloodborne PC and shadPS4.
+Persistence of Echoes scaling across a full game restart has not been reproduced.
+Please include your runtime/version, reproduction steps and session log in reports.
 
 ## v0.6.1 patch
 
