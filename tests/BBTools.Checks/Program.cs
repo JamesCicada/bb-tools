@@ -145,6 +145,14 @@ internal static partial class Program
         Check(BossRevivalCatalog.All.Length==22 && BossRevivalCatalog.All.All(x=>BossDestinations.All.Any(d=>d.Name==x.Name)),"revival allowlist contains all twenty-two catalogued base-game and DLC bosses");
         Check(BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Moon Presence"))[9900] && BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Moon Presence"))[12101800],"Moon Presence profile explicitly enables its route and records Gehrman as defeated");
         Check(!BossRevivalCatalog.Changes(BossRevivalCatalog.Find("Micolash, Host of the Nightmare"))[12604879],"Micolash revival resets its chase phase and room flags");
+        var ludwig=BossRevivalCatalog.Find("[DLC] Ludwig, the Holy Blade");
+        foreach(var first in new[]{false,true})
+        {
+            var reset=BossRevivalCatalog.Changes(ludwig,first);
+            Check(!reset[9471]&&!reset[13401800]&&!reset[13404825]&&!reset[13404808]&&reset[13401801]==!first,
+                $"Ludwig revival clears the separate defeat gate and both-phase state in {(first?"first":"repeat")} encounter mode");
+            Check(!reset.ContainsKey(6674)&&!reset.ContainsKey(3400)&&!reset.ContainsKey(13401850),"Ludwig revival leaves reward, story and Laurence flags alone");
+        }
         var profile=BossRevivalCatalog.Find("Cleric Beast");var changes=BossRevivalCatalog.Changes(profile);
         Check(changes.Count==10 && changes.Count(x=>x.Value)==1 && changes[profile.DefeatFlag+2],"boss reset clears encounter family while preserving repeat-entrance staging");
         Check(BossRevivalCatalog.All.All(b=>!BossRevivalCatalog.Changes(b,true)[b.DefeatFlag+(uint)b.MetOffset]),"first-encounter mode clears each boss's own base-game or DLC staging event");
@@ -536,6 +544,12 @@ internal static partial class Program
                 Check(BitConverter.ToSingle(modified, 0x38) == 2.5f && BitConverter.ToSingle(modified, 0xE0) == 3 &&
                     modified[0x155] == 0xAB && BitConverter.ToSingle(neutral, 0x38) == 1,
                     "multiplier row scales outgoing damage and enemy rewards while preserving other fields and the original row");
+                Check(BitConverter.ToSingle(modified,8)==GameActions.MultiplierLeaseSeconds&&modified[0x141]==0xFF,
+                    "multiplier clones have a finite renewable duration and no saved effect category");
+                var legacy=modified.ToArray();BitConverter.GetBytes(-1f).CopyTo(legacy,8);
+                Check(GameActions.IsTrainerMultiplierRow(legacy,neutral)&&GameActions.IsTrainerMultiplierRow(modified,neutral),"recovery recognizes exact legacy and leased trainer clones");
+                var foreign=legacy.ToArray();foreign[0x150]^=1;
+                Check(!GameActions.IsTrainerMultiplierRow(foreign,neutral)&&!GameActions.IsTrainerMultiplierRow(neutral,neutral),"recovery rejects unrelated modifications and vanilla effect rows");
                 Reject<ArgumentException>(() => GameActions.MultiplierRow(neutral, float.NaN, 1), "reject nonfinite multipliers");
                 Reject<ArgumentException>(() => GameActions.MultiplierRow(neutral, 1, 101), "reject excessive reward multiplier");
                 var container = root + 0x57C1000; var node = root + 0x57C0000; var originalRow = root + 0x57C2000;
@@ -549,11 +563,16 @@ internal static partial class Program
                 var helper = memory.AllocateCode(GameActions.BuildEffectHelper(root));
                 dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
                 Check(memory.Int32(dispatcher.Payload + 48) == 1 && memory.Pointer(node + 0x48) == cloneRow &&
-                    memory.Pointer(dispatcher.Payload + 56) == node && BitConverter.ToSingle(memory.Read(node, 4)) == -1 && memory.Int32(node + 0x1C) == 4,
+                    memory.Pointer(dispatcher.Payload + 56) == node && BitConverter.ToSingle(memory.Read(node, 4)) == GameActions.MultiplierLeaseSeconds && memory.Int32(node + 0x1C) == 4,
                     "game-thread effect helper attaches the private row only to the native-created player node and activates it");
                 dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
                 Check(memory.Int32(dispatcher.Payload + 48) == 0 && memory.Pointer(node + 0x48) == cloneRow,
                     "effect ID collision cannot overwrite an existing effect");
+                var expiredNode=memory.AllocateData(0x80);memory.SetInt32(expiredNode+0x40,9999);memory.Write(expiredNode+0x2D,[1]);
+                memory.Write(container+8,BitConverter.GetBytes(expiredNode));memory.Write(node+0x48,BitConverter.GetBytes(originalRow));
+                dispatcher.ExecuteAsync([new(helper,dispatcher.Payload)],effectPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload+48)==1&&memory.Pointer(node+0x48)==cloneRow&&memory.Read(expiredNode+0x2D,1)[0]==1,
+                    "native multiplier insertion skips an expired collision without waiting for another game frame");
                 memory.Write(container + 8, new byte[8]);
                 memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor + 8));
                 dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
@@ -568,9 +587,26 @@ internal static partial class Program
                         ("effectNode", node), ("effectRow", cloneRow), ("originalEffectRow", originalRow) })
                         typeof(GameActions).GetField(field.Name, binding)!.SetValue(multiplierActions, field.Value);
                     Check(multiplierActions.MultipliersAttached(), "multiplier ownership requires the current actor, native node and private row");
+                    memory.Write(node,BitConverter.GetBytes(0.5f));
+                    Check(multiplierActions.MaintainMultipliers()&&BitConverter.ToSingle(memory.Read(node,4))==GameActions.MultiplierLeaseSeconds,"active polling renews only the owned multiplier node");
+                    memory.Write(node+0x2D,[1]);
+                    Check(!multiplierActions.MaintainMultipliers(),"an expired multiplier is never renewed or counted as attached");memory.Write(node+0x2D,[0]);
                     multiplierActions.ResetMultipliers();
                     Check(memory.Pointer(node + 0x48) == originalRow && memory.Int32(node) == 0 && memory.Read(node + 0x2D, 1)[0] == 1 &&
                         !multiplierActions.MultipliersAttached(), "disabling multipliers restores the original row and schedules native node expiration");
+                    var staleNode=memory.AllocateData(0x80);var staleRow=memory.AllocateData(0x210);
+                    memory.Write(staleRow,legacy);memory.Write(originalRow,neutral);
+                    memory.SetInt32(staleNode+0x40,9999);memory.Write(staleNode+0x48,BitConverter.GetBytes(staleRow));
+                    memory.Write(node+0x48,BitConverter.GetBytes(cloneRow));memory.Write(node+0x2D,[0]);memory.Write(node+0x58,BitConverter.GetBytes(staleNode));
+                    Check(multiplierActions.RecoverMultiplierEffects(player.Actor,originalRow,neutral)==2&&
+                        memory.Pointer(node+0x48)==originalRow&&memory.Pointer(staleNode+0x48)==originalRow&&memory.Read(staleNode+0x2D,1)[0]==1,
+                        "a fresh trainer instance removes stacked legacy and leased effects instead of compounding them");
+                    Check(multiplierActions.RecoverMultiplierEffects(player.Actor,originalRow,neutral)==0,"repeated reset ignores already expired effects");
+                    memory.Write(node+0x48,BitConverter.GetBytes(cloneRow));memory.Write(node+0x2D,[0]);
+                    memory.Write(staleRow,foreign);memory.Write(staleNode+0x48,BitConverter.GetBytes(staleRow));memory.Write(staleNode+0x2D,[0]);
+                    Reject<IOException>(()=>multiplierActions.RecoverMultiplierEffects(player.Actor,originalRow,neutral),"foreign effect collisions block recovery");
+                    Check(memory.Pointer(node+0x48)==cloneRow&&memory.Read(node+0x2D,1)[0]==0,"a later foreign collision prevents partial recovery writes");
+                    memory.Write(node+0x58,new byte[8]);memory.Write(node+0x2D,[1]);memory.Write(node+0x48,BitConverter.GetBytes(originalRow));
                 }
                 var menuManager = root + 0x57D0000; var menuStep = root + 0x57D2000;
                 memory.Write(root + 0x5562870, BitConverter.GetBytes(menuManager));

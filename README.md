@@ -196,8 +196,13 @@ The features below have individual implementation and confirmation statuses in
 
 - **Combat → Damage and Echoes multipliers:** enter 0.1–100 for outgoing damage and enemy
   Echoes rewards, then Apply. Set both to 1 or Turn off practice toggles to restore.
-  Loading screens retain the desired values. Spending and bloodstain retrieval
-  are not treated as rewards. Avoid other mods that use SpEffect 9999.
+  Loading screens retain the desired values. In the development build, effects expire
+  after five seconds of game time without trainer updates. To remove leftover effects
+  from an older BB Tools session, set both values to **1** and click **Apply multipliers**
+  with a character loaded. Recovery only removes recognizable BB Tools clones;
+  avoid other mods that use SpEffect 9999. If scaling persists after a full game process
+  restart with BB Tools closed, report the runtime/version, enabled mods and session log;
+  that case has not yet been reproduced.
 - **Workshop → Workshop menus:** level up, fortify, repair, storage, blood
   gems and Caryll runes. Close other game menus first. The native game handles
   normal prices, materials and closing; finish in the game.

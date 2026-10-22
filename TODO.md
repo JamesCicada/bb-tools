@@ -4,6 +4,15 @@
 marked tested and confirmed only after explicit live confirmation of that specific feature in Bloodborne PC 1.09.
 New features remain pending live validation even when automated checks pass.
 
+## Reported regressions — next patch
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Ludwig revival | ✔️ | ⌛ | Reset separate defeat gate 9471 and Ludwig entry/phase state. Check repeat and first-encounter modes, fog, both phases and post-fight behavior. |
+| Multiplier cleanup and legacy-effect recovery | ✔️ | ⌛ | Finite renewable effects; setting both multipliers to 1 and applying removes identifiable old trainer effects. Check repeated 2× application, disconnect, force-close, warp, death and full process restart. Persistence across a full restart has not been reproduced. |
+
+## Feature checklist
+
 | Feature                                              | Implemented | Tested and confirmed | Notes                                                                                            |
 | ---------------------------------------------------- | :---------: | :------------------: | ------------------------------------------------------------------------------------------------ |
 | Blood Echoes balance, health, stamina and attributes |     ✔️      |          ✔️          | Confirmed working.                                                                               |
@@ -148,6 +157,13 @@ These need verified engine paths. They are not represented by placeholder contro
 - ✔️ Confirm 100° and 120° on a standard runtime; check reset/disconnect restores the clamp and an existing external uncap is preserved.
 
 ## Ideas for later versions
+
+### Complete built-in item catalog — high priority
+
+- ⌛ Map all base-game and DLC item names to their correct IDs and categories so users can search by name without third-party ID lookup or manual catalog import.
+- ⌛ Cover consumables, weapons and variants, armor, Caryll/oath runes, blood gems, key items and chalice items; include common aliases and category filters.
+- ⌛ Distinguish spawnable item IDs from rune/gem effect IDs and generated instance handles. Use the appropriate grant path for each category; do not treat effect IDs as ordinary Goods IDs.
+- ⌛ Verify mappings, search results and actual grants in game before marking tested and confirmed. Keep manual ID entry available as an advanced option.
 
 This roadmap includes implemented foundations and future proposals. Implementation
 and tested-and-confirmed status are tracked separately; pending live checks remain ⌛.

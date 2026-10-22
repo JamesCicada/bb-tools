@@ -135,7 +135,8 @@ toggle. Restoration preserves unrelated bits and the selection survives loads.
 Multipliers clone neutral SpEffectParam row 9999 into a private data allocation.
 The original parameter table is not edited. Its full neutral-row SHA-256 is
 validated before activation, rejecting altered rows from other data mods. Damage fields +0x38..+0x44 and enemy
-reward soulRate +0xE0 change; duration becomes -1 and saveCategory stays -1.
+reward soulRate +0xE0 change; the original implementation used duration -1 and
+saveCategory -1. The 2026-10-22 follow-up below replaces the infinite duration.
 Native row lookup `0x1F28AA0`, insertion `0x17E3130` and node update `0x17EA980`
 run through the player update dispatcher. The container is actor +0x1C8,
 its owner is +0x18, head +8; nodes have ID +0x40, row +0x48 and next +0x58.
@@ -522,3 +523,42 @@ the supplied in-game name; personal field values are not recorded here. The hand
 Discord publication occurred. This validates the reader, not the final Discord UI.
 
 Discord application selection updated to 1196921008809066616 at the user’s request. The external PNG override was removed: the activity omits assets so Discord can use that application’s configured Bloodborne icon. The BBTools repository button remains. Earlier pinned-emblem notes describe the superseded payload.
+
+## Multiplier cleanup and Ludwig revival — 2026-10-22
+
+A third-party report describes compounding Echoes gain, including persistence after
+restarting the game. This has not been reproduced live. The trainer's parameter
+clone is process memory only, with saveCategory -1; it does not edit game files or
+the save's base reward scaling. A full process restart should discard that private
+allocation, so the cross-restart part requires the reporter's runtime, mods and
+controlled baseline before a save-persistence diagnosis can be made.
+
+The previous infinite node could outlive an interrupted trainer session. Ownership
+was local to one GameActions instance and resetting 1× returned without checking
+unowned leftovers. The development implementation now recognizes exact private
+9999 clones (all bytes match the validated neutral row except the four outgoing
+rates, soulRate and duration), restores their original table pointer and schedules
+normal native expiration before attaching a replacement. Foreign or vanilla 9999
+collisions reject the entire recovery before writes. No native node is freed by
+the trainer. Both 1× values explicitly recover old infinite clones too.
+
+New clones use a five-second game-time lease, renewed once per second while the
+owned effect remains attached. The prepared 1.09 native node update at 0x17EA980
+subtracts delta time from a positive node +0 remaining duration and marks +0x2D
+for expiration on a subsequent update at zero. The helper initializes node +0/+4
+to five seconds, keeps saveCategory -1 and ignores nodes already marked expired.
+A paused/unloaded game expires the effect when its normal updates resume.
+
+The local m34_00_00_00 event script independently uses defeat flag 9471 in event
+13401800 to disable/kill both Ludwig forms (3400800/3400801), remove fog object
+3401800 and its SFX, and end fog/intro/AI events 13404800/13401801/13404802.
+Clearing only 13401800..9 therefore leaves the fight disabled. Ludwig's profile
+now clears 9471 and its 13404800..49 entry/phase family (including phase switch
+13404825). Repeat mode retains 13401801; first-encounter mode clears it. Reward
+flag 6674, quest flags 3400..3403 and Laurence's family remain untouched.
+Original values, including 9471, are included in the existing pre-write journal.
+
+Regression fixtures cover multiple old/new clones, repeat resets, foreign-effect
+refusal without partial writes, lease ownership and both Ludwig encounter modes.
+Live retests remain pending; these checks do not establish that the reported full
+restart persistence is resolved.

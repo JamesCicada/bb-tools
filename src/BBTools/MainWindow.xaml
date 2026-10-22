@@ -380,7 +380,7 @@
             </StackPanel>
            </UniformGrid>
            <Button Content="Apply multipliers" Click="ApplyMultipliers" HorizontalAlignment="Left" />
-           <TextBlock Text="0.1–100×. Set both to 1 to restore. Uses a player-only effect; does not scale spending or bloodstain recovery. Selections resume after loading." Style="{StaticResource Caption}" Margin="0,12,0,12" />
+           <TextBlock Text="0.1–100×. Set both to 1 and Apply to restore, including leftover BB Tools effects. Selections resume after loading; effects expire shortly after the tool stops updating." Style="{StaticResource Caption}" Margin="0,12,0,12" />
           </StackPanel>
           <TextBlock Text="Selections stay on through loading screens and warps. They resume when the player validates. Disconnecting clears selections; turning them off restores the settings they replaced." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,24,0,16" />
           <Button Content="Turn off practice toggles" Click="TurnOffFeatures" HorizontalAlignment="Left" />

@@ -12,7 +12,9 @@ public static class BossRevivalCatalog
         new("Shadow of Yharnam",12701800,2),new("Rom, the Vacuous Spider",13201800,2,[13200040,13200120]),new("The One Reborn",12801800,2),
         new("Martyr Logarius",12501800,2,[12500000]),new("Amygdala",13301800,2),new("Celestial Emissary",12421700,2),
         new("Ebrietas, Daughter of the Cosmos",12421800,2),new("Mergo's Wet Nurse",12601800,2),
-        new("[DLC] Ludwig, the Holy Blade",13401800,1),new("[DLC] Living Failures",13501850,1,[13501200,13504220]),
+        // m34's defeat, fog and AI events also test 9471, independently of
+        // the 13401800 completion event. Reset both forms' entry/phase state.
+        new("[DLC] Ludwig, the Holy Blade",13401800,1,null,[9471,..Enumerable.Range(13404800,50).Select(x=>(uint)x)]),new("[DLC] Living Failures",13501850,1,[13501200,13504220]),
         new("[DLC] Lady Maria of the Astral Clocktower",13501800,1),new("[DLC] Laurence, the First Vicar",13401850,1),new("[DLC] Orphan of Kos",13601800,1),
         new("Micolash, Host of the Nightmare",12601850,2,null,[12604731,..Enumerable.Range(12604850,50).Select(x=>(uint)x)]),
         new("Gehrman, the First Hunter",12101800,2,null,[12101850,12101852,..Enumerable.Range(12104800,12).Select(x=>(uint)x)]),

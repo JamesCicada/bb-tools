@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+**Feedback requested:** these fixes have not been thoroughly tested in-game. Automated validation passes (404 checks in Debug and Release, plus 96 supported-game instruction fingerprints), but Ludwig revival and multiplier cleanup/recovery still need user feedback on Bloodborne PC and shadPS4. Please report the runtime/version, reproduction steps and session log for any remaining issues.
+
+- Fix Ludwig revival's missing defeat flag (`9471`), which independently disables his boss forms and fog. Reset his entry/phase flags for both first-encounter and repeat modes. Live retest pending.
+- Harden damage/Echoes multiplier cleanup: use a five-second renewable game-time effect instead of an infinite effect, and reject expired nodes during ownership checks. Effects stop after polling ends, including an interrupted trainer session.
+- Applying multipliers removes recognizable leftover BB Tools effects before adding one replacement; applying both at `1×` also recovers legacy infinite effects. Preserve unrelated effects and reject foreign collisions. Add recovery logging and regression checks. The reported persistence across a full game restart is not yet reproduced; live validation remains pending.
+
 ## 0.6.1 — 2026-10-21
 
 - Integrate the official Nexus Mods v3 upload API with CI/CD: publish the verified ZIP and changelog after a stable GitHub release is published, with validation-only runs and duplicate protection.

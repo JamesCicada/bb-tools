@@ -269,7 +269,7 @@ public partial class MainWindow : Window
                 else session.RestorePracticeFlag(flag);
             }
             if (!actionBusy && actions != null && (desiredDamage != 1 || desiredEchoes != 1) &&
-                multiplierFailedActor != state.Actor && !actions.MultipliersAttached())
+                multiplierFailedActor != state.Actor && !actions.MaintainMultipliers())
                 _ = ResumeMultipliers(state.Actor);
             var character = session.ReadCharacter();
             EchoValue.Text = character.Values.Echoes.ToString("N0");
