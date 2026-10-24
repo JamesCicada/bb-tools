@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3 — 2026-10-24
+
+- Fix [#1](https://github.com/JamesCicada/bb-tools/issues/1): Camera → Movement remained disabled after connecting, preventing speed/gravity toggles and sliders from being used. Enable the panel for a validated loaded player, disable it during loading/disconnect and restore access after loading. Add UI/native regression coverage; live retest pending. Photo mode and flight/noclip remain hidden.
+- Add a Linux tester invitation in Settings → About: “We need Linux testers. If interested, DM JamesCicada on Discord.”
+
+Validation: 410 automated checks in Debug and Release and 22 release-workflow checks pass. The About layout was inspected at the minimum window size. Live movement retest remains pending.
+
 ## 0.6.2 — 2026-10-22
 
 **Feedback requested:** these fixes have not been thoroughly tested in-game. Automated validation passes (404 checks in Debug and Release, plus 96 supported-game instruction fingerprints), but Ludwig revival and multiplier cleanup/recovery still need user feedback on Bloodborne PC and shadPS4. Please report the runtime/version, reproduction steps and session log for any remaining issues.

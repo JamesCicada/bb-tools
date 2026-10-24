@@ -11,6 +11,18 @@ New features remain pending live validation even when automated checks pass.
 | Ludwig revival | ✔️ | ⌛ | Reset separate defeat gate 9471 and Ludwig entry/phase state. Check repeat and first-encounter modes, fog, both phases and post-fight behavior. |
 | Multiplier cleanup and legacy-effect recovery | ✔️ | ⌛ | Finite renewable effects; setting both multipliers to 1 and applying removes identifiable old trainer effects. Check repeated 2× application, disconnect, force-close, warp, death and full process restart. Persistence across a full restart has not been reproduced. |
 
+## Reported regressions — v0.6.3
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Camera → Movement controls ([#1](https://github.com/JamesCicada/bb-tools/issues/1)) | ✔️ | ⌛ | Re-enable speed/gravity toggles and sliders once a player validates, including after loading. UI/native checks cover selection, application and restoration; live retest pending. |
+
+## Item discovery boost — researched, implementation pending
+
+- ✔️ Verify a separate discovery-effect path in the private 1.09 image at RVA `0x1581830`: effect state `0x42`, bonus field `+0x1FC`, added to the Arcane-derived baseline. Base attributes do not need editing.
+- ⌛ Add a configurable temporary player-only bonus, with normal Eye rune bonuses preserved. Do not edit Arcane, Blood Level, other attributes or shared item/loot parameter rows.
+- ⌛ Verify native activation/category bookkeeping, expiration, repeated application, loading/death and disconnect restoration before exposing the control. No stacking or persistence claim until tested.
+
 ## Feature checklist
 
 | Feature                                              | Implemented | Tested and confirmed | Notes                                                                                            |

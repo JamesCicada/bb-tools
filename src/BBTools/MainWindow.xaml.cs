@@ -253,7 +253,7 @@ public partial class MainWindow : Window
             }
             UpdateEnemyPractice();
             PlayerControls.IsEnabled = true;
-            PracticeControls.IsEnabled = true;
+            ExplorationControls.IsEnabled = PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
             if (!actionBusy && retryDestination==null && !retryTravelling && DateTime.UtcNow>=durabilityRetryAt && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
                 _=RepairWeaponsOnGameThread(false);

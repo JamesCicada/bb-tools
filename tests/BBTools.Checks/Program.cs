@@ -743,6 +743,11 @@ internal static partial class Program
     {
         _ = new Application();
         var window = new MainWindow();
+        var movementToggle=(System.Windows.Controls.CheckBox)window.FindName("MovementEnabled");
+        var movementSlider=(System.Windows.Controls.Slider)window.FindName("MovementSlider");
+        var gravityToggle=(System.Windows.Controls.CheckBox)window.FindName("GravityEnabled");
+        var gravitySlider=(System.Windows.Controls.Slider)window.FindName("GravitySlider");
+        Check(!movementToggle.IsEnabled&&!movementSlider.IsEnabled&&!gravityToggle.IsEnabled&&!gravitySlider.IsEnabled,"movement and physics controls are disabled before a player connects");
         Check(!((UIElement)window.FindName("FreeCameraPanel")).IsVisible,"photo-mode controls remain hidden");
         Check(!((UIElement)window.FindName("NoclipEnabled")).IsVisible,"noclip control remains hidden");
         Check(((FrameworkElement)window.FindName("EntityInspectorPanel")).Visibility==Visibility.Visible,"realtime enemy detail panel is available on its own page");
@@ -777,8 +782,16 @@ internal static partial class Program
         foreach (var toggle in toggles) toggle.IsChecked = true;
         Field("updating", false); Field("session", session); Field("memory", memory);
         Poll();
+        Check(movementToggle.IsEnabled&&movementSlider.IsEnabled&&gravityToggle.IsEnabled&&gravitySlider.IsEnabled,"loaded-player polling enables movement toggles and sliders independently of disabled photo mode");
+        movementSlider.Value=2;movementToggle.IsChecked=true;Poll();
+        var activeMovement=(MovementSpeed)typeof(MainWindow).GetField("movementSpeed",binding)!.GetValue(window)!;
+        var movementFactor=(ulong)typeof(MovementSpeed).GetField("factor",binding)!.GetValue(activeMovement)!;
+        Check(!memory.Read(root+MovementSpeed.Offset,14).SequenceEqual(MovementSpeed.Original)&&BitConverter.ToSingle(memory.Read(movementFactor,4))==2,
+            "changing the enabled movement toggle and slider applies the requested native speed factor");
         memory.Write(world + 0x60, new byte[8]);
         Poll();
+        Check(!movementToggle.IsEnabled&&!movementSlider.IsEnabled&&!gravityToggle.IsEnabled&&!gravitySlider.IsEnabled&&movementToggle.IsChecked==true&&movementSlider.Value==2,
+            "loading disables movement inputs while preserving the selected speed");
         Check(toggles.All(x => x.IsChecked == true), "UI preserves all selected practice toggles across a null-player loading screen");
         Check(((System.Windows.Controls.Button)window.FindName("CancelRetryButton")).IsEnabled,"pending boss retry remains cancellable while the player is loading");
         Field("retryDestination",BossDestinations.All[0]);typeof(MainWindow).GetMethod("CancelBossRetry",binding)!.Invoke(window,[window,new RoutedEventArgs()]);
@@ -792,10 +805,14 @@ internal static partial class Program
         memory.Write(root + 0x553E889, [0]); // Simulate the engine resetting a global flag on load.
         var oldFlags = memory.Read(player.Component + 0x200, 1)[0];
         Poll();
+        Check(movementToggle.IsEnabled&&movementSlider.IsEnabled&&gravityToggle.IsEnabled&&gravitySlider.IsEnabled,
+            "movement and physics inputs become usable again after the player reloads");
         Check(memory.Read(replacement + 0x200, 1)[0] == 0x9B && memory.Read(root + 0x553E889, 1)[0] == 1 && memory.Read(root + 0x553E895, 1)[0] == 1 && memory.Read(replacement + 0x201, 1)[0] == 0x22,
             "UI reapplies combat and consumption flags to the loaded player");
         Check(memory.Read(player.Component + 0x200, 1)[0] == oldFlags, "transition never writes through the old resource component");
         typeof(MainWindow).GetMethod("StopFeatures", binding)!.Invoke(window, null);
+        Check(movementToggle.IsChecked==false&&memory.Read(root+MovementSpeed.Offset,14).SequenceEqual(MovementSpeed.Original),
+            "stopping movement from the UI restores the native movement instructions");
         Check(toggles.All(x => x.IsChecked == false) && memory.Read(replacement + 0x200, 1)[0] == 0x10 && memory.Read(replacement + 0x201, 1)[0] == 0x20,
             "explicit stop clears selections and restores the new component's original bits");
         var startupFolder=Path.Combine(Path.GetTempPath(),"BBTools-startup-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(startupFolder);
@@ -829,6 +846,7 @@ internal static partial class Program
         if(page=="Bosses"){((System.Windows.Controls.TabItem)window.FindName("BossesTab")).IsSelected=true;page="Travel";}
         if(page=="CameraTuning"){((System.Windows.Controls.TabItem)window.FindName("CameraTuningTab")).IsSelected=true;page="Camera";}
         if(page=="Preferences"){((System.Windows.Controls.TabControl)window.FindName("SettingsSections")).SelectedIndex=1;page="Settings";}
+        if(page=="About"){((System.Windows.Controls.TabItem)window.FindName("AboutTab")).IsSelected=true;page="Settings";}
         if(page=="TargetPreview")
         {
             ((System.Windows.Controls.TextBlock)window.FindName("EnemyName")).Text="c2200 · handle 0x8001";

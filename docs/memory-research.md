@@ -562,3 +562,24 @@ Regression fixtures cover multiple old/new clones, repeat resets, foreign-effect
 refusal without partial writes, lease ownership and both Ludwig encounter modes.
 Live retests remain pending; these checks do not establish that the reported full
 restart persistence is resolved.
+
+## Independent item discovery — feasibility, 2026-10-23
+
+Read-only inspection of the private 1.09 image confirms the native discovery
+calculation at RVA 0x1581830. It checks the player's effect-container category
+bits (+0x21 mask 0x70), finds an active node whose row stateInfo (+0x156) is 0x42,
+and sums active effects' itemDropRate floats (+0x1FC). It then adds that bonus to
+the Arcane-derived discovery curve. The independent decompilation reference is
+bbhost/src/decomp/player/player_data.cpp (preferred VA 0x1981830).
+
+The local parameter data contains discovery-state rows 102000/102001/102002 with
+bonuses 0.5/0.7/1.0, and 180060 with 0.1; rows 1928/6960 have zero. These are layout
+leads, not IDs to blindly attach or overwrite. A temporary player-only discovery
+bonus can therefore avoid all writes to Arcane, Blood Level or other base stats.
+
+Implementation is pending. The existing multiplier helper inserts neutral row
+9999 before redirecting its node to a clone; changing the clone's stateInfo alone
+is insufficient proof that the container's native category bits will be updated.
+Verify activation/bookkeeping and native cleanup first, preserve equipped effects
+and use a finite owned lifetime with restoration/recovery checks. No actual game
+writes or new discovery controls were added during this investigation.

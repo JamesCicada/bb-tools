@@ -953,7 +953,7 @@
          </Border>
         </StackPanel>
        </TabItem>
-       <TabItem Header="About">
+       <TabItem Header="About" x:Name="AboutTab">
         <StackPanel>
          <Border Style="{StaticResource Card}" Margin="0,0,0,18">
           <StackPanel>
@@ -962,6 +962,8 @@
            <TextBlock x:Name="AboutVersion" FontSize="22" FontWeight="SemiBold" />
            <TextBlock x:Name="UpdateStatus" Text="Use Check for updates below to look for a newer stable GitHub release." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0" />
            <TextBlock Text="Checks run only when requested. Downloads open on GitHub; nothing is installed automatically." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,0" />
+           <TextBlock Text="LINUX TESTERS WANTED" Style="{StaticResource Caption}" Margin="0,20,0,8" />
+           <TextBlock Text="We need Linux testers. If interested, DM JamesCicada on Discord." Foreground="#D0B179" TextWrapping="Wrap" />
           </StackPanel>
          </Border>
         </StackPanel>

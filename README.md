@@ -1,4 +1,5 @@
-> **Version 0.6.2:** Ludwig revival and multiplier cleanup fixes need user feedback; they have not been thoroughly tested in-game.
+> **Version 0.6.3:** fixes disabled movement-speed/gravity controls after connecting. Live retest pending.
+> Ludwig revival and multiplier cleanup fixes from 0.6.2 still need feedback; they have not been thoroughly tested in-game.
 > God mode + Ignore hits and earlier first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
 > **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
@@ -16,6 +17,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.3 patch
+
+- Restore Camera → Movement toggles and sliders when a character is loaded, including after loading screens.
+- Add a Linux tester invitation in Settings → About. Interested? DM **JamesCicada** on Discord.
+
+The movement fix has UI/native regression coverage; live retesting remains pending.
 
 ## v0.6.2 patch
 
