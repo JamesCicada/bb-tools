@@ -17,11 +17,21 @@ New features remain pending live validation even when automated checks pass.
 | --- | :---: | :---: | --- |
 | Camera → Movement controls ([#1](https://github.com/JamesCicada/bb-tools/issues/1)) | ✔️ | ⌛ | Re-enable speed/gravity toggles and sliders once a player validates, including after loading. UI/native checks cover selection, application and restoration; live retest pending. |
 
-## Item discovery boost — researched, implementation pending
+## Item discovery and eligible enemy drops — v0.6.4
 
 - ✔️ Verify a separate discovery-effect path in the private 1.09 image at RVA `0x1581830`: effect state `0x42`, bonus field `+0x1FC`, added to the Arcane-derived baseline. Base attributes do not need editing.
-- ⌛ Add a configurable temporary player-only bonus, with normal Eye rune bonuses preserved. Do not edit Arcane, Blood Level, other attributes or shared item/loot parameter rows.
-- ⌛ Verify native activation/category bookkeeping, expiration, repeated application, loading/death and disconnect restoration before exposing the control. No stacking or persistence claim until tested.
+- ✔️ Implement a temporary player-only +0–1000 point bonus at the native discovery return, preserving Arcane/rune calculation and base stats. Use a separate eligible-enemy-roll hook to remove blank outcomes after level-dependent item resolution. Do not change shared loot rows, game files, gem quality/effects or chest/scripted rewards.
+- ✔️ Add native helper and lifecycle regression checks for ownership, no compounding/stat edits, blank/invalid outcomes, non-enemy caller exclusion, preset persistence and restoration. Include chalice-map and resolved gem-type fixture cases.
+- ⌛ Test both options in normal areas and chalice dungeons: mobs, bosses, generated/level-dependent drops, empty/ineligible tables, death, warp, reconnect, disabling and another runtime mod. Synthetic fixture checks do not establish real chalice compatibility or improved gem quality.
+
+## Community translations — v0.6.4
+
+- ✔️ Embed English source and all 28 configured locale catalogs; add live language switching, system detection, English fallback, RTL layout and a persisted UI language independent of gameplay presets.
+- ✔️ Draft the extracted Simplified Chinese interface/message catalog. Other targets have starter labels. Add Preferences/About contribution links and file-based Crowdin mapping; preserve IDs, placeholders and numeric parsing.
+- ✔️ Add catalog/reference validation and placeholder-format checks to the existing CI test command.
+- ⌛ Native-speaker review, translated-layout testing, Bloodborne terminology and completion of starter catalogs.
+- ✔️ Link the app and contributor guide to [BB Tools on Crowdin](https://crowdin.com/project/bb-tools).
+- ⌛ Enable Crowdin's GitHub integration; do not claim synchronization until an actual translation PR succeeds.
 
 ## Feature checklist
 

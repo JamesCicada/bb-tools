@@ -1,4 +1,4 @@
-> **Version 0.6.3:** fixes disabled movement-speed/gravity controls after connecting. Live retest pending.
+> **Version 0.6.4:** adds community translations, discovery boost and guaranteed eligible enemy drops. Live chalice/drop testing and translation review are pending.
 > Ludwig revival and multiplier cleanup fixes from 0.6.2 still need feedback; they have not been thoroughly tested in-game.
 > God mode + Ignore hits and earlier first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
@@ -17,6 +17,21 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.4: translations and discovery
+
+Choose an interface language in Settings → Preferences. Simplified Chinese has a
+draft for the extracted UI/message catalog; the other community languages still
+need contributions and fall back to English. Native speakers can help on
+[Crowdin](https://crowdin.com/project/bb-tools) or through
+[the translation guide](https://github.com/JamesCicada/bb-tools/blob/main/docs/translating.md).
+No language is marked native-speaker reviewed merely because its catalog is complete.
+
+Items → Discovery & drops adds an independent discovery bonus and a separate
+guaranteed **eligible enemy-roll** option, including the shared chalice-dungeon
+loot path. Live testing and feedback are still needed. They do not edit
+Arcane or other attributes, guarantee gem quality/effects, create unavailable loot
+or change chest/scripted rewards.
 
 ## v0.6.3 patch
 

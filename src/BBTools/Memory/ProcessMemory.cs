@@ -5,25 +5,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace BBTools.Memory;
 
-public interface IMemory
-{
-    byte[] Read(ulong address, int size);
-    void Write(ulong address, byte[] value);
-}
-
-public static class MemoryValues
-{
-    public static int Int32(this IMemory memory, ulong address) => BitConverter.ToInt32(memory.Read(address, 4));
-    public static ulong Pointer(this IMemory memory, ulong address, string context = "game object")
-    {
-        var value = BitConverter.ToUInt64(memory.Read(address, 8));
-        if (value < 0x10000 || value >= 0x0000800000000000 || value % 8 != 0)
-            throw new IOException($"Unavailable {context} pointer at 0x{address:X} (value 0x{value:X}).");
-        return value;
-    }
-    public static void SetInt32(this IMemory memory, ulong address, int value) => memory.Write(address, BitConverter.GetBytes(value));
-}
-
 public sealed class ProcessMemory : IMemory, IDisposable
 {
     private readonly SafeProcessHandle handle;
@@ -168,6 +149,28 @@ public sealed class ProcessMemory : IMemory, IDisposable
         if(!VirtualProtectEx(handle,(nuint)at,14,0x40,out var protection))throw new IOException("Movement code is unavailable.");
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
+    }
+    // Only the two independently verified loot sites may use this write path.
+    internal void ReplaceLootCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
+    {
+        var original = offset == LootOverrides.DiscoveryOffset ? LootOverrides.DiscoveryOriginal :
+            offset == LootOverrides.DropOffset ? LootOverrides.DropOriginal : throw new ArgumentException("Unsupported loot hook site.");
+        if (expected.Length != original.Length || replacement.Length != original.Length)
+            throw new ArgumentException("Invalid loot patch length.");
+        var at = imageBase + offset;
+        if (!Read(at, expected.Length).SequenceEqual(expected)) throw new IOException("Loot instructions changed externally; no patch was applied.");
+        if (!VirtualProtectEx(handle, (nuint)at, (nuint)expected.Length, 0x40, out var protection)) throw new IOException("Loot code is unavailable.");
+        try
+        {
+            if (!WriteProcessMemory(handle, (nuint)at, replacement, (nuint)replacement.Length, out var count) || count != (nuint)replacement.Length)
+                throw new IOException("Loot patch write failed.");
+        }
+        finally
+        {
+            var flushed = FlushInstructionCache(handle, (nuint)at, (nuint)replacement.Length);
+            var restored = VirtualProtectEx(handle, (nuint)at, (nuint)replacement.Length, protection, out _);
+            if (!flushed || !restored) throw new IOException("Loot code protection/cache restoration failed.");
+        }
     }
     public void Suspended(Action operation)
     {

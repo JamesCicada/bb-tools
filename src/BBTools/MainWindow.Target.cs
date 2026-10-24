@@ -35,13 +35,13 @@ public partial class MainWindow
         EnemyTrackingState.Text=targetMonitor.State;
         if(loggedTargetState!=targetMonitor.State){loggedTargetState=targetMonitor.State;App.Log?.Write("TARGET",targetMonitor.State);}
         if(targetMonitor.Snapshot is not {} enemy)return;
-        EnemyName.Text=enemy.Title;EnemyMeta.Text=$"{enemy.Identity} · {(enemy.Distance is {} distance?$"{distance:0.0} m away":"distance unavailable")} · sampled {enemy.Sampled.ToLocalTime():HH:mm:ss}";
+        EnemyName.Text=enemy.Title;EnemyMeta.Text=Translations.Format("message.01sampled2HHmmss.4342a80", enemy.Identity, (enemy.Distance is {} distance?$"{distance:0.0} m away":"distance unavailable"), enemy.Sampled.ToLocalTime());
         EnemyHealth.Text=$"{enemy.Health:N0} / {enemy.Maximum:N0}";EnemyHealthBar.Value=100d*enemy.Health/enemy.Maximum;
-        EnemyStamina.Text=enemy.MaxStamina>0?$"Stamina {enemy.Stamina:N0} / {enemy.MaxStamina:N0}":"Stamina unavailable / unused";
-        EnemyArmor.Text=enemy.Armor?.Summary??"No super-armor module available";EnemyArmorBar.Value=enemy.Armor?.Percent??0;
-        EnemyBreaks.Text=$"Observed breaks: {targetMonitor.ObservedBreaks}";
+        EnemyStamina.Text=enemy.MaxStamina>0?Translations.Format("message.Stamina0N01N0.61cca01", enemy.Stamina, enemy.MaxStamina):Translations.T("message.Staminaunavailableunused.2a55a31");
+        EnemyArmor.Text=enemy.Armor?.Summary??Translations.T("message.Nosuperarmormoduleavailable.d5acf20");EnemyArmorBar.Value=enemy.Armor?.Percent??0;
+        EnemyBreaks.Text=Translations.Format("message.Observedbreaks0.ff3e3a7", targetMonitor.ObservedBreaks);
         EnemyGauges.ItemsSource=enemy.Gauges.Where(g=>g.Name!="Legacy disease slot"||g.Current!=0||g.Limit>1).ToArray();
-        EnemyEffects.ItemsSource=enemy.Effects;EnemyEffectsHeader.Text=$"STATUS / SPECIAL EFFECTS · {enemy.Effects.Count(x=>x.Active)} active / {enemy.Effects.Length} captured";
-        EnemyEffectsEmpty.Text=enemy.Effects.Length==0?"No effects in this snapshot.":"";
+        EnemyEffects.ItemsSource=enemy.Effects;EnemyEffectsHeader.Text=Translations.Format("message.STATUSSPECIALEFFECTS0active1captured.71e80c8", enemy.Effects.Count(x=>x.Active), enemy.Effects.Length);
+        EnemyEffectsEmpty.Text=enemy.Effects.Length==0?Translations.T("message.Noeffectsinthissnapshot.fbd9e70"):"";
     }
 }

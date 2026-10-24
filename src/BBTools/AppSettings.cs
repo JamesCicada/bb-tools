@@ -3,11 +3,12 @@ using System.Text.Json;
 
 namespace BBTools;
 
-public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false, CameraControls? Camera = null, PhotoSettings? Photos = null,bool DiscordRichPresence=true,DiscordDetailPreferences? DiscordDetails=null)
+public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnabled = false, float StartupFov = 43, string? StartupPresetName = null, HotkeyPreferences? Hotkeys = null, bool ExperimentalShad = false, CameraControls? Camera = null, PhotoSettings? Photos = null,bool DiscordRichPresence=true,DiscordDetailPreferences? DiscordDetails=null,string Language="auto")
 {
     public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BBTools", "settings.json");
     public void Validate()
     {
+        if (!Translations.IsSupported(Language)) throw new ArgumentException("Choose a supported interface language.");
         Hotkeys?.Validate();
         Camera?.Validate();
         Photos?.Validate();
@@ -16,7 +17,7 @@ public sealed record AppSettings(bool AutoConnect = false, bool StartupFovEnable
     }
     public static AppSettings Load(string? path = null)
     {
-        try { var result = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path ?? DefaultPath)) ?? new(); result.Validate(); return result; }
+        try { var result = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path ?? DefaultPath)) ?? new(); if (!Translations.IsSupported(result.Language)) result = result with { Language = "auto" }; result.Validate(); return result; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException) { return new(); }
     }
     public void Save(string? path = null)

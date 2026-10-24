@@ -1,0 +1,39 @@
+# File-based project. Credentials are environment variables, never committed values.
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+preserve_hierarchy: true
+files:
+  - source: /src/BBTools/Localization/Locales/en.json
+    translation: /src/BBTools/Localization/Locales/%locale%.json
+    excluded_target_languages: [en]
+    languages_mapping:
+      locale:
+        ar: ar
+        ca: ca
+        zh-CN: zh-Hans
+        zh-TW: zh-Hant
+        cs: cs
+        da: da
+        nl: nl
+        fi: fi
+        fr: fr
+        de: de
+        el: el
+        hu: hu
+        it: it
+        ja: ja
+        ko: ko
+        no: nb
+        pl: pl
+        pt-PT: pt-PT
+        pt-BR: pt-BR
+        ro: ro
+        ru: ru
+        sr: sr-Cyrl
+        es-ES: es
+        sv-SE: sv
+        tr: tr
+        uk: uk
+        vi: vi
+pull_request_title: Update community translations
+commit_message: 'i18n: update %language% translations'

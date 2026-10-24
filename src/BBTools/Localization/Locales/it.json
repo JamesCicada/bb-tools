@@ -1,0 +1,21 @@
+{
+  "ui.Player.64aee8c": "Giocatore",
+  "ui.Combat.49fcf2c": "Combattimento",
+  "ui.Enemies.5ad2600": "Nemici",
+  "ui.Items.fb8e7a1": "Oggetti",
+  "ui.Travel.d2b98fb": "Viaggio",
+  "ui.Camera.03494b0": "Telecamera",
+  "ui.Workshop.c0086f2": "Officina",
+  "ui.Settings.74a883a": "Impostazioni",
+  "ui.Connection.639a40e": "Connessione",
+  "ui.Preferences.66962f7": "Preferenze",
+  "ui.Hotkeys.c15f153": "Scorciatoie",
+  "ui.Library.dc20b3d": "Libreria",
+  "ui.Backups.3334fee": "Backup",
+  "ui.About.4efca0d": "Informazioni",
+  "ui.Connect.1a2303e": "Connetti",
+  "ui.Refresh.0e91610": "Aggiorna",
+  "ui.Godmode.c2a056f": "Invincibilità",
+  "ui.Infinitestamina.5cc94e4": "Vigore infinito",
+  "ui.Applymultipliers.aa68718": "Applica moltiplicatori"
+}

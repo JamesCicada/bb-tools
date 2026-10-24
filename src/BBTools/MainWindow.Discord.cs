@@ -28,7 +28,7 @@ public partial class MainWindow
             catch(Exception ex)when(IsExpected(ex)){presenceDetails=null;}
         }
         discordPresence.Update(runtime,presenceDetails);
-        DiscordPresenceStatus.Text=enabled?discordPresence.Status:"Discord Rich Presence is off.";
+        DiscordPresenceStatus.Text=enabled?discordPresence.Status:Translations.T("message.DiscordRichPresenceisoff.3c0f12f");
     }
     private void DiscordPresenceChanged(object sender,RoutedEventArgs e)
     {
@@ -39,6 +39,6 @@ public partial class MainWindow
         nextPresenceRead=DateTime.MinValue;presenceDetails=null;
         UpdateDiscordPresence();
         try{settings.Save();}
-        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text="Discord preference changed for this session but could not be saved: "+ex.Message;}
+        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=Translations.T("message.Discordpreferencechangedforthissessionbutcouldnotbes.f4fe905")+ex.Message;}
     }
 }

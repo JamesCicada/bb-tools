@@ -24,17 +24,17 @@ public partial class MainWindow
             beforeParryPractice??=previous;
             await SetParryCombat(engine,previous.Drill());
             TrackEnemy.IsChecked=true;
-            ParrySummary.Text="Practice setup applied: protection, infinite bullets/stamina and 0.1× damage. Lock onto an enemy to protect it separately.";
-        },"Parry practice setup applied. Enemy AI is active; one-shot, invisibility and silence are off.");
+            ParrySummary.Text=Translations.T("message.Practicesetupappliedprotectioninfinitebulletsstamina.2090fea");
+        },Translations.T("message.ParrypracticesetupappliedEnemyAIisactiveoneshotinvis.3e72427"));
     }
     private async void RestoreParrySetup(object sender,RoutedEventArgs e)
     {
-        if(beforeParryPractice is not {} previous){Status.Text="No previous parry-practice setup to restore.";return;}
+        if(beforeParryPractice is not {} previous){Status.Text=Translations.T("message.Nopreviousparrypracticesetuptorestore.bb266fc");return;}
         await RunGameAction(async engine=>
         {
             StopEnemyPractice();await SetParryCombat(engine,previous);beforeParryPractice=null;
-            ParrySummary.Text="Previous combat selections restored.";
-        },"Previous combat selections restored. Health changes already made remain in the game.");
+            ParrySummary.Text=Translations.T("message.Previouscombatselectionsrestored.c11fd35");
+        },Translations.T("message.PreviouscombatselectionsrestoredHealthchangesalready.a0acb47"));
     }
     private async Task SetParryCombat(GameActions engine,ParryCombatSettings next)
     {
@@ -58,17 +58,17 @@ public partial class MainWindow
         if(updating)return;
         try
         {
-            if(ProtectPracticeEnemy.IsChecked!=true){StopEnemyPractice();ParrySummary.Text="Target protection disabled; original flag restored where the target still validates.";return;}
-            if(session==null||memory==null||actionBusy)throw new IOException("Connect to a loaded character and finish the current request first.");
+            if(ProtectPracticeEnemy.IsChecked!=true){StopEnemyPractice();ParrySummary.Text=Translations.T("message.Targetprotectiondisabledoriginalflagrestoredwherethe.4e9fc0b");return;}
+            if(session==null||memory==null||actionBusy)throw new IOException(Translations.T("message.Connecttoaloadedcharacterandfinishthecurrentrequestf.c4b5d82"));
             enemyPractice??=new(session);memory.Suspended(()=>enemyPractice.ProtectLockedEnemy());
             App.Log?.Write("ACTION","Parry practice target protection enabled");
-            TrackEnemy.IsChecked=true;ParrySummary.Text="Locked enemy protected from ordinary lethal HP damage. Unlocking keeps protection; a different lock-on transfers it.";
+            TrackEnemy.IsChecked=true;ParrySummary.Text=Translations.T("message.LockedenemyprotectedfromordinarylethalHPdamageUnlock.e137988");
         }
         catch(Exception ex)when(IsExpected(ex))
         {
             updating=true;ProtectPracticeEnemy.IsChecked=false;updating=false;
             App.LogError(ex);Status.Text=ex.Message;
-            try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);Status.Text+=$" Restoration pending: {cleanup.Message}";}
+            try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);Status.Text+=Translations.Format("message.Restorationpending0.b9d681a", cleanup.Message);}
         }
     }
     private void UpdateEnemyPractice()
@@ -78,7 +78,7 @@ public partial class MainWindow
         try{if(enemyPractice.NeedsUpdate())memory.Suspended(()=>enemyPractice.Update());}
         catch(Exception ex)when(IsExpected(ex))
         {
-            StopEnemyPractice();ParrySummary.Text=$"Target protection stopped: {ex.Message} Lock onto a living enemy and re-enable it.";
+            StopEnemyPractice();ParrySummary.Text=Translations.Format("message.Targetprotectionstopped0Lockontoalivingenemyandreena.6b018ad", ex.Message);
             App.LogError(ex);
         }
     }
@@ -93,9 +93,9 @@ public partial class MainWindow
     {
         Run(()=>
         {
-            if(actionBusy||memory==null)throw new IOException("Finish the current game request before restoring enemy health.");
+            if(actionBusy||memory==null)throw new IOException(Translations.T("message.Finishthecurrentgamerequestbeforerestoringenemyhealt.f7d7389"));
             memory.Suspended(()=>session!.RestoreLockedEnemyHealth());
-            ParrySummary.Text="Locked enemy restored to full HP. This does not revive a dead enemy or reset boss encounter flags.";
-        },"Locked enemy health restored.");
+            ParrySummary.Text=Translations.T("message.LockedenemyrestoredtofullHPThisdoesnotreviveadeadene.06d484e");
+        },Translations.T("message.Lockedenemyhealthrestored.2a881cf"));
     }
 }

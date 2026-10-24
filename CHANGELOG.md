@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4 — 2026-10-24
+
+- Add an embedded JSON localization system with live interface-language selection, system-language detection, English fallback, preserved numeric-input culture and RTL layout support. Match the 28-language Crowdin list. Simplified Chinese has a complete extracted UI/message draft; other targets have starter labels and need community contributions. Game catalog names and technical diagnostics may remain English; no native-speaker review is claimed.
+- Extract XAML text and UI messages into translation catalogs. Add file-based Crowdin configuration, [community translation links](https://crowdin.com/project/bb-tools) in Preferences/About, translator instructions and catalog/placeholder validation in CI. Crowdin synchronization still needs integration setup and a verified translation pull request.
+- Add Items → Discovery & drops: a 0–1000 point discovery bonus without editing Arcane or other attributes, and a separate 100% eligible enemy-roll option. Includes the shared chalice-dungeon enemy loot path, removes blank outcomes only when valid weighted loot exists, and preserves relative item weights and quantities. Does not force gem quality/effects, grant every item or modify chest/scripted reward rolls. Both toggles support presets, loading pause and owned-code restoration; live testing, especially in chalice dungeons, is pending.
+
+Validation: 467 isolated checks pass in Debug and Release, plus 26 script checks. Chinese and Arabic layouts were inspected at the minimum window size. These checks do not replace live discovery/chalice testing or native-speaker translation review.
+
 ## 0.6.3 — 2026-10-24
 
 - Fix [#1](https://github.com/JamesCicada/bb-tools/issues/1): Camera → Movement remained disabled after connecting, preventing speed/gravity toggles and sliders from being used. Enable the panel for a validated loaded player, disable it during loading/disconnect and restore access after loading. Add UI/native regression coverage; live retest pending. Photo mode and flight/noclip remain hidden.

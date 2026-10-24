@@ -1,0 +1,21 @@
+{
+  "ui.Player.64aee8c": "Játékos",
+  "ui.Combat.49fcf2c": "Harc",
+  "ui.Enemies.5ad2600": "Ellenségek",
+  "ui.Items.fb8e7a1": "Tárgyak",
+  "ui.Travel.d2b98fb": "Utazás",
+  "ui.Camera.03494b0": "Kamera",
+  "ui.Workshop.c0086f2": "Műhely",
+  "ui.Settings.74a883a": "Beállítások",
+  "ui.Connection.639a40e": "Kapcsolat",
+  "ui.Preferences.66962f7": "Beállítások",
+  "ui.Hotkeys.c15f153": "Gyorsbillentyűk",
+  "ui.Library.dc20b3d": "Könyvtár",
+  "ui.Backups.3334fee": "Biztonsági mentések",
+  "ui.About.4efca0d": "Névjegy",
+  "ui.Connect.1a2303e": "Csatlakozás",
+  "ui.Refresh.0e91610": "Frissítés",
+  "ui.Godmode.c2a056f": "Sebezhetetlenség",
+  "ui.Infinitestamina.5cc94e4": "Végtelen állóképesség",
+  "ui.Applymultipliers.aa68718": "Szorzók alkalmazása"
+}

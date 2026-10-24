@@ -29,8 +29,8 @@ public partial class MainWindow
     private string PhotoFolder=>photoFolder??Path.Combine(AppContext.BaseDirectory,"photos");
     private void UpdatePhotoCaption()
     {
-        var value=ReadPhotoAdjustments();PhotoAdjustmentsSummary.Text=$"Exposure {value.Exposure:+0.0;-0.0;0.0} EV · Contrast {value.Contrast:0.00} · Saturation {value.Saturation:0.00} · Vignette {value.Vignette:0.00}";
-        PhotoFolderLabel.Text=$"PNG folder: {PhotoFolder}";
+        var value=ReadPhotoAdjustments();PhotoAdjustmentsSummary.Text=Translations.Format("message.Exposure0000000EVContrast1000Saturation2000Vignette3.7105687", value.Exposure, value.Contrast, value.Saturation, value.Vignette);
+        PhotoFolderLabel.Text=Translations.Format("message.PNGfolder0.f76d329", PhotoFolder);
     }
     private void PhotoAdjustmentChanged(object sender,RoutedPropertyChangedEventArgs<double> e)=>QueuePhotoPreview();
     private void PhotoFilterChanged(object sender,SelectionChangedEventArgs e)=>QueuePhotoPreview();
@@ -46,18 +46,18 @@ public partial class MainWindow
             if(!closing&&generation==photoPreviewGeneration)PhotoPreview.Source=bitmap;
         }
         catch(OperationCanceledException){ }
-        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);if(!closing)PhotoCaptureSummary.Text=$"Preview unavailable: {ex.Message}";}
+        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);if(!closing)PhotoCaptureSummary.Text=Translations.Format("message.Previewunavailable0.1f9a0b1", ex.Message);}
         finally{if(ReferenceEquals(photoPreviewLifetime,lifetime))photoPreviewLifetime=null;lifetime.Dispose();}
     }
     private void CapturePhotoCountdown(object sender,RoutedEventArgs e)=>_ = CapturePhotoAsync(3);
     private async Task CapturePhotoAsync(int delaySeconds)
     {
-        if(saveOperationBusy){Status.Text="Wait for the current photo or save operation.";return;}
-        if(session==null||connectedPid<=0){Status.Text="Connect to the game before capturing a photo.";return;}
+        if(saveOperationBusy){Status.Text=Translations.T("message.Waitforthecurrentphotoorsaveoperation.70f80bf");return;}
+        if(session==null||connectedPid<=0){Status.Text=Translations.T("message.Connecttothegamebeforecapturingaphoto.dafaa9d");return;}
         saveOperationBusy=true;var pid=connectedPid;var generation=targetGeneration;var folder=PhotoFolder;var adjustments=ReadPhotoAdjustments();
         try
         {
-            if(delaySeconds>0){Status.Text="Photo in three seconds. Focus the game now.";await Task.Delay(TimeSpan.FromSeconds(delaySeconds));}
+            if(delaySeconds>0){Status.Text=Translations.T("message.PhotointhreesecondsFocusthegamenow.ecfa01d");await Task.Delay(TimeSpan.FromSeconds(delaySeconds));}
             if(closing||pid!=connectedPid||generation!=targetGeneration)return;
             var capture=await Task.Run(()=>{var image=PhotoCapture.ReadFocusedGame(pid);var path=image.SavePng(folder,"original");return(Image:image,Path:path);});
             photoOriginal=capture.Image;SavePhotoEditsButton.IsEnabled=true;QueuePhotoPreview();
@@ -69,26 +69,26 @@ public partial class MainWindow
             }
             PhotoCaptureSummary.Text=message;Status.Text=message;App.Log?.Write("PHOTO",message);
         }
-        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);if(!closing){PhotoCaptureSummary.Text=ex.Message;Status.Text=$"Photo capture failed: {ex.Message}";}}
+        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);if(!closing){PhotoCaptureSummary.Text=ex.Message;Status.Text=Translations.Format("message.Photocapturefailed0.c203cb7", ex.Message);}}
         finally{saveOperationBusy=false;}
     }
     private async void SavePhotoEdits(object sender,RoutedEventArgs e)
     {
-        if(photoOriginal is not {} original){Status.Text="Capture a photo first.";return;}
-        if(saveOperationBusy){Status.Text="Wait for the current photo or save operation.";return;}
+        if(photoOriginal is not {} original){Status.Text=Translations.T("message.Captureaphotofirst.9950f5d");return;}
+        if(saveOperationBusy){Status.Text=Translations.T("message.Waitforthecurrentphotoorsaveoperation.70f80bf");return;}
         var adjustments=ReadPhotoAdjustments();var folder=PhotoFolder;saveOperationBusy=true;
-        try{var path=await Task.Run(()=>PhotoProcessing.Apply(original,adjustments).SavePng(folder,"edited"));PhotoCaptureSummary.Text=$"Filtered copy saved: {Path.GetFileName(path)}. Original preserved.";Status.Text=PhotoCaptureSummary.Text;}
-        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=$"Photo export failed: {ex.Message}";}
+        try{var path=await Task.Run(()=>PhotoProcessing.Apply(original,adjustments).SavePng(folder,"edited"));PhotoCaptureSummary.Text=Translations.Format("message.Filteredcopysaved0Originalpreserved.1d33d7e", Path.GetFileName(path));Status.Text=PhotoCaptureSummary.Text;}
+        catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=Translations.Format("message.Photoexportfailed0.2bebcbd", ex.Message);}
         finally{saveOperationBusy=false;}
     }
     private void SavePhotoDefaults(object sender,RoutedEventArgs e)
     {
-        try{var next=settings with{Photos=new(photoFolder,ReadPhotoAdjustments())};next.Save();settings=next;Status.Text="Photo folder and filter defaults saved.";}
+        try{var next=settings with{Photos=new(photoFolder,ReadPhotoAdjustments())};next.Save();settings=next;Status.Text=Translations.T("message.Photofolderandfilterdefaultssaved.78db6bb");}
         catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private void ChoosePhotoFolder(object sender,RoutedEventArgs e)
     {
-        var dialog=new OpenFolderDialog{Title="Choose photo output folder",FolderName=Directory.Exists(PhotoFolder)?PhotoFolder:""};
+        var dialog=new OpenFolderDialog{Title=Translations.T("message.Choosephotooutputfolder.c02b7ff"),FolderName=Directory.Exists(PhotoFolder)?PhotoFolder:""};
         if(dialog.ShowDialog(this)!=true)return;photoFolder=dialog.FolderName;UpdatePhotoCaption();SavePhotoDefaults(sender,e);
     }
     private void OpenPhotoFolder(object sender,RoutedEventArgs e)

@@ -1,0 +1,21 @@
+{
+  "ui.Player.64aee8c": "Jugador",
+  "ui.Combat.49fcf2c": "Combat",
+  "ui.Enemies.5ad2600": "Enemics",
+  "ui.Items.fb8e7a1": "Objectes",
+  "ui.Travel.d2b98fb": "Viatge",
+  "ui.Camera.03494b0": "Càmera",
+  "ui.Workshop.c0086f2": "Taller",
+  "ui.Settings.74a883a": "Configuració",
+  "ui.Connection.639a40e": "Connexió",
+  "ui.Preferences.66962f7": "Preferències",
+  "ui.Hotkeys.c15f153": "Dreceres",
+  "ui.Library.dc20b3d": "Biblioteca",
+  "ui.Backups.3334fee": "Còpies de seguretat",
+  "ui.About.4efca0d": "Quant a",
+  "ui.Connect.1a2303e": "Connecta",
+  "ui.Refresh.0e91610": "Actualitza",
+  "ui.Godmode.c2a056f": "Invencibilitat",
+  "ui.Infinitestamina.5cc94e4": "Resistència infinita",
+  "ui.Applymultipliers.aa68718": "Aplica els multiplicadors"
+}

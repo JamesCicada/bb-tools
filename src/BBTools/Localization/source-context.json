@@ -1,0 +1,1671 @@
+{
+  "message.DiscordRichPresenceisoff.3c0f12f": [
+    "MainWindow.Discord.cs:31"
+  ],
+  "message.Discordpreferencechangedforthissessionbutcouldnotbes.f4fe905": [
+    "MainWindow.Discord.cs:42"
+  ],
+  "message.CameracontrolssavedPhotomoderemainsanexplicitsession.51477be": [
+    "MainWindow.Exploration.cs:45"
+  ],
+  "message.DefaultWASDcameracontrolsrestored.a6851b2": [
+    "MainWindow.Exploration.cs:51"
+  ],
+  "message.Photozoom00FOV.45069cf": [
+    "MainWindow.Exploration.cs:55"
+  ],
+  "message.Enablephotomodefirst.6951aa1": [
+    "MainWindow.Exploration.cs:58"
+  ],
+  "message.PhotocameraresettoitsstartingpositionrotationandFOV.ba29c9e": [
+    "MainWindow.Exploration.cs:58"
+  ],
+  "message.Photomoderestorationcompleted.4d15662": [
+    "MainWindow.Exploration.cs:65"
+  ],
+  "message.Restorationpending0.41873b8": [
+    "MainWindow.Exploration.cs:66"
+  ],
+  "message.Starting.bbe5fc3": [
+    "MainWindow.Exploration.cs:76"
+  ],
+  "message.Retrycamerarestore.c69c892": [
+    "MainWindow.Exploration.cs:76"
+  ],
+  "message.Exitphotomode.ed439a9": [
+    "MainWindow.Exploration.cs:76"
+  ],
+  "ui.Startphotomode.87d5c05": [
+    "MainWindow.Exploration.cs:76",
+    "MainWindow.xaml:779"
+  ],
+  "message.Preparingcamera.7d31356": [
+    "MainWindow.Exploration.cs:78"
+  ],
+  "message.Restoringnormalcontrols.a5c73a6": [
+    "MainWindow.Exploration.cs:78"
+  ],
+  "ui.Photomodeactive.9ec1e84": [
+    "MainWindow.Exploration.cs:78",
+    "MainWindow.xaml:783"
+  ],
+  "ui.Readytocompose.20e5f18": [
+    "MainWindow.Exploration.cs:78",
+    "MainWindow.xaml:776"
+  ],
+  "message.Photooptionscouldnotapply0.79ff2ed": [
+    "MainWindow.Exploration.cs:89"
+  ],
+  "message.Photomodeisdisabledinthisbuild.31f492f": [
+    "MainWindow.Exploration.cs:96"
+  ],
+  "message.Connectandloadacharacterwaitforanyactivegameactionbe.d663675": [
+    "MainWindow.Exploration.cs:97"
+  ],
+  "message.Findingtheactivenativecamera.ba1a9c1": [
+    "MainWindow.Exploration.cs:104"
+  ],
+  "message.PhotomodeenabledFocusthegametomovethecameraSettingss.177b0e4": [
+    "MainWindow.Exploration.cs:112"
+  ],
+  "message.Photomodecouldnotstart0.558b62d": [
+    "MainWindow.Exploration.cs:114"
+  ],
+  "message.Photomodedisablednormalcamerarestored.a426ad5": [
+    "MainWindow.Exploration.cs:122"
+  ],
+  "message.Photomoderestorationpending0.4e56b1b": [
+    "MainWindow.Exploration.cs:124"
+  ],
+  "message.HUDrestorationpending0.3edc13b": [
+    "MainWindow.Exploration.cs:131"
+  ],
+  "message.ConnecttothegamebeforerestoringtheHUD.835e121": [
+    "MainWindow.Exploration.cs:135"
+  ],
+  "message.HUDdisplayrestored.35f7e46": [
+    "MainWindow.Exploration.cs:141"
+  ],
+  "message.HUDcouldnotberestored0.33bd0b3": [
+    "MainWindow.Exploration.cs:143"
+  ],
+  "message.Flightandnocliparedisabledinthisbuild.d7084e7": [
+    "MainWindow.Exploration.cs:148"
+  ],
+  "message.Flightrestorationpending0.4baa155": [
+    "MainWindow.Exploration.cs:153"
+  ],
+  "message.Photomodestopped0.78b6731": [
+    "MainWindow.Exploration.cs:174"
+  ],
+  "message.Flightnoclipstopped0.058e8a3": [
+    "MainWindow.Exploration.cs:189"
+  ],
+  "language.system": [
+    "MainWindow.Localization.cs:20"
+  ],
+  "language.coverage": [
+    "MainWindow.Localization.cs:24"
+  ],
+  "language.changed": [
+    "MainWindow.Localization.cs:36"
+  ],
+  "app.title": [
+    "MainWindow.Localization.cs:42",
+    "MainWindow.xaml.cs:75"
+  ],
+  "app.version": [
+    "MainWindow.Localization.cs:43",
+    "MainWindow.xaml.cs:76"
+  ],
+  "loot.bonus": [
+    "MainWindow.Localization.cs:47",
+    "MainWindow.Loot.cs:13"
+  ],
+  "loot.paused": [
+    "MainWindow.Loot.cs:29"
+  ],
+  "message.Practicesetupappliedprotectioninfinitebulletsstamina.2090fea": [
+    "MainWindow.Parry.cs:27"
+  ],
+  "message.ParrypracticesetupappliedEnemyAIisactiveoneshotinvis.3e72427": [
+    "MainWindow.Parry.cs:28"
+  ],
+  "message.Nopreviousparrypracticesetuptorestore.bb266fc": [
+    "MainWindow.Parry.cs:32"
+  ],
+  "message.Previouscombatselectionsrestored.c11fd35": [
+    "MainWindow.Parry.cs:36"
+  ],
+  "message.PreviouscombatselectionsrestoredHealthchangesalready.a0acb47": [
+    "MainWindow.Parry.cs:37"
+  ],
+  "message.Targetprotectiondisabledoriginalflagrestoredwherethe.4e9fc0b": [
+    "MainWindow.Parry.cs:61"
+  ],
+  "message.Connecttoaloadedcharacterandfinishthecurrentrequestf.c4b5d82": [
+    "MainWindow.Parry.cs:62"
+  ],
+  "message.LockedenemyprotectedfromordinarylethalHPdamageUnlock.e137988": [
+    "MainWindow.Parry.cs:65"
+  ],
+  "message.Restorationpending0.b9d681a": [
+    "MainWindow.Parry.cs:71"
+  ],
+  "message.Targetprotectionstopped0Lockontoalivingenemyandreena.6b018ad": [
+    "MainWindow.Parry.cs:81"
+  ],
+  "message.Finishthecurrentgamerequestbeforerestoringenemyhealt.f7d7389": [
+    "MainWindow.Parry.cs:96"
+  ],
+  "message.LockedenemyrestoredtofullHPThisdoesnotreviveadeadene.06d484e": [
+    "MainWindow.Parry.cs:98"
+  ],
+  "message.Lockedenemyhealthrestored.2a881cf": [
+    "MainWindow.Parry.cs:99"
+  ],
+  "message.Exposure0000000EVContrast1000Saturation2000Vignette3.7105687": [
+    "MainWindow.Photo.cs:32"
+  ],
+  "message.PNGfolder0.f76d329": [
+    "MainWindow.Photo.cs:33"
+  ],
+  "message.Previewunavailable0.1f9a0b1": [
+    "MainWindow.Photo.cs:49"
+  ],
+  "message.Waitforthecurrentphotoorsaveoperation.70f80bf": [
+    "MainWindow.Photo.cs:55",
+    "MainWindow.Photo.cs:78"
+  ],
+  "message.Connecttothegamebeforecapturingaphoto.dafaa9d": [
+    "MainWindow.Photo.cs:56"
+  ],
+  "message.PhotointhreesecondsFocusthegamenow.ecfa01d": [
+    "MainWindow.Photo.cs:60"
+  ],
+  "message.Photocapturefailed0.c203cb7": [
+    "MainWindow.Photo.cs:72"
+  ],
+  "message.Captureaphotofirst.9950f5d": [
+    "MainWindow.Photo.cs:77"
+  ],
+  "message.Filteredcopysaved0Originalpreserved.1d33d7e": [
+    "MainWindow.Photo.cs:80"
+  ],
+  "message.Photoexportfailed0.2bebcbd": [
+    "MainWindow.Photo.cs:81"
+  ],
+  "message.Photofolderandfilterdefaultssaved.78db6bb": [
+    "MainWindow.Photo.cs:86"
+  ],
+  "message.Choosephotooutputfolder.c02b7ff": [
+    "MainWindow.Photo.cs:91"
+  ],
+  "message.01sampled2HHmmss.4342a80": [
+    "MainWindow.Target.cs:38"
+  ],
+  "message.Stamina0N01N0.61cca01": [
+    "MainWindow.Target.cs:40"
+  ],
+  "message.Staminaunavailableunused.2a55a31": [
+    "MainWindow.Target.cs:40"
+  ],
+  "message.Nosuperarmormoduleavailable.d5acf20": [
+    "MainWindow.Target.cs:41"
+  ],
+  "message.Observedbreaks0.ff3e3a7": [
+    "MainWindow.Target.cs:42"
+  ],
+  "message.STATUSSPECIALEFFECTS0active1captured.71e80c8": [
+    "MainWindow.Target.cs:44"
+  ],
+  "message.Noeffectsinthissnapshot.fbd9e70": [
+    "MainWindow.Target.cs:45"
+  ],
+  "ui.BBToolsHuntersWorkshop.361f645": [
+    "MainWindow.xaml:1"
+  ],
+  "ui.Searchchoices.cac413d": [
+    "MainWindow.xaml:116"
+  ],
+  "ui.Searchthesechoices.c0e2dd7": [
+    "MainWindow.xaml:116"
+  ],
+  "ui.BBTOOLS.15718e6": [
+    "MainWindow.xaml:223"
+  ],
+  "ui.BloodbornePCshadPS4.ceaf32f": [
+    "MainWindow.xaml:226"
+  ],
+  "ui.ManagegameconnectioninSettings.7cddb54": [
+    "MainWindow.xaml:228"
+  ],
+  "ui.DISCONNECTED.5541de9": [
+    "MainWindow.xaml:230",
+    "MainWindow.xaml.cs:345"
+  ],
+  "ui.Manageconnection.025ae57": [
+    "MainWindow.xaml:231"
+  ],
+  "ui.Player.64aee8c": [
+    "MainWindow.xaml:236"
+  ],
+  "ui.Combat.49fcf2c": [
+    "MainWindow.xaml:237"
+  ],
+  "ui.Enemies.5ad2600": [
+    "MainWindow.xaml:238"
+  ],
+  "ui.Items.fb8e7a1": [
+    "MainWindow.xaml:239"
+  ],
+  "ui.Travel.d2b98fb": [
+    "MainWindow.xaml:240"
+  ],
+  "ui.Camera.03494b0": [
+    "MainWindow.xaml:241"
+  ],
+  "ui.Workshop.c0086f2": [
+    "MainWindow.xaml:242"
+  ],
+  "ui.Settings.74a883a": [
+    "MainWindow.xaml:243",
+    "MainWindow.xaml.cs:458"
+  ],
+  "ui.Photostudio.bd45bf4": [
+    "MainWindow.xaml:245",
+    "MainWindow.xaml.cs:458"
+  ],
+  "ui.Thehunter.86332c5": [
+    "MainWindow.xaml:257",
+    "MainWindow.xaml.cs:458"
+  ],
+  "ui.Shapeyournextpracticerun.33c61d1": [
+    "MainWindow.xaml:258",
+    "MainWindow.xaml.cs:457"
+  ],
+  "ui.HEALTH.e5b73ae": [
+    "MainWindow.xaml:272",
+    "MainWindow.xaml:501"
+  ],
+  "ui.Healthamount.414fa50": [
+    "MainWindow.xaml:280"
+  ],
+  "ui.SetHP.c70e6e8": [
+    "MainWindow.xaml:281"
+  ],
+  "ui.Restorefullhealth.191281b": [
+    "MainWindow.xaml:283"
+  ],
+  "ui.Keephealthfull.972e436": [
+    "MainWindow.xaml:284"
+  ],
+  "ui.RefillswhilealiveDoesnotpreventonehitorscripteddeath.6c1149c": [
+    "MainWindow.xaml:285"
+  ],
+  "ui.STAMINA.9b2391b": [
+    "MainWindow.xaml:290"
+  ],
+  "ui.Infinitestamina.5cc94e4": [
+    "MainWindow.xaml:293"
+  ],
+  "ui.UsesthelocalplayersstaminaconsumptionflagTurningitof.5872fc6": [
+    "MainWindow.xaml:294"
+  ],
+  "ui.Healthandstaminacontrolsstopwhenplayervalidationfail.8e0a16a": [
+    "MainWindow.xaml:295"
+  ],
+  "ui.BLOODECHOES.e21b296": [
+    "MainWindow.xaml:302"
+  ],
+  "ui.BloodEchoesamount.c6a4de3": [
+    "MainWindow.xaml:311"
+  ],
+  "ui.Setechoes.cc5d2f0": [
+    "MainWindow.xaml:312"
+  ],
+  "ui.0999999999ChangesthecurrentbalanceThegamemaysavethis.69817c0": [
+    "MainWindow.xaml:315"
+  ],
+  "ui.CHARACTERATTRIBUTES.c312bf9": [
+    "MainWindow.xaml:322"
+  ],
+  "ui.BloodLevel.492e51a": [
+    "MainWindow.xaml:323",
+    "MainWindow.xaml.cs:347"
+  ],
+  "ui.Reloadcurrent.a068df2": [
+    "MainWindow.xaml:325"
+  ],
+  "ui.Vitality.33a4c26": [
+    "MainWindow.xaml:329",
+    "MainWindow.xaml:330"
+  ],
+  "ui.Endurance.98c8abf": [
+    "MainWindow.xaml:333",
+    "MainWindow.xaml:334"
+  ],
+  "ui.Strength.63ee3a1": [
+    "MainWindow.xaml:337",
+    "MainWindow.xaml:338"
+  ],
+  "ui.Skill.6df1bb1": [
+    "MainWindow.xaml:341",
+    "MainWindow.xaml:342"
+  ],
+  "ui.Bloodtinge.9af4bd9": [
+    "MainWindow.xaml:345",
+    "MainWindow.xaml:346"
+  ],
+  "ui.Arcane.93006d6": [
+    "MainWindow.xaml:349",
+    "MainWindow.xaml:350"
+  ],
+  "ui.199perattributeBloodLevelfollowstheattributechangeAp.d5bcd9e": [
+    "MainWindow.xaml:353"
+  ],
+  "ui.Applyattributes.1462b4c": [
+    "MainWindow.xaml:354"
+  ],
+  "ui.Controls.799c269": [
+    "MainWindow.xaml:360"
+  ],
+  "ui.COMBATSTEALTH.386ac2a": [
+    "MainWindow.xaml:363"
+  ],
+  "ui.Godmode.c2a056f": [
+    "MainWindow.xaml:366",
+    "MainWindow.xaml:926"
+  ],
+  "ui.Ignorehits.043c8f9": [
+    "MainWindow.xaml:367"
+  ],
+  "ui.Nativeinvincibilityavoidnormalattackhitsandreactions.2a5243a": [
+    "MainWindow.xaml:367"
+  ],
+  "ui.Oneshotkills.9694a1e": [
+    "MainWindow.xaml:369"
+  ],
+  "ui.Invisibletoenemies.dd34f73": [
+    "MainWindow.xaml:370"
+  ],
+  "ui.Silentfootsteps.cc6fb1c": [
+    "MainWindow.xaml:371"
+  ],
+  "ui.DisableenemyAI.93b6904": [
+    "MainWindow.xaml:372"
+  ],
+  "ui.Nofalldamage.a71aeec": [
+    "MainWindow.xaml:373"
+  ],
+  "ui.Infiniteconsumablesbullets.54c925f": [
+    "MainWindow.xaml:374"
+  ],
+  "ui.KeepBloodEchoesondeath.cdd0350": [
+    "MainWindow.xaml:375"
+  ],
+  "ui.UsesthenativedeathpenaltyskipflagDoesnotrefillEchoes.d045528": [
+    "MainWindow.xaml:375"
+  ],
+  "ui.PLAYERMULTIPLIERS.4e0a305": [
+    "MainWindow.xaml:378"
+  ],
+  "ui.Outgoingdamage.97da73e": [
+    "MainWindow.xaml:381"
+  ],
+  "ui.Damagemultiplier.b7b6391": [
+    "MainWindow.xaml:382"
+  ],
+  "ui.Echoesfromenemies.faa3e54": [
+    "MainWindow.xaml:385"
+  ],
+  "ui.Echoesrewardmultiplier.32f6905": [
+    "MainWindow.xaml:386"
+  ],
+  "ui.Applymultipliers.aa68718": [
+    "MainWindow.xaml:389"
+  ],
+  "ui.01100Setbothto1andApplytorestoreincludingleftoverBBT.4906d11": [
+    "MainWindow.xaml:390"
+  ],
+  "ui.SelectionsstayonthroughloadingscreensandwarpsTheyres.44c3c25": [
+    "MainWindow.xaml:392"
+  ],
+  "ui.Turnoffpracticetoggles.2c7e474": [
+    "MainWindow.xaml:393"
+  ],
+  "ui.Practice.d3857b1": [
+    "MainWindow.xaml:397"
+  ],
+  "ui.Applypracticesetup.975c5d8": [
+    "MainWindow.xaml:401"
+  ],
+  "ui.Restorepreviouscombatsetup.ed51401": [
+    "MainWindow.xaml:402"
+  ],
+  "ui.Enablesprotectioninfinitebulletsstaminaand01outgoing.1c6e74d": [
+    "MainWindow.xaml:404"
+  ],
+  "ui.Keeppracticeenemyalive.bc8f4b3": [
+    "MainWindow.xaml:405"
+  ],
+  "ui.RestorelockedenemyHP.df9daac": [
+    "MainWindow.xaml:406"
+  ],
+  "ui.Lockontoalivingenemybeforeenablingtargetprotectionor.ab7e875": [
+    "MainWindow.xaml:407"
+  ],
+  "ui.Targetprotectionallowsnormaldamageandreactionspreven.4a89df4": [
+    "MainWindow.xaml:408"
+  ],
+  "ui.Status.920e413": [
+    "MainWindow.xaml:412"
+  ],
+  "ui.STATUSBUILDUP.da42cdf": [
+    "MainWindow.xaml:415"
+  ],
+  "ui.Keepstatusbuildupempty.721951d": [
+    "MainWindow.xaml:416"
+  ],
+  "ui.Cureactiveslowrapidpoison.a551e27": [
+    "MainWindow.xaml:417"
+  ],
+  "ui.Clearstatusbuildupnow.08a463d": [
+    "MainWindow.xaml:418"
+  ],
+  "ui.ClearsthefivebuildupgaugeswhiletheplayervalidatesCur.0b2ccee": [
+    "MainWindow.xaml:419"
+  ],
+  "ui.Weapons.aafc7b0": [
+    "MainWindow.xaml:423"
+  ],
+  "ui.WEAPONDURABILITY.edd0eff": [
+    "MainWindow.xaml:426"
+  ],
+  "ui.Keepequippedweaponsatfulldurability.d35aba1": [
+    "MainWindow.xaml:427"
+  ],
+  "ui.Autorepairequippedweaponsbelowthreshold.f9697f9": [
+    "MainWindow.xaml:428"
+  ],
+  "ui.Threshold.b488ada": [
+    "MainWindow.xaml:430"
+  ],
+  "ui.Repairthresholdpercent.9eb070a": [
+    "MainWindow.xaml:431"
+  ],
+  "ui.Repairequippedweaponsnow.69c93aa": [
+    "MainWindow.xaml:433"
+  ],
+  "ui.RepairusesthenativeequippedweaponroutineResultsforea.7d9ee0d": [
+    "MainWindow.xaml:434"
+  ],
+  "ui.Refillsequippedweapondurabilitywhilethecharactervali.f3b1420": [
+    "MainWindow.xaml:435"
+  ],
+  "ui.Presets.954f93f": [
+    "MainWindow.xaml:439"
+  ],
+  "ui.Group.34ca0e7": [
+    "MainWindow.xaml:442",
+    "MainWindow.xaml:690"
+  ],
+  "ui.Presetgroup.56efc97": [
+    "MainWindow.xaml:443"
+  ],
+  "ui.Presetname.e534a66": [
+    "MainWindow.xaml:444"
+  ],
+  "ui.Savecurrentsettings.23d4cb6": [
+    "MainWindow.xaml:445"
+  ],
+  "ui.Searchpresetsbynameorgroup.9b37105": [
+    "MainWindow.xaml:446",
+    "MainWindow.xaml:446"
+  ],
+  "ui.Savedpracticepreset.9d23907": [
+    "MainWindow.xaml:447"
+  ],
+  "ui.Applyselectedpreset.069549b": [
+    "MainWindow.xaml:449"
+  ],
+  "ui.Deletepreset.f307af8": [
+    "MainWindow.xaml:450"
+  ],
+  "ui.Renameselected.e2f0f5d": [
+    "MainWindow.xaml:453"
+  ],
+  "ui.Duplicateselected.ae77efb": [
+    "MainWindow.xaml:454"
+  ],
+  "ui.Useselectedpresetonstartup.fa281f1": [
+    "MainWindow.xaml:457"
+  ],
+  "ui.Clearstartuppreset.090542b": [
+    "MainWindow.xaml:458"
+  ],
+  "ui.StoresFOVapppreferencescombattoggleshealthrefillstam.10a3730": [
+    "MainWindow.xaml:460"
+  ],
+  "ui.Timer.cdeec2b": [
+    "MainWindow.xaml:464"
+  ],
+  "ui.Noattempt.be88ed4": [
+    "MainWindow.xaml:467"
+  ],
+  "ui.Startattempt.5439bc9": [
+    "MainWindow.xaml:469"
+  ],
+  "ui.Pauseresume.cada79a": [
+    "MainWindow.xaml:470"
+  ],
+  "ui.Finishattempt.a1f910c": [
+    "MainWindow.xaml:471"
+  ],
+  "ui.Resettimer.23d712d": [
+    "MainWindow.xaml:472"
+  ],
+  "ui.SelectthebossinTravelthenstartmanuallyTimepauseswhil.ea07493": [
+    "MainWindow.xaml:474"
+  ],
+  "ui.TRACKEDENEMY.d6f8f44": [
+    "MainWindow.xaml:484"
+  ],
+  "ui.Livetracking.6137459": [
+    "MainWindow.xaml:485"
+  ],
+  "ui.Noenemytargetedyet.4b3c756": [
+    "MainWindow.xaml:487"
+  ],
+  "ui.Lockontoanenemyinthegametobegin.6ac1a79": [
+    "MainWindow.xaml:488"
+  ],
+  "ui.Updatesevery200msUnlockingkeepsthesameenemyandcontin.1634972": [
+    "MainWindow.xaml:490"
+  ],
+  "ui.Stamina.381dad0": [
+    "MainWindow.xaml:504"
+  ],
+  "ui.SUPERARMORSTAGGER.1e2f02b": [
+    "MainWindow.xaml:509"
+  ],
+  "ui.Nodata.3b41ba9": [
+    "MainWindow.xaml:510"
+  ],
+  "ui.Observedbreaks0.38bce35": [
+    "MainWindow.xaml:512"
+  ],
+  "ui.STATUSGAUGESLIMIT.3383385": [
+    "MainWindow.xaml:518"
+  ],
+  "ui.AzerolimitdoesnotbyitselfproveimmunitySuperarmoristh.bdfb5a6": [
+    "MainWindow.xaml:536"
+  ],
+  "ui.STATUSSPECIALEFFECTS.9f81806": [
+    "MainWindow.xaml:541"
+  ],
+  "ui.Noeffectscapturedyet.5a93912": [
+    "MainWindow.xaml:542"
+  ],
+  "ui.Allcapturednativeeffectsarelistedincludingbuffsandpe.8c09802": [
+    "MainWindow.xaml:550"
+  ],
+  "loot.spawnTab": [
+    "MainWindow.xaml:556"
+  ],
+  "ui.SPAWNITEM.25218b9": [
+    "MainWindow.xaml:559"
+  ],
+  "ui.ChooseacommonitemorenterabaseitemIDandcategory.a63ee12": [
+    "MainWindow.xaml:560"
+  ],
+  "links.items": [
+    "MainWindow.xaml:562"
+  ],
+  "links.weapons": [
+    "MainWindow.xaml:565"
+  ],
+  "ui.WikihexadecimalItemIDincludescategory.1548fe4": [
+    "MainWindow.xaml:568"
+  ],
+  "ui.DecimalmodebaseIDselectedcategoryWikimodepastetheful.2fe9750": [
+    "MainWindow.xaml:569"
+  ],
+  "ui.Importallitemnamesfromgamefiles.92dcac1": [
+    "MainWindow.xaml:570"
+  ],
+  "ui.Searchitemcatalog.e9cafd2": [
+    "MainWindow.xaml:571"
+  ],
+  "ui.SearchcommonitemnamesorIDs.b4a31df": [
+    "MainWindow.xaml:571"
+  ],
+  "ui.BaseitemID.741ff22": [
+    "MainWindow.xaml:580",
+    "MainWindow.xaml:581"
+  ],
+  "ui.Category.292c06f": [
+    "MainWindow.xaml:584"
+  ],
+  "ui.Goods.36574fc": [
+    "MainWindow.xaml:586"
+  ],
+  "ui.Weapon.1710782": [
+    "MainWindow.xaml:587"
+  ],
+  "ui.Armor.a592855": [
+    "MainWindow.xaml:588"
+  ],
+  "ui.Accessory.adf7651": [
+    "MainWindow.xaml:589"
+  ],
+  "ui.Quantity.822bab8": [
+    "MainWindow.xaml:593"
+  ],
+  "ui.Itemquantity.1c102dc": [
+    "MainWindow.xaml:594"
+  ],
+  "ui.Spawnitem.5fe3098": [
+    "MainWindow.xaml:597"
+  ],
+  "ui.Favoriteitemname.e0743bc": [
+    "MainWindow.xaml:598"
+  ],
+  "ui.Saveitemasfavorite.7abd982": [
+    "MainWindow.xaml:599"
+  ],
+  "ui.Favoriteitems.5fc6406": [
+    "MainWindow.xaml:600"
+  ],
+  "ui.Loadfavorite.3e6029f": [
+    "MainWindow.xaml:602"
+  ],
+  "ui.Deletefavorite.1ea48e2": [
+    "MainWindow.xaml:603"
+  ],
+  "ui.Goods199Equipment1CustomIDsmustexistinyourgameThegam.c42ee31": [
+    "MainWindow.xaml:605"
+  ],
+  "loot.tab": [
+    "MainWindow.xaml:610"
+  ],
+  "loot.heading": [
+    "MainWindow.xaml:613"
+  ],
+  "loot.enable": [
+    "MainWindow.xaml:614",
+    "MainWindow.xaml:616"
+  ],
+  "loot.initialBonus": [
+    "MainWindow.xaml:615"
+  ],
+  "loot.description": [
+    "MainWindow.xaml:617"
+  ],
+  "loot.guaranteed": [
+    "MainWindow.xaml:618"
+  ],
+  "loot.guaranteeHelp": [
+    "MainWindow.xaml:619"
+  ],
+  "loot.testing": [
+    "MainWindow.xaml:620"
+  ],
+  "ui.WORKSHOPMENUS.67910f5": [
+    "MainWindow.xaml:629"
+  ],
+  "ui.Openselectedmenu.0a5b46c": [
+    "MainWindow.xaml:631"
+  ],
+  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": [
+    "MainWindow.xaml:632"
+  ],
+  "ui.Lamps.4960826": [
+    "MainWindow.xaml:638"
+  ],
+  "ui.WARPTOLAMP.a4b783a": [
+    "MainWindow.xaml:641"
+  ],
+  "ui.FilterlampsbynameorDLC.dcfb2c7": [
+    "MainWindow.xaml:642"
+  ],
+  "ui.Searchlamps.b4b115e": [
+    "MainWindow.xaml:642"
+  ],
+  "ui.Warptoselectedlamp.a969c15": [
+    "MainWindow.xaml:644"
+  ],
+  "ui.All45namedbasegameandDLCdestinationsBossarenalampsdo.24e9755": [
+    "MainWindow.xaml:645"
+  ],
+  "ui.Chalices.0db80ea": [
+    "MainWindow.xaml:649"
+  ],
+  "ui.CHALICEDUNGEONTRAVEL.9f56a27": [
+    "MainWindow.xaml:652"
+  ],
+  "ui.Refreshaltars.bf1af5d": [
+    "MainWindow.xaml:656"
+  ],
+  "ui.Traveltochalicelamp.02bec56": [
+    "MainWindow.xaml:657"
+  ],
+  "ui.StartfromHuntersDreamChooseanexistingaltarandoneofit.c030613": [
+    "MainWindow.xaml:659"
+  ],
+  "ui.Bosses.addb839": [
+    "MainWindow.xaml:663"
+  ],
+  "ui.BOSSENTRANCES.3da6a52": [
+    "MainWindow.xaml:667"
+  ],
+  "ui.Reviveasfirstencounter.09384ca": [
+    "MainWindow.xaml:669"
+  ],
+  "ui.ReplaystheoriginalencountertriggerandintroFogfollows.502ea88": [
+    "MainWindow.xaml:670"
+  ],
+  "ui.1Traveltoarea.d0d106e": [
+    "MainWindow.xaml:672"
+  ],
+  "ui.2Gotoentrance.39cda25": [
+    "MainWindow.xaml:673"
+  ],
+  "ui.Revivereloadbossarea.0aa6e07": [
+    "MainWindow.xaml:676"
+  ],
+  "ui.Revivetravelforretry.343330f": [
+    "MainWindow.xaml:677"
+  ],
+  "ui.Oneclickresetssavedencounterflagsandreloadstheselect.bcf835d": [
+    "MainWindow.xaml:679"
+  ],
+  "ui.22bossentrancesincludingallfiveDLCbossesTraveltothea.cca1037": [
+    "MainWindow.xaml:680"
+  ],
+  "ui.Cancelpendingentranceplacement.c556409": [
+    "MainWindow.xaml:682"
+  ],
+  "ui.StopspendingplacementTravelalreadyrequestedandreviva.53f9899": [
+    "MainWindow.xaml:682"
+  ],
+  "ui.Savedlocations.3a52bda": [
+    "MainWindow.xaml:686"
+  ],
+  "ui.SAVEDLOCATIONS.d686ff1": [
+    "MainWindow.xaml:689"
+  ],
+  "ui.Locationgroup.c030bc7": [
+    "MainWindow.xaml:691"
+  ],
+  "ui.Locationname.eab349b": [
+    "MainWindow.xaml:692"
+  ],
+  "ui.Savecurrentlocation.64999a5": [
+    "MainWindow.xaml:693"
+  ],
+  "ui.Searchsavedlocations.10c2914": [
+    "MainWindow.xaml:694",
+    "MainWindow.xaml:695"
+  ],
+  "ui.Searchbynameormap.0832d10": [
+    "MainWindow.xaml:695"
+  ],
+  "ui.Restorelocation.3b67078": [
+    "MainWindow.xaml:698"
+  ],
+  "ui.Deleteselected.d2ab5d4": [
+    "MainWindow.xaml:699"
+  ],
+  "ui.Storesnamedpositionsinthelocallibrarybetweenappsessi.9c3952b": [
+    "MainWindow.xaml:701"
+  ],
+  "ui.FOVandcameraoverridesareexperimentalandunstableTheyc.c852cc0": [
+    "MainWindow.xaml:708"
+  ],
+  "ui.FOV.5608c2a": [
+    "MainWindow.xaml:710"
+  ],
+  "ui.FIELDOFVIEW.7b94af7": [
+    "MainWindow.xaml:713"
+  ],
+  "ui.VerticalFOV.6b06274": [
+    "MainWindow.xaml:714"
+  ],
+  "ui.Verticalfieldofview.cba16bb": [
+    "MainWindow.xaml:716"
+  ],
+  "ui.OverridecameraFOV.a6608b7": [
+    "MainWindow.xaml:717"
+  ],
+  "ui.RestoreoriginalFOV.1c47367": [
+    "MainWindow.xaml:718"
+  ],
+  "ui.Connecttoaloadedcharacter38120verticalWideanglesauto.aa9f3f0": [
+    "MainWindow.xaml:719"
+  ],
+  "ui.Usescameraparameterrowsandpreservestheirindividualor.e513170": [
+    "MainWindow.xaml:720"
+  ],
+  "ui.Distanceheight.12eaa0e": [
+    "MainWindow.xaml:724"
+  ],
+  "ui.Distance10Height10.6ad94d1": [
+    "MainWindow.xaml:727"
+  ],
+  "ui.Distancemultiplier0520.f8c585b": [
+    "MainWindow.xaml:728"
+  ],
+  "ui.Heightmultiplier0520.8475338": [
+    "MainWindow.xaml:730"
+  ],
+  "ui.Overridecameradistanceandheight.b7811c6": [
+    "MainWindow.xaml:732"
+  ],
+  "ui.ScaleseachcamerarowsoriginaldistanceandlookatheightD.a0c5534": [
+    "MainWindow.xaml:733"
+  ],
+  "ui.HUD.c40c747": [
+    "MainWindow.xaml:737"
+  ],
+  "ui.HideHUDfrontendUI.fdcefc0": [
+    "MainWindow.xaml:740"
+  ],
+  "ui.HidingfrontendUImayhidegamemenustooUncheckheretorest.6438b7a": [
+    "MainWindow.xaml:741"
+  ],
+  "ui.Movement.49ba63e": [
+    "MainWindow.xaml:745"
+  ],
+  "ui.MOVEMENTANDPHYSICSEXPERIMENTAL.108bbe9": [
+    "MainWindow.xaml:748"
+  ],
+  "ui.Overrideplayermovementspeed.86330df": [
+    "MainWindow.xaml:749"
+  ],
+  "ui.Movement10.cb4a405": [
+    "MainWindow.xaml:750"
+  ],
+  "ui.Overrideworldgravityallactorsandobjects.502b58a": [
+    "MainWindow.xaml:752"
+  ],
+  "ui.Gravity10.9a86103": [
+    "MainWindow.xaml:753"
+  ],
+  "ui.Restoremovementandgravity.7193e12": [
+    "MainWindow.xaml:755"
+  ],
+  "ui.Movementscalesplayertranslationwithoutspeedingupenem.625c7ab": [
+    "MainWindow.xaml:756"
+  ],
+  "ui.Flightandnoclipexperimental.e3a6a8d": [
+    "MainWindow.xaml:757"
+  ],
+  "ui.Enableflightnogravity.b8b5226": [
+    "MainWindow.xaml:759"
+  ],
+  "ui.Enablenoclipincludesflight.f83b9fe": [
+    "MainWindow.xaml:760"
+  ],
+  "ui.Flightspeedmetrespersecond.8995117": [
+    "MainWindow.xaml:761"
+  ],
+  "ui.Returntoflightstartanddisable.9badbff": [
+    "MainWindow.xaml:763"
+  ],
+  "ui.WiththegamefocusedholdCtrltheconfiguredcameramovemen.9973018": [
+    "MainWindow.xaml:764"
+  ],
+  "ui.Startphotomodefocusthegametomovethecamerathencapture.a2d7ea5": [
+    "MainWindow.xaml:777"
+  ],
+  "ui.Capturein3seconds.fe6b21d": [
+    "MainWindow.xaml:780"
+  ],
+  "ui.Openphotos.349d2a8": [
+    "MainWindow.xaml:781"
+  ],
+  "ui.Freezehuntermovement.d1eed39": [
+    "MainWindow.xaml:785"
+  ],
+  "ui.HideHUD.9af4b19": [
+    "MainWindow.xaml:786"
+  ],
+  "ui.RestoreHUD.44a10b7": [
+    "MainWindow.xaml:787"
+  ],
+  "ui.Photozoom43FOV.0fa75de": [
+    "MainWindow.xaml:790"
+  ],
+  "ui.Cameraspeedandreset.872e024": [
+    "MainWindow.xaml:792"
+  ],
+  "ui.Cameraspeedmetrespersecond.cee13a7": [
+    "MainWindow.xaml:794"
+  ],
+  "ui.Turnspeeddegreespersecond.5d0d612": [
+    "MainWindow.xaml:796"
+  ],
+  "ui.Resetcameratophotomodestart.6cf7b65": [
+    "MainWindow.xaml:798"
+  ],
+  "ui.Editcapturedphotofilters.2d9df10": [
+    "MainWindow.xaml:801"
+  ],
+  "ui.FiltersapplytosavedphotosCaptureanimagetopreviewadju.a8370be": [
+    "MainWindow.xaml:803"
+  ],
+  "ui.Photofilter.f23f5de": [
+    "MainWindow.xaml:804"
+  ],
+  "ui.Exposure2to2EV.dd8b872": [
+    "MainWindow.xaml:805"
+  ],
+  "ui.Contrast.08795ba": [
+    "MainWindow.xaml:807"
+  ],
+  "ui.Saturation.993f024": [
+    "MainWindow.xaml:809"
+  ],
+  "ui.Vignette.f841c20": [
+    "MainWindow.xaml:811"
+  ],
+  "ui.Savefilteredcopy.1cdc593": [
+    "MainWindow.xaml:815"
+  ],
+  "ui.Resetfilters.10afa98": [
+    "MainWindow.xaml:816"
+  ],
+  "ui.Nophotocapturedthissession.114fece": [
+    "MainWindow.xaml:819"
+  ],
+  "ui.Savefolderanddefaults.e93e7e2": [
+    "MainWindow.xaml:822"
+  ],
+  "ui.Choosephotofolder.78482f1": [
+    "MainWindow.xaml:826"
+  ],
+  "ui.Savephotodefaults.ebf83e9": [
+    "MainWindow.xaml:827"
+  ],
+  "ui.LosslessPNGatthedisplayedgameresolutionRebindcontrol.e86b39e": [
+    "MainWindow.xaml:831"
+  ],
+  "ui.Connection.639a40e": [
+    "MainWindow.xaml:837"
+  ],
+  "ui.GAMECONNECTION.612d717": [
+    "MainWindow.xaml:841"
+  ],
+  "ui.FilterprocessesbynameorPID.fe49cc1": [
+    "MainWindow.xaml:842"
+  ],
+  "ui.FilterbynamedecimalPIDor0xprefixedhexadecimalPID.918b809": [
+    "MainWindow.xaml:842"
+  ],
+  "ui.AllprocessesfilterbynameorPIDlikelyBloodborne.1756f03": [
+    "MainWindow.xaml:843"
+  ],
+  "ui.Refresh.0e91610": [
+    "MainWindow.xaml:851"
+  ],
+  "ui.Connect.1a2303e": [
+    "MainWindow.xaml:852",
+    "MainWindow.xaml.cs:345"
+  ],
+  "ui.StartBloodbornePCandloadacharacterthenconnect.ccf1095": [
+    "MainWindow.xaml:854",
+    "MainWindow.xaml.cs:346"
+  ],
+  "ui.SUPPORTEDRUNTIMES.5011989": [
+    "MainWindow.xaml:859"
+  ],
+  "ui.BloodbornePCandshadPS4CUSA03173109Testedandconfirmed.535f710": [
+    "MainWindow.xaml:860"
+  ],
+  "ui.CONNECTION.453e643": [
+    "MainWindow.xaml:865"
+  ],
+  "ui.Findthebestgameprocessandconnectautomatically.9a144b4": [
+    "MainWindow.xaml:866"
+  ],
+  "ui.CheckseverythreesecondswhiledisconnectedPrefersaload.e74722a": [
+    "MainWindow.xaml:867"
+  ],
+  "ui.Preferences.66962f7": [
+    "MainWindow.xaml:872"
+  ],
+  "language.heading": [
+    "MainWindow.xaml:876"
+  ],
+  "ui.Interfacelanguage.8027f43": [
+    "MainWindow.xaml:877"
+  ],
+  "language.help": [
+    "MainWindow.xaml:879"
+  ],
+  "language.contribute": [
+    "MainWindow.xaml:880",
+    "MainWindow.xaml:1002"
+  ],
+  "ui.DISCORDRICHPRESENCE.089ff82": [
+    "MainWindow.xaml:885"
+  ],
+  "ui.ShowBloodborneactivityonDiscord.90a232a": [
+    "MainWindow.xaml:886"
+  ],
+  "ui.BasicpresenceshowsBloodborneandtheruntimewiththeDisc.9db8a45": [
+    "MainWindow.xaml:887"
+  ],
+  "ui.Shareextragamedetails.f6bd61e": [
+    "MainWindow.xaml:888"
+  ],
+  "ui.Area.024dc20": [
+    "MainWindow.xaml:890"
+  ],
+  "ui.Level.1709305": [
+    "MainWindow.xaml:891"
+  ],
+  "ui.Totaldeaths.a3533c3": [
+    "MainWindow.xaml:892"
+  ],
+  "ui.Charactername.faf3e90": [
+    "MainWindow.xaml:893"
+  ],
+  "ui.NGcycle.02e9a68": [
+    "MainWindow.xaml:894"
+  ],
+  "ui.ExtradetailsareoffbydefaultSelectedfieldsarepublicto.543bcdc": [
+    "MainWindow.xaml:896"
+  ],
+  "ui.Waitingforaconnectedgame.8efbadc": [
+    "MainWindow.xaml:897"
+  ],
+  "ui.STARTUPSETTINGS.2289baf": [
+    "MainWindow.xaml:902"
+  ],
+  "ui.ApplysavedFOVautomaticallywhenacharacterloads.cac82d4": [
+    "MainWindow.xaml:903"
+  ],
+  "ui.SavecurrentFOVasstartupdefault.67a9154": [
+    "MainWindow.xaml:904"
+  ],
+  "ui.Startuppresetsapplyonceperconnectionwhenalivingchara.e16e5a2": [
+    "MainWindow.xaml:906"
+  ],
+  "ui.Hotkeys.c15f153": [
+    "MainWindow.xaml:911"
+  ],
+  "ui.PRACTICEHOTKEYS.2b0bcce": [
+    "MainWindow.xaml:915"
+  ],
+  "ui.Enablepracticehotkeys.464b96d": [
+    "MainWindow.xaml:916"
+  ],
+  "ui.ShortcutmodifierchooseNoneforFkeysalone.3daa95a": [
+    "MainWindow.xaml:917"
+  ],
+  "ui.Heal.421acf1": [
+    "MainWindow.xaml:922"
+  ],
+  "ui.Savespot.a7e8a18": [
+    "MainWindow.xaml:930"
+  ],
+  "ui.Restore.a76e13b": [
+    "MainWindow.xaml:934"
+  ],
+  "ui.Bossretry.62990b9": [
+    "MainWindow.xaml:938"
+  ],
+  "ui.Applyhotkeys.2a77f99": [
+    "MainWindow.xaml:942"
+  ],
+  "ui.ActiveonlywhiletheconnectedgameorBBToolshasfocusigno.6c6ae8e": [
+    "MainWindow.xaml:943"
+  ],
+  "ui.Library.dc20b3d": [
+    "MainWindow.xaml:948"
+  ],
+  "ui.SAVEDLIBRARY.922cc4b": [
+    "MainWindow.xaml:952"
+  ],
+  "ui.Exportlibrary.b0f7875": [
+    "MainWindow.xaml:954"
+  ],
+  "ui.Importlibrary.09691e9": [
+    "MainWindow.xaml:955"
+  ],
+  "ui.Backupdatabase.c8d469e": [
+    "MainWindow.xaml:956"
+  ],
+  "ui.ExportspresetslocationsanditemfavoritesImportvalidat.799180a": [
+    "MainWindow.xaml:958"
+  ],
+  "ui.Backups.3334fee": [
+    "MainWindow.xaml:963"
+  ],
+  "ui.SAVEBACKUPHISTORYRESTORE.ee6cba2": [
+    "MainWindow.xaml:967"
+  ],
+  "ui.Choosebackupfolder.aaae42e": [
+    "MainWindow.xaml:968"
+  ],
+  "ui.Savebackuphistory.2a954f0": [
+    "MainWindow.xaml:969"
+  ],
+  "ui.Restoreselectedbackuptosavefolder.fdbd2e6": [
+    "MainWindow.xaml:970"
+  ],
+  "ui.ClosethegameandlauncherfirstRestoreverifiespathssize.929594e": [
+    "MainWindow.xaml:971"
+  ],
+  "ui.SAVEBACKUP.ec836aa": [
+    "MainWindow.xaml:981"
+  ],
+  "ui.Keepacopybeforechangingyourcharacter.bf86fae": [
+    "MainWindow.xaml:982"
+  ],
+  "ui.Closethegamebeforecreatingabackup.367935d": [
+    "MainWindow.xaml:983"
+  ],
+  "ui.Backupsaves.1eac63b": [
+    "MainWindow.xaml:985"
+  ],
+  "ui.About.4efca0d": [
+    "MainWindow.xaml:990"
+  ],
+  "ui.ABOUTUPDATES.f099d6b": [
+    "MainWindow.xaml:994"
+  ],
+  "ui.Exportdiagnostics.b420518": [
+    "MainWindow.xaml:995"
+  ],
+  "ui.UseCheckforupdatesbelowtolookforanewerstableGitHubre.24d863c": [
+    "MainWindow.xaml:997"
+  ],
+  "ui.ChecksrunonlywhenrequestedDownloadsopenonGitHubnothi.334655b": [
+    "MainWindow.xaml:998"
+  ],
+  "ui.LINUXTESTERSWANTED.3e04eda": [
+    "MainWindow.xaml:999"
+  ],
+  "ui.WeneedLinuxtestersIfinterestedDMJamesCicadaonDiscord.2d4a29b": [
+    "MainWindow.xaml:1000"
+  ],
+  "language.community": [
+    "MainWindow.xaml:1001"
+  ],
+  "ui.ReadyConnecttoaloadedBloodbornePC109session.fb7d09a": [
+    "MainWindow.xaml:1012"
+  ],
+  "ui.Madewith.3617f6e": [
+    "MainWindow.xaml:1021"
+  ],
+  "ui.ByJamesCicada.69b9364": [
+    "MainWindow.xaml:1023"
+  ],
+  "ui.GitHub.041ebc7": [
+    "MainWindow.xaml:1026"
+  ],
+  "ui.Checkforupdates.f26f327": [
+    "MainWindow.xaml:1027"
+  ],
+  "ui.Viewrelease.e95bf1a": [
+    "MainWindow.xaml:1028"
+  ],
+  "message.BBToolsv0.b7fe245": [
+    "MainWindow.xaml.cs:77"
+  ],
+  "message.Found0processesLikelyBloodborneprocessesarestarredan.688f5b3": [
+    "MainWindow.xaml.cs:105"
+  ],
+  "message.NoprocessesmatchthisfilterClearitorrefreshthelist.a34ac2a": [
+    "MainWindow.xaml.cs:112"
+  ],
+  "message.Showing0of1processesSelectthegameenginethenconnect.6613503": [
+    "MainWindow.xaml.cs:113"
+  ],
+  "message.Waitfortheactivegamerequestbeforedisconnecting.df86824": [
+    "MainWindow.xaml.cs:122"
+  ],
+  "message.Selectarunninggameprocessfirst.996f24f": [
+    "MainWindow.xaml.cs:123"
+  ],
+  "message.ThisprocessidentityisrestrictedorunavailableRefresha.f5fe983": [
+    "MainWindow.xaml.cs:130"
+  ],
+  "message.Checkingtheloadedgameimageandplayerstructures.3a71539": [
+    "MainWindow.xaml.cs:134"
+  ],
+  "message.TheselectedprocesswasreplacedRefreshandselectitagain.beb4d74": [
+    "MainWindow.xaml.cs:139"
+  ],
+  "message.AnotherBBToolswindowisalreadyconnectedtothisprocess.67ccdb5": [
+    "MainWindow.xaml.cs:143"
+  ],
+  "message.SHADPS4CONNECTED.229770f": [
+    "MainWindow.xaml.cs:151"
+  ],
+  "message.CONNECTED.1f914c4": [
+    "MainWindow.xaml.cs:151"
+  ],
+  "message.0Bloodborne109instructionsmatched.5d2255f": [
+    "MainWindow.xaml.cs:152"
+  ],
+  "message.Disconnect.acfc5be": [
+    "MainWindow.xaml.cs:153"
+  ],
+  "message.ConnectedFeaturesstartoffPlayercontrolsbecomeavailab.74ae0b3": [
+    "MainWindow.xaml.cs:157"
+  ],
+  "message.Settingchangedforthiswindowbutcouldnotbesaved0.716288d": [
+    "MainWindow.xaml.cs:193"
+  ],
+  "message.GameprocessexitedRefreshandreconnectafterrestarting.a4c1e5d": [
+    "MainWindow.xaml.cs:201"
+  ],
+  "message.PlayerloadedSelectedpracticetogglesresumedandattribu.15354a3": [
+    "MainWindow.xaml.cs:210"
+  ],
+  "message.Movementphysicspaused0Togglethesettingtoretry.0de6cdf": [
+    "MainWindow.xaml.cs:220"
+  ],
+  "message.HUDoverridestopped0.f5a7c37": [
+    "MainWindow.xaml.cs:223"
+  ],
+  "message.FOVpaused0Toggletheoverridetoretry.762beab": [
+    "MainWindow.xaml.cs:233"
+  ],
+  "message.Cameratuningpaused0.e2403c7": [
+    "MainWindow.xaml.cs:238"
+  ],
+  "message.BossretrytimedoutwaitingfortheareaEncounterflagswere.b06282b": [
+    "MainWindow.xaml.cs:242"
+  ],
+  "message.StartuppresetismissingselectitagaininCombat.fe06ad3": [
+    "MainWindow.xaml.cs:251"
+  ],
+  "message.Startuppresetfailed0.4a16103": [
+    "MainWindow.xaml.cs:254"
+  ],
+  "message.Statusclearpaused0UseClearnowtoretry.27704a3": [
+    "MainWindow.xaml.cs:264"
+  ],
+  "message.0Selectedpracticetoggleswillresumewhentheplayervalid.18721e2": [
+    "MainWindow.xaml.cs:295"
+  ],
+  "message.DisconnectedHealthechoesandattributechangesalreadyma.4240b3c": [
+    "MainWindow.xaml.cs:349"
+  ],
+  "message.Finishingtheactiveoperationbeforeclosing.466adda": [
+    "MainWindow.xaml.cs:365"
+  ],
+  "message.CheckingGitHubforupdates.26293f4": [
+    "MainWindow.xaml.cs:389"
+  ],
+  "message.BBToolsv0isavailableOpenViewreleasetodownloadit.f15a767": [
+    "MainWindow.xaml.cs:395"
+  ],
+  "message.Youreuptodatev0.5a57995": [
+    "MainWindow.xaml.cs:396"
+  ],
+  "message.Yourerunningv0Thelatestpublishedreleaseisv1.f1df4f7": [
+    "MainWindow.xaml.cs:397"
+  ],
+  "message.UpdatechecktimedoutTryagainoropenGitHub.58468b9": [
+    "MainWindow.xaml.cs:400"
+  ],
+  "message.Couldntcheckforupdates0.1ebee32": [
+    "MainWindow.xaml.cs:403"
+  ],
+  "message.Connecttothegamefirst.bef6b75": [
+    "MainWindow.xaml.cs:410"
+  ],
+  "message.0mustbeawholenonnegativenumber.881f3c4": [
+    "MainWindow.xaml.cs:416"
+  ],
+  "message.Healthupdated.b0303ed": [
+    "MainWindow.xaml.cs:419"
+  ],
+  "message.Healthrestored.d9c546e": [
+    "MainWindow.xaml.cs:420"
+  ],
+  "message.BloodEchoesupdated.a23b0e1": [
+    "MainWindow.xaml.cs:421"
+  ],
+  "message.Addedupto10000BloodEchoes.c7006a6": [
+    "MainWindow.xaml.cs:422"
+  ],
+  "message.Infinitestaminaenabled.c28be18": [
+    "MainWindow.xaml.cs:427"
+  ],
+  "message.Previousstaminaconsumptionsettingrestored.531a8dc": [
+    "MainWindow.xaml.cs:427"
+  ],
+  "message.0Selectionretainedwaitingforavalidplayer.4fa65c1": [
+    "MainWindow.xaml.cs:428",
+    "MainWindow.xaml.cs:440"
+  ],
+  "message.Practiceflagupdated.43a53ff": [
+    "MainWindow.xaml.cs:438"
+  ],
+  "message.Waitfortheactivegamerequesttofinish.6008a4e": [
+    "MainWindow.xaml.cs:442"
+  ],
+  "message.Practicetogglesswitchedoffandpreviousflagsrestored.4364f9b": [
+    "MainWindow.xaml.cs:442"
+  ],
+  "message.Composeashotcaptureittheneditthesavedphoto.7ddfe10": [
+    "MainWindow.xaml.cs:457"
+  ],
+  "message.Combatrewards.31e6a34": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Itemspawning.f589ae2": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Travellocations.b745f7d": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Workshopmenus.f2a05fc": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Enemydetails.b31585f": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Gameplaycamera.e7db326": [
+    "MainWindow.xaml.cs:458"
+  ],
+  "message.Connecttoaloadedcharacterandwaitfortheactiverequestt.807dca7": [
+    "MainWindow.xaml.cs:474"
+  ],
+  "message.Waitingforthegamethreadtoprocesstherequest.1ac029f": [
+    "MainWindow.xaml.cs:477"
+  ],
+  "message.Multiplierspaused0UseApplymultiplierstoretry.db026b7": [
+    "MainWindow.xaml.cs:487"
+  ],
+  "message.Enternumericmultipliersbetween01and100usingadecimalp.bccec26": [
+    "MainWindow.xaml.cs:494"
+  ],
+  "message.PlayerdamageandenemyEchoesrewardmultipliersapplied.9ca34fc": [
+    "MainWindow.xaml.cs:497"
+  ],
+  "message.Connecttoaloadedcharacterfirst.291b82a": [
+    "MainWindow.xaml.cs:500"
+  ],
+  "message.Altardatarefreshedfromthecurrentcharacter.15a98e9": [
+    "MainWindow.xaml.cs:504"
+  ],
+  "message.Chooseachalicealtar.5306ccc": [
+    "MainWindow.xaml.cs:507"
+  ],
+  "message.Chooseachalicelamp.f2b16b4": [
+    "MainWindow.xaml.cs:508"
+  ],
+  "message.Chalicelamptravelrequestedusingtheselectedaltarsgene.c46c52a": [
+    "MainWindow.xaml.cs:510"
+  ],
+  "message.Chooseaworkshopmenu.c3d4087": [
+    "MainWindow.xaml.cs:513"
+  ],
+  "message.MenuopenedCompleteorcloseitnormallyinthegame.a8d87e3": [
+    "MainWindow.xaml.cs:515"
+  ],
+  "message.Chooseanitemcategory.47eb33d": [
+    "MainWindow.xaml.cs:518",
+    "MainWindow.xaml.cs:817"
+  ],
+  "message.ItemgrantcompletedonthegamethreadCheckinventoryandst.be4825f": [
+    "MainWindow.xaml.cs:521"
+  ],
+  "message.Choosealamp.076c529": [
+    "MainWindow.xaml.cs:524"
+  ],
+  "message.WarprequestedAllowthegametofinishloadingbeforeissuin.6a3c0d2": [
+    "MainWindow.xaml.cs:526"
+  ],
+  "message.LocationsavedSavingwiththesamenamereplacesthatbookma.9fef5bf": [
+    "MainWindow.xaml.cs:544"
+  ],
+  "message.StatusbuildupgaugesclearedExistingactiveeffectsareun.f67f89d": [
+    "MainWindow.xaml.cs:545"
+  ],
+  "message.Activeslowrapidpoisonremovedandbuildupcleared.3f44233": [
+    "MainWindow.xaml.cs:546"
+  ],
+  "message.Flightstopped0.a86c602": [
+    "MainWindow.xaml.cs:550"
+  ],
+  "message.Noflightreturnpointisavailable.dc0adc5": [
+    "MainWindow.xaml.cs:554"
+  ],
+  "message.Returnedtotheflightstartanddisabledflight.cb81c9e": [
+    "MainWindow.xaml.cs:555"
+  ],
+  "message.Movement000.7208afb": [
+    "MainWindow.xaml.cs:559"
+  ],
+  "message.Gravity0000.2d36093": [
+    "MainWindow.xaml.cs:559"
+  ],
+  "message.Movementandworldgravityrestored.0142882": [
+    "MainWindow.xaml.cs:560"
+  ],
+  "message.Norepairableequippedweaponsdetected.ec56972": [
+    "MainWindow.xaml.cs:570"
+  ],
+  "message.Nativerepair0repaired1equippedweaponsfound.37c48c3": [
+    "MainWindow.xaml.cs:572"
+  ],
+  "message.Nativerepairwaiting0.a7b0a8e": [
+    "MainWindow.xaml.cs:574"
+  ],
+  "message.Chooseabossfirst.28c03fe": [
+    "MainWindow.xaml.cs:581",
+    "MainWindow.xaml.cs:591"
+  ],
+  "message.Bossrevivaltravelrequestcompleted.dbc9f55": [
+    "MainWindow.xaml.cs:598"
+  ],
+  "message.PendingplacementcancelledAreatravelalreadyrequestedm.cbce444": [
+    "MainWindow.xaml.cs:600"
+  ],
+  "message.BossrevivedWaitingforarealoadingthenentranceplacemen.a865eba": [
+    "MainWindow.xaml.cs:601"
+  ],
+  "message.BossretryreadyattheentranceHealthstaminarefilledanda.b769021": [
+    "MainWindow.xaml.cs:607"
+  ],
+  "message.PendingentranceplacementcancelledTravelalreadyreques.f8dddab": [
+    "MainWindow.xaml.cs:608"
+  ],
+  "message.Nopendingbossretry.2d06008": [
+    "MainWindow.xaml.cs:608"
+  ],
+  "message.Selectabossentrancefirst.db238e0": [
+    "MainWindow.xaml.cs:611",
+    "MainWindow.xaml.cs:616"
+  ],
+  "message.AreatravelrequestedAfterloadinguseGotoentrance.071afef": [
+    "MainWindow.xaml.cs:613"
+  ],
+  "message.Bossentrancerelocationprocessed.29daaa1": [
+    "MainWindow.xaml.cs:618"
+  ],
+  "message.Selectasavedlocationfirst.e072131": [
+    "MainWindow.xaml.cs:621",
+    "MainWindow.xaml.cs:628"
+  ],
+  "message.Locationrestoreprocessedonthegamethread.6c1077b": [
+    "MainWindow.xaml.cs:623"
+  ],
+  "message.Locationdeleted.1e3c8d7": [
+    "MainWindow.xaml.cs:630"
+  ],
+  "message.Distance000Height100.5e95835": [
+    "MainWindow.xaml.cs:637"
+  ],
+  "message.FOVrestorationpending0.710538a": [
+    "MainWindow.xaml.cs:656",
+    "MainWindow.xaml.cs:662"
+  ],
+  "message.Originalcameraparametervaluesrestored.241f4cd": [
+    "MainWindow.xaml.cs:661"
+  ],
+  "message.SavedlibraryisunavailableCheckthestatusmessageandres.e2043b3": [
+    "MainWindow.xaml.cs:664"
+  ],
+  "message.CurrentactivesettingssavedAmatchingnamereplacestheex.628a437": [
+    "MainWindow.xaml.cs:691"
+  ],
+  "message.Chooseasavedpreset.67169d4": [
+    "MainWindow.xaml.cs:697",
+    "MainWindow.xaml.cs:735",
+    "MainWindow.xaml.cs:854",
+    "MainWindow.xaml.cs:864"
+  ],
+  "message.PresetselectedCombatsettingsresumewhiletheplayerisva.f722ff9": [
+    "MainWindow.xaml.cs:730"
+  ],
+  "message.Presetdeletedactivecombatsettingsareunchanged.d723239": [
+    "MainWindow.xaml.cs:737"
+  ],
+  "message.Diagnosticsexportedwithoutsavedataorpersonalpaths.93aae61": [
+    "MainWindow.xaml.cs:748"
+  ],
+  "message.Hotkeysunavailable0.088f835": [
+    "MainWindow.xaml.cs:760"
+  ],
+  "message.Hotkeysactive.b7cbe6a": [
+    "MainWindow.xaml.cs:767"
+  ],
+  "message.Hotkeysdisabled.5337d57": [
+    "MainWindow.xaml.cs:767"
+  ],
+  "message.0Heal1God2Save3Restore4Retry5.fc25415": [
+    "MainWindow.xaml.cs:770"
+  ],
+  "message.Quickbookmarksaved.9fad55d": [
+    "MainWindow.xaml.cs:781"
+  ],
+  "message.SaveaQuickbookmarkfirst.8e0f4a8": [
+    "MainWindow.xaml.cs:782"
+  ],
+  "message.Quickbookmarkrestored.7bdfba8": [
+    "MainWindow.xaml.cs:782"
+  ],
+  "message.Loadalivingcharacterbeforestartinganattempt.e1dd61b": [
+    "MainWindow.xaml.cs:786"
+  ],
+  "message.Attempttimerstarted.f2ba5c7": [
+    "MainWindow.xaml.cs:786"
+  ],
+  "message.ChooseBloodbornegamefolderordvdrootps4.466699e": [
+    "MainWindow.xaml.cs:809"
+  ],
+  "message.Imported0N0itemnamesfromyourgameNoitemswerespawned.0843e70": [
+    "MainWindow.xaml.cs:810"
+  ],
+  "message.Itemfavoritesaved.f2e3fc9": [
+    "MainWindow.xaml.cs:819"
+  ],
+  "message.Chooseafavoritefirst.d7249cb": [
+    "MainWindow.xaml.cs:825",
+    "MainWindow.xaml.cs:832"
+  ],
+  "message.FavoriteloadedUseSpawnitemtograntit.cc5be1c": [
+    "MainWindow.xaml.cs:828"
+  ],
+  "message.Favoritedeleted.929fd4b": [
+    "MainWindow.xaml.cs:832"
+  ],
+  "message.Libraryexported.fcca287": [
+    "MainWindow.xaml.cs:838"
+  ],
+  "message.Libraryimportednogameactionswereperformed.69687f1": [
+    "MainWindow.xaml.cs:843"
+  ],
+  "message.Databasebackupcreated.826a284": [
+    "MainWindow.xaml.cs:848"
+  ],
+  "message.Presetrenamed.eae02dd": [
+    "MainWindow.xaml.cs:857"
+  ],
+  "message.Enteranewunusedpresetname.78416da": [
+    "MainWindow.xaml.cs:865"
+  ],
+  "message.Presetduplicated.e745cf4": [
+    "MainWindow.xaml.cs:866"
+  ],
+  "message.SavedstartupFOV001Startuppreset2.760f889": [
+    "MainWindow.xaml.cs:869"
+  ],
+  "message.StartupFOVpreferencesaved.ca9c381": [
+    "MainWindow.xaml.cs:872"
+  ],
+  "message.Selectasavedpresetfirst.628bb86": [
+    "MainWindow.xaml.cs:879"
+  ],
+  "message.Presetwillapplyafteralivingcharacterisreadyonthenext.4efe854": [
+    "MainWindow.xaml.cs:880"
+  ],
+  "message.Startuppresetcleared.4f4629f": [
+    "MainWindow.xaml.cs:886"
+  ],
+  "message.BloodLevel0.9907fab": [
+    "MainWindow.xaml.cs:893"
+  ],
+  "message.Currentattributesloadedintotheeditor.2164ff1": [
+    "MainWindow.xaml.cs:897"
+  ],
+  "message.Reloadcurrentattributesfirst.e9af61c": [
+    "MainWindow.xaml.cs:900"
+  ],
+  "message.AttributesappliedQuittotitleandreloadyourcharacterto.d1f5e77": [
+    "MainWindow.xaml.cs:904"
+  ],
+  "message.DisconnectandcloseBloodborneanditslauncherbeforeback.7b1c2a6": [
+    "MainWindow.xaml.cs:907"
+  ],
+  "message.ChooseBloodbornesavefolderclosethegamefirst.ac6abd7": [
+    "MainWindow.xaml.cs:908"
+  ],
+  "message.Choosebackupdestinationoutsidethesavefolder.115324d": [
+    "MainWindow.xaml.cs:910"
+  ],
+  "message.CloseBloodborneanditslauncherbeforebackup.69bd078": [
+    "MainWindow.xaml.cs:913"
+  ],
+  "message.Backupcreated0.1e5f38c": [
+    "MainWindow.xaml.cs:913"
+  ],
+  "message.Backupfailed0.9e8e99a": [
+    "MainWindow.xaml.cs:914"
+  ],
+  "message.ChooseBBToolssavebackupfolder.106bb8a": [
+    "MainWindow.xaml.cs:924"
+  ],
+  "message.Backuphistoryloaded.01477ed": [
+    "MainWindow.xaml.cs:925"
+  ],
+  "message.DisconnectandcloseBloodborneanditslauncherbeforerest.2706ffe": [
+    "MainWindow.xaml.cs:930"
+  ],
+  "message.Chooseabackupfirst.d0c2076": [
+    "MainWindow.xaml.cs:931"
+  ],
+  "message.Choosetheactualsavefoldertoreplacearecoverycopywillb.fafeb12": [
+    "MainWindow.xaml.cs:932"
+  ],
+  "message.SaverestoredPreviousfolder0RecoveryZIP1.e836063": [
+    "MainWindow.xaml.cs:936"
+  ],
+  "message.Backupdestinationmustbeoutsidethesavefolder.f824ef4": [
+    "MainWindow.xaml.cs:945"
+  ],
+  "message.Linksandjunctionsareunsupportedinsavefolders.e5b16c3": [
+    "MainWindow.xaml.cs:954",
+    "MainWindow.xaml.cs:957"
+  ]
+}

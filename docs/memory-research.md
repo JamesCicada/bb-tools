@@ -583,3 +583,36 @@ is insufficient proof that the container's native category bits will be updated.
 Verify activation/bookkeeping and native cleanup first, preserve equipped effects
 and use a finite owned lifetime with restoration/recovery checks. No actual game
 writes or new discovery controls were added during this investigation.
+
+## Discovery and eligible enemy rolls — development follow-up
+
+The discovery implementation hooks the verified return at RVA 0x158191B (12 bytes
+of native arithmetic, RET and complete eight-byte padding; 21-byte patch span).
+It retains the native Arcane-plus-equipped-effect result and adds a private float
+only when the incoming effect container matches GameDataMan +8 character record
++0x670. The kill reward caller at 0x18C54A0..0x18C5503 independently supplies that
+record's container and Arcane. The bonus is stored as points/100, limited to +1000
+points, with no attribute or shared parameter edits.
+
+A separate hook at RVA 0x17CF52C spans complete instructions (17 bytes). RAX points
+to the resolved temporary slot's weight; item ID/category are -8/-4 and quantity
+is +0xD relative to it. Only the enemy-kill caller return 0x18C5503 is accepted.
+The hook zeroes the weight when the native final-item validity test would reject
+the slot (negative ID/category or zero quantity), before the original total-weight
+addition. It preserves registers/flags, then replays the original instructions.
+The normal RNG draw, valid relative weights, quantities and native flags remain
+in the original engine. If no eligible positive weights remain, the native total
+<=0 branch at 0x17CF567 skips the row. It is not an all-items or gem-quality patch.
+
+The common enemy path has no map filter, so chalice dungeons are an explicit
+intended target. Level-dependent category-15 slots resolve before the hook; the
+fixture includes resolved category-8 gem/rune entries. This does not establish
+live chalice compatibility or force gem quality/effect rolls. The independent
+layout reference is bbhost/src/decomp/items/item_lots.cpp (preferred VA 0x1BCEAF0),
+checked against the local 1.09 image; no decompiled implementation was copied.
+
+Both hooks use a narrow process-memory write allowlist, reject foreign edits,
+neutralize private controls on loading, and restore only owned instructions on
+normal disable/disconnect. Private pages remain allocated until process exit to
+avoid freeing code cached by native threads. Abnormal trainer termination is not
+claimed to restore these hooks; full game process exit discards them.

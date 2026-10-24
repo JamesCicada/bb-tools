@@ -39,7 +39,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -448,6 +448,7 @@ internal static partial class Program
             var session = new PlayerSession(memory, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
+            LootLifecycleChecks(memory,session,root);
             CameraChecks(memory,session,root);
             DurabilityChecks(memory,session,root);
             BossFlagChecks(memory,session,root);
@@ -743,6 +744,11 @@ internal static partial class Program
     {
         _ = new Application();
         var window = new MainWindow();
+        var localeBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+        void PreviewLanguage(string code){typeof(MainWindow).GetField("settings",localeBinding)!.SetValue(window,new AppSettings(Language:code));foreach(var method in new[]{"ApplyLanguageResources","LoadLanguageControls","RefreshLocalizedLabels"})typeof(MainWindow).GetMethod(method,localeBinding)!.Invoke(window,null);}
+        PreviewLanguage("zh-Hans");Check(((System.Windows.Controls.Button)window.FindName("NavPlayer")).Content.ToString()=="猎人"&&((System.Windows.Controls.Button)window.FindName("NavItems")).Tag.ToString()=="Items","live Chinese switching translates labels while preserving navigation identity");
+        PreviewLanguage("ar");Check(window.FlowDirection==FlowDirection.RightToLeft&&((System.Windows.Controls.TextBox)window.FindName("ItemId")).FlowDirection==FlowDirection.LeftToRight,"RTL interface keeps numeric and item-ID input left to right");
+        PreviewLanguage("en");
         var movementToggle=(System.Windows.Controls.CheckBox)window.FindName("MovementEnabled");
         var movementSlider=(System.Windows.Controls.Slider)window.FindName("MovementSlider");
         var gravityToggle=(System.Windows.Controls.CheckBox)window.FindName("GravityEnabled");
@@ -840,6 +846,8 @@ internal static partial class Program
     {
         var app = new Application();
         var window = new MainWindow { Width = width, Height = height };
+        if(page.Contains('@')){var selection=page.Split('@');page=selection[0];var localeBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;typeof(MainWindow).GetField("settings",localeBinding)!.SetValue(window,new AppSettings(Language:selection[1]));foreach(var method in new[]{"ApplyLanguageResources","LoadLanguageControls","RefreshLocalizedLabels"})typeof(MainWindow).GetMethod(method,localeBinding)!.Invoke(window,null);}
+        if(page=="Drops"){((System.Windows.Controls.TabItem)window.FindName("DropsTab")).IsSelected=true;page="Items";}
         if(page=="Presets"){((System.Windows.Controls.TabItem)window.FindName("PresetsTab")).IsSelected=true;page="Practice";}
         if(page=="PhotoCapture"){((System.Windows.Controls.Expander)window.FindName("PhotoCaptureExpander")).IsExpanded=true;page="Photo";}
         if(page=="Parry"){((System.Windows.Controls.TabItem)window.FindName("ParryTab")).IsSelected=true;page="Practice";}
@@ -878,7 +886,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints))
+        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

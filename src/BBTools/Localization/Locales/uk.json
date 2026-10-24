@@ -1,0 +1,21 @@
+{
+  "ui.Player.64aee8c": "Гравець",
+  "ui.Combat.49fcf2c": "Бій",
+  "ui.Enemies.5ad2600": "Вороги",
+  "ui.Items.fb8e7a1": "Предмети",
+  "ui.Travel.d2b98fb": "Переміщення",
+  "ui.Camera.03494b0": "Камера",
+  "ui.Workshop.c0086f2": "Майстерня",
+  "ui.Settings.74a883a": "Налаштування",
+  "ui.Connection.639a40e": "Підключення",
+  "ui.Preferences.66962f7": "Параметри",
+  "ui.Hotkeys.c15f153": "Гарячі клавіші",
+  "ui.Library.dc20b3d": "Бібліотека",
+  "ui.Backups.3334fee": "Резервні копії",
+  "ui.About.4efca0d": "Про програму",
+  "ui.Connect.1a2303e": "Підключити",
+  "ui.Refresh.0e91610": "Оновити",
+  "ui.Godmode.c2a056f": "Невразливість",
+  "ui.Infinitestamina.5cc94e4": "Нескінченна витривалість",
+  "ui.Applymultipliers.aa68718": "Застосувати множники"
+}

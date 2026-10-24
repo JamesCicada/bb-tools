@@ -3,6 +3,13 @@
 Thanks for helping improve Bloodborne practice tools. Bug reports, compatibility
 tests, clearer documentation, UI fixes and code contributions are all welcome.
 
+## Help translate
+
+Native speakers can improve the JSON language files without changing game code.
+Simplified Chinese is the first complete draft; all community translations need
+review and missing entries fall back to English. See the [translation guide](docs/translating.md)
+for Crowdin setup, locale files, placeholder rules and screenshot checks.
+
 ## Report a problem
 
 [Open an issue](https://github.com/JamesCicada/bb-tools/issues) with:
