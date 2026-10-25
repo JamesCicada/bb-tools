@@ -112,6 +112,12 @@ start Bloodborne or include private game data. UI checks verify initial read-onl
 state, localization/RTL and rendering; a separate Xvfb smoke test starts a real
 X11 window, including from the packaged self-contained binary.
 
+Validation on 2026-10-25: [Linux CI run 40225769893](https://github.com/JamesCicada/bb-tools/actions/runs/40225769893)
+passes on Ubuntu 22.04 and 24.04, with 37 native/profile and five UI checks on each.
+Both real X11 startup tests pass, and the Ubuntu 22.04 self-contained packages pass
+their startup checks. The separate Windows regression run also passes. This is
+platform/fixture evidence, not a tested-and-confirmed Linux game configuration.
+
 Public information cannot validate the game's behavior end to end. Remaining work
 is live game confirmation, additional runtime/distro profiles, native game actions
 and the rest of the Windows feature set. Source research is recorded separately in

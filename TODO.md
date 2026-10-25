@@ -52,7 +52,7 @@ See [Linux development and tester guide](docs/linux-support.md).
 | Milestone | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | Read-only connection probe | ✔️ | ⌛ | Shared image/player checks, maps, process reads and permission diagnostics. Native synthetic CI and live game results are distinct. |
-| Linux CI and development artifacts | ✔️ | ⌛ | Ubuntu 22.04/24.04 native child-process checks, headless/real-X11 UI and self-contained glibc x64 archives. musl deferred; workflow verification pending. |
+| Linux CI and development artifacts | ✔️ | ⌛ | Ubuntu 22.04/24.04 pass 37 native/profile checks and five UI checks each; X11 and packaged startup pass. glibc x64 preview archives generated. Synthetic platform evidence only; live game pending, musl deferred. |
 | Cross-platform desktop preview and shared core | ✔️ | ⌛ | Avalonia preview, process picker, parent launch, locales/RTL and logs; Windows desktop remains intact. Live game behavior unconfirmed. |
 | Experimental data editing | ✔️ | ⌛ | Opt-in health/Echoes/attributes and selected owned resource/combat flags; checked non-executable data writes and per-process edit lock. Native synthetic checks do not establish live compatibility. |
 | Native game actions and hooks | ⌛ | ⌛ | Allocation, thread coordination and dispatcher before spawning, menus, warp, revival, multipliers, discovery or FOV patches. |
