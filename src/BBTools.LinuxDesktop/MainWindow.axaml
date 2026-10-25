@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ x:Class="BBTools.LinuxDesktop.MainWindow" Width="1040" Height="780" MinWidth="860" MinHeight="680"
+ Title="BB Tools · Linux preview" Background="#101318">
+ <Window.Styles>
+  <Style Selector="Button"><Setter Property="Margin" Value="0,4,8,4"/><Setter Property="MinHeight" Value="36"/></Style>
+  <Style Selector="TextBox"><Setter Property="MinHeight" Value="36"/><Setter Property="FlowDirection" Value="LeftToRight"/></Style>
+  <Style Selector="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
+  <Style Selector="CheckBox"><Setter Property="Margin" Value="0,5"/></Style>
+  <Style Selector="Border.card"><Setter Property="Background" Value="#1A1F27"/><Setter Property="Padding" Value="18"/><Setter Property="CornerRadius" Value="10"/><Setter Property="Margin" Value="0,0,0,14"/></Style>
+ </Window.Styles>
+ <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+  <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,18">
+   <Image Source="avares://BBTools.LinuxDesktop/Assets/BBTools.png" Width="46" Height="46" Margin="0,0,14,0"/>
+   <StackPanel Grid.Column="1"><TextBlock Text="BB TOOLS" FontSize="24" FontWeight="Bold" Foreground="#CBA96E"/>
+    <TextBlock Text="Linux desktop preview · experimental · game compatibility unverified" Foreground="#ABB2BF"/>
+   </StackPanel>
+   <TextBlock x:Name="ConnectionBadge" Grid.Column="2" Text="READ-ONLY · DISCONNECTED" VerticalAlignment="Center"/>
+  </Grid>
+  <TabControl Grid.Row="1">
+   <TabItem Header="{DynamicResource L.ui.Connection.639a40e}"><ScrollViewer><StackPanel Margin="0,16,0,0">
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock Text="Native bbport · Bloodborne 1.09" FontSize="20" FontWeight="SemiBold"/>
+     <TextBlock Text="Choose the game engine process. All processes are shown; likely Bloodborne runtimes appear first. The original instruction profile must validate." Foreground="#ABB2BF"/>
+     <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="ProcessFilter" PlaceholderText="Search name or PID" TextChanged="FilterChanged"/>
+      <Button x:Name="RefreshButton" Grid.Column="1" Content="{DynamicResource L.ui.Refresh.0e91610}" Click="RefreshProcesses" Margin="10,0,0,0"/></Grid>
+     <ComboBox x:Name="Candidates" HorizontalAlignment="Stretch" MinHeight="40" FlowDirection="LeftToRight"/>
+     <Button x:Name="ConnectButton" Content="{DynamicResource L.ui.Connect.1a2303e}" Click="Connect"/>
+     <TextBlock x:Name="PermissionInfo" Foreground="#D7BC89"/>
+    </StackPanel></Border>
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock Text="Launch the game from BB Tools" FontSize="20" FontWeight="SemiBold"/>
+     <TextBlock Text="On systems with Yama scope 1, a parent/descendant relationship can allow access without changing tracing policy. Select your installed AppImage, launcher or run.sh. The game must remain in this process tree; scope 2/3 and sandboxes can still deny access." Foreground="#ABB2BF"/>
+     <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="LauncherPath" PlaceholderText="Absolute path to your game launcher"/>
+      <Button Grid.Column="1" Content="Choose file…" Click="ChooseLauncher" Margin="10,0,0,0"/></Grid>
+     <TextBlock Text="Arguments as a JSON array (AppImage: [&#x22;--play&#x22;]; run.sh: [])"/>
+     <TextBox x:Name="LauncherArguments" Text="[&#x22;--play&#x22;]"/>
+     <Button x:Name="LaunchButton" Content="Launch game" Click="LaunchGame"/>
+    </StackPanel></Border>
+   </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="{DynamicResource L.ui.Player.64aee8c}"><ScrollViewer><StackPanel Margin="0,16,0,0">
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock x:Name="ResourceSummary" Text="Connect and load a character." FontSize="22"/>
+     <CheckBox x:Name="EditingEnabled" Content="Enable experimental data editing for this connection" IsEnabled="False" IsCheckedChanged="EditingChanged"/>
+     <TextBlock Text="Read-only is the default. Editing has synthetic Linux coverage but no live game confirmation. Save-file changes to Echoes/attributes can be kept by the game." Foreground="#D7BC89"/>
+    </StackPanel></Border>
+    <StackPanel x:Name="EditorPanel" IsEnabled="False">
+     <Border Classes="card"><StackPanel Spacing="8">
+      <TextBlock Text="{DynamicResource L.ui.HEALTH.e5b73ae}"/>
+      <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="HealthInput" PlaceholderText="HP"/><Button Grid.Column="1" Content="{DynamicResource L.ui.SetHP.c70e6e8}" Click="ApplyHealth" Margin="10,0,0,0"/></Grid>
+      <TextBlock Text="{DynamicResource L.ui.BLOODECHOES.e21b296}" Margin="0,8,0,0"/>
+      <Grid ColumnDefinitions="*,Auto"><TextBox x:Name="EchoesInput" PlaceholderText="0–999999999"/><Button Grid.Column="1" Content="{DynamicResource L.ui.Setechoes.cc5d2f0}" Click="ApplyEchoes" Margin="10,0,0,0"/></Grid>
+     </StackPanel></Border>
+     <Border Classes="card"><StackPanel Spacing="10">
+      <TextBlock Text="{DynamicResource L.ui.CHARACTERATTRIBUTES.c312bf9}"/>
+      <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto,Auto">
+       <TextBlock Text="{DynamicResource L.ui.Vitality.33a4c26}"/><TextBlock Grid.Column="1" Text="{DynamicResource L.ui.Endurance.98c8abf}"/><TextBlock Grid.Column="2" Text="{DynamicResource L.ui.Strength.63ee3a1}"/>
+       <TextBox x:Name="VitalityInput" Grid.Row="1" Margin="0,4,8,10"/><TextBox x:Name="EnduranceInput" Grid.Row="1" Grid.Column="1" Margin="0,4,8,10"/><TextBox x:Name="StrengthInput" Grid.Row="1" Grid.Column="2" Margin="0,4,0,10"/>
+       <TextBlock Grid.Row="2" Text="{DynamicResource L.ui.Skill.6df1bb1}"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{DynamicResource L.ui.Bloodtinge.9af4bd9}"/><TextBlock Grid.Row="2" Grid.Column="2" Text="{DynamicResource L.ui.Arcane.93006d6}"/>
+       <TextBox x:Name="SkillInput" Grid.Row="3" Margin="0,4,8,0"/><TextBox x:Name="BloodtingeInput" Grid.Row="3" Grid.Column="1" Margin="0,4,8,0"/><TextBox x:Name="ArcaneInput" Grid.Row="3" Grid.Column="2" Margin="0,4,0,0"/>
+      </Grid>
+      <WrapPanel><Button Content="{DynamicResource L.ui.Reloadcurrent.a068df2}" Click="ReloadStats"/><Button Content="{DynamicResource L.ui.Applyattributes.1462b4c}" Click="ApplyStats"/></WrapPanel>
+      <TextBlock Text="{DynamicResource L.ui.199perattributeBloodLevelfollowstheattributechangeAp.d5bcd9e}" Foreground="#ABB2BF"/>
+     </StackPanel></Border>
+    </StackPanel>
+   </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="{DynamicResource L.ui.Combat.49fcf2c}"><ScrollViewer><StackPanel Margin="0,16,0,0">
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock Text="Selections resume after loading when the player validates. Disabling edits, disconnecting or closing restores owned bits when the same player is still valid. A killed tool cannot clean up its flags." Foreground="#D7BC89"/>
+     <StackPanel x:Name="ResourceFlags" IsEnabled="False">
+      <CheckBox x:Name="KeepHealthToggle" Tag="health" Content="{DynamicResource L.ui.Keephealthfull.972e436}" IsCheckedChanged="CombatChanged"/>
+      <CheckBox x:Name="StaminaToggle" Tag="stamina" Content="{DynamicResource L.ui.Infinitestamina.5cc94e4}" IsCheckedChanged="CombatChanged"/>
+     </StackPanel>
+     <StackPanel x:Name="NativeFlags" IsEnabled="False">
+      <CheckBox Tag="GodMode" Content="{DynamicResource L.ui.Godmode.c2a056f}" IsCheckedChanged="CombatChanged"/>
+      <CheckBox Tag="NoHitReaction" Content="{DynamicResource L.ui.Ignorehits.043c8f9}" IsCheckedChanged="CombatChanged"/>
+      <CheckBox Tag="NoFallDamage" Content="{DynamicResource L.ui.Nofalldamage.a71aeec}" IsCheckedChanged="CombatChanged"/>
+      <CheckBox Tag="InfiniteItems" Content="{DynamicResource L.ui.Infiniteconsumablesbullets.54c925f}" IsCheckedChanged="CombatChanged"/>
+      <CheckBox Tag="NoEchoesLoss" Content="{DynamicResource L.ui.KeepBloodEchoesondeath.cdd0350}" IsCheckedChanged="CombatChanged"/>
+     </StackPanel>
+     <WrapPanel><Button Content="{DynamicResource L.ui.Turnoffpracticetoggles.2c7e474}" Click="StopFeatures"/><Button Content="Resume paused features" Click="ResumeFeatures"/></WrapPanel>
+    </StackPanel></Border>
+   </StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="{DynamicResource L.ui.Settings.74a883a}"><ScrollViewer><StackPanel Margin="0,16,0,0">
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock Text="{DynamicResource L.language.heading}"/>
+     <ComboBox x:Name="LanguagePicker" HorizontalAlignment="Stretch" FlowDirection="LeftToRight" SelectionChanged="LanguageChanged"/>
+     <TextBlock Text="{DynamicResource L.language.help}" Foreground="#ABB2BF"/>
+     <Button Content="{DynamicResource L.language.contribute}" Click="OpenCrowdin"/>
+    </StackPanel></Border>
+    <Border Classes="card"><StackPanel Spacing="10">
+     <TextBlock Text="Preview feature coverage" FontSize="20" FontWeight="SemiBold"/>
+     <TextBlock Text="Implemented: process list/filter, image/player validation, health, Echoes, attributes, selected resource/combat flags, locale selection and five-session log retention."/>
+     <TextBlock Text="Unavailable: item spawning, menus, warp, boss revival, multipliers, discovery hooks, FOV patches, hotkeys, Discord, presets and save restore. These need Linux-specific execution/platform work. Photo mode and noclip remain hidden." Foreground="#D7BC89"/>
+     <TextBlock Text="Native Linux x64/glibc desktop preview. X11/XWayland is the initial display target. No Wine/Proton Windows-memory backend, ARM64 or musl package is provided. Public source review and synthetic checks do not establish live game compatibility." Foreground="#ABB2BF"/>
+     <TextBlock x:Name="LogLocation"/>
+    </StackPanel></Border>
+   </StackPanel></ScrollViewer></TabItem>
+  </TabControl>
+  <Border Grid.Row="2" Background="#1A1F27" Padding="12" CornerRadius="8" Margin="0,16,0,0">
+   <StackPanel Spacing="8"><TextBlock x:Name="Status" Text="Linux preview · read-only until editing is explicitly enabled."/><TextBlock Text="Made with 🖤 By James Cicada · github.com/JamesCicada/bb-tools" Foreground="#ABB2BF" FontSize="12"/></StackPanel>
+  </Border>
+ </Grid>
+</Window>
+

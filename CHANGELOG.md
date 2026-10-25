@@ -15,6 +15,13 @@ Tested and confirmed on Bloodborne PC: multiplier and player-detection fixes. Re
 
 Validation: 481 regression checks pass in both Debug and Release, plus 26 script checks and 103 supported-image fingerprints. Arabic, French and Simplified Chinese each contain all 544 current catalog entries.
 
+## Unreleased — Linux desktop preview
+
+- Add an Avalonia desktop preview for native Linux x64/glibc, with a shared game core and a separate read-only probe. Start each connection read-only; expose experimental health/Echoes/attribute edits and selected resource/combat flags only after explicit opt-in and image/player validation.
+- Add checked Linux process reads/data-only writes, PID/start-time validation, bounded/cancellable image discovery, cleanup ownership, a per-game edit lock, five-session logs and shared translation catalogs. Keep native-call/hook features unavailable until their Linux execution path is implemented and verified.
+- Research upstream bbport, Linux forks, bbhost, kernel process-access rules and native tooling. Add literal-argument launch-from-tool and Yama/container diagnostics without changing system policy. Record sources and a compatibility matrix; no live Linux game result is claimed.
+- Add Ubuntu 22.04/24.04 native synthetic checks, headless localization/UI checks, real X11 startup and standalone development packaging. Windows-host checks do not count as Linux native results. Native CI verification is pending until the preview workflow completes.
+
 ## 0.6.4 — 2026-10-24
 
 - Add an embedded JSON localization system with live interface-language selection, system-language detection, English fallback, preserved numeric-input culture and RTL layout support. Match the 28-language Crowdin list. Simplified Chinese has a complete extracted UI/message draft; other targets have starter labels and need community contributions. Game catalog names and technical diagnostics may remain English; no native-speaker review is claimed.

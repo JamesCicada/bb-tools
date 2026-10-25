@@ -49,3 +49,17 @@ do not establish launcher/emulator compatibility.
 Use [GitHub issues](https://github.com/JamesCicada/bb-tools/issues) for reports and
 pull requests for additional verified configurations. Keep unsupported and not-tested
 entries distinct from tested failures.
+
+## Linux desktop preview — 2026-10-25
+
+| Runtime / environment | Status | Evidence / limitations |
+| --- | --- | --- |
+| Native Linux bbport (`deadinside28`, 0.6 / `8185b88`) | ⌛ Not tested live | Public loader/memory/hook source reviewed; experimental shared-data desktop preview and read-only probe. Native synthetic CI does not establish game compatibility. |
+| ayozetr Linux bbport fork | ⌛ Not tested live | Candidate from public native/1.09 architecture; exact running instruction profile must validate. |
+| bbhost / shadPS4 on Linux | ⌛ Not tested live | Separate runtime/profile milestones; no compatibility transferred from Windows results. |
+| Ubuntu 22.04 / 24.04 x64 | ⌛ Platform checks pending workflow verification | Native child-process data reads/writes, headless UI, X11 startup and self-contained packaging. No game runs in CI. |
+| Debian / Fedora / Arch / SteamOS x64 | ⌛ Not tested | Intended glibc/X11 or XWayland desktop targets; packaging, dependencies and process policy still require verification. |
+
+See the [Linux preview guide](linux-support.md) and [source research](linux-compatibility-research.md).
+The Windows release remains supported on its recorded configurations; Linux preview
+scope does not change those results.

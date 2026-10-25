@@ -1,0 +1,75 @@
+name: Linux desktop preview
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md']
+  push:
+    branches: [main, codex/linux-desktop-preview]
+    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  glibc:
+    name: Native Linux checks (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Native child-process memory and portable profile checks
+        run: dotnet run --project tests/BBTools.LinuxChecks -c Release
+      - name: Headless UI, localization and rendering checks
+        run: dotnet run --project tests/BBTools.LinuxDesktopChecks -c Release -- artifacts/ui
+      - name: Native X11 desktop startup
+        run: xvfb-run -a dotnet run --project src/BBTools.LinuxDesktop -c Release --no-build -- --smoke-test
+      - name: Package self-contained glibc x64 development apps
+        if: matrix.os == 'ubuntu-22.04'
+        run: bash scripts/package-linux.sh
+      - name: Smoke-test packaged apps without an installed dotnet runtime
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          mkdir -p artifacts/desktop-smoke artifacts/probe-smoke
+          tar -xzf artifacts/BBTools-LinuxDesktop-preview-linux-x64.tar.gz -C artifacts/desktop-smoke
+          tar -xzf artifacts/BBTools-LinuxProbe-preview-linux-x64.tar.gz -C artifacts/probe-smoke
+          artifacts/probe-smoke/BBTools.LinuxProbe --help
+          env DOTNET_ROOT=/nonexistent xvfb-run -a artifacts/desktop-smoke/BBTools.LinuxDesktop --smoke-test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Linux-preview-${{ matrix.os }}
+          path: |
+            artifacts/BBTools-*-preview-linux-x64.tar.gz
+            artifacts/BBTools-Linux-SHA256SUMS.txt
+            artifacts/linux-publish.log
+            artifacts/ui/*.png
+          if-no-files-found: warn
+          retention-days: 14
+
+  portable:
+    name: Portable Linux/UI checks (Windows host)
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project tests/BBTools.LinuxChecks -c Release
+      - run: dotnet run --project tests/BBTools.LinuxDesktopChecks -c Release -- artifacts/ui
