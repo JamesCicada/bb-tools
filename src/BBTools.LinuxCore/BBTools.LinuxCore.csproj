@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.6.5</Version>
+    <InformationalVersion>0.6.5-linux-preview</InformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../BBTools/Memory/MemoryAccess.cs" Link="Shared/MemoryAccess.cs" />
+    <Compile Include="../BBTools/Memory/ProcessAccessErrors.cs" Link="Shared/ProcessAccessErrors.cs" />
+    <Compile Include="../BBTools/Memory/PlayerSession.cs" Link="Shared/PlayerSession.cs" />
+    <Compile Include="../BBTools/Memory/PracticeFeatures.cs" Link="Shared/PracticeFeatures.cs" />
+    <Compile Include="../BBTools/CharacterValues.cs" Link="Shared/CharacterValues.cs" />
+    <Compile Include="../BBTools/Localization/Translations.cs" Link="Shared/Translations.cs" />
+    <Compile Include="../BBTools/AppInfo.cs" Link="Shared/AppInfo.cs" />
+    <Compile Include="../BBTools/SessionLog.cs" Link="Shared/SessionLog.cs" />
+    <EmbeddedResource Include="../BBTools/Localization/Locales/*.json" WithCulture="false" LogicalName="BBTools.Locales.%(Filename).json" />
+  </ItemGroup>
+</Project>
