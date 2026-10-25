@@ -5,7 +5,7 @@
 - Complete Arabic and French extracted interface/message catalog drafts, joining Simplified Chinese at 100% coverage. All three include the new permission guidance; native-speaker review and in-game usability checks remain pending.
 - Preserve placeholders, format strings, numeric ranges, internal IDs and brand names. Add embedded-catalog checks for both languages; Arabic retains RTL layout and LTR numeric input.
 - Correct mixed-script language-picker percentage ordering and shorten the French Voyage tab label to fit the minimum window size.
-- Upload Arabic and French to the connected Crowdin source file as unapproved drafts. Crowdin reports 100% translated and 0% approved for both; existing duplicate translations are retained.
+- Initially upload Arabic and French to Crowdin as unapproved drafts, then integrate the merged Crowdin translation updates. Preserve English fallback for untranslated entries so unfinished languages do not falsely show 100% coverage.
 
 - Fix multiplier insertion rejecting the native-created neutral node because its zero-second duration immediately sets its expiration flag. Validate the exact returned node index before attaching the leased row; preserve older expired/foreign nodes and report distinct failure stages.
 - Fix valid players being rejected during ordinary negative-stamina overdraft. Show an empty gauge and keep controls available; retry bounded read-only snapshots and verify ownership again before returning.

@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Камера",
   "ui.Workshop.c0086f2": "Радионица",
   "ui.Settings.74a883a": "Подешавања",
+  "ui.Infinitestamina.5cc94e4": "Бесконачна издржљивост",
+  "ui.Godmode.c2a056f": "Нерањивост",
+  "ui.Applymultipliers.aa68718": "Примени множиоце",
   "ui.Connection.639a40e": "Повезивање",
+  "ui.Refresh.0e91610": "Освежи",
+  "ui.Connect.1a2303e": "Повежи",
   "ui.Preferences.66962f7": "Поставке",
   "ui.Hotkeys.c15f153": "Пречице",
   "ui.Library.dc20b3d": "Библиотека",
   "ui.Backups.3334fee": "Резервне копије",
-  "ui.About.4efca0d": "О програму",
-  "ui.Connect.1a2303e": "Повежи",
-  "ui.Refresh.0e91610": "Освежи",
-  "ui.Godmode.c2a056f": "Нерањивост",
-  "ui.Infinitestamina.5cc94e4": "Бесконачна издржљивост",
-  "ui.Applymultipliers.aa68718": "Примени множиоце"
+  "ui.About.4efca0d": "О програму"
 }

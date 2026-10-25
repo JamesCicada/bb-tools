@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Camera",
   "ui.Workshop.c0086f2": "Werkplaats",
   "ui.Settings.74a883a": "Instellingen",
+  "ui.Infinitestamina.5cc94e4": "Onbeperkt uithoudingsvermogen",
+  "ui.Godmode.c2a056f": "Onkwetsbaarheid",
+  "ui.Applymultipliers.aa68718": "Vermenigvuldigers toepassen",
   "ui.Connection.639a40e": "Verbinding",
+  "ui.Refresh.0e91610": "Vernieuwen",
+  "ui.Connect.1a2303e": "Verbinden",
   "ui.Preferences.66962f7": "Voorkeuren",
   "ui.Hotkeys.c15f153": "Sneltoetsen",
   "ui.Library.dc20b3d": "Bibliotheek",
   "ui.Backups.3334fee": "Back-ups",
-  "ui.About.4efca0d": "Over",
-  "ui.Connect.1a2303e": "Verbinden",
-  "ui.Refresh.0e91610": "Vernieuwen",
-  "ui.Godmode.c2a056f": "Onkwetsbaarheid",
-  "ui.Infinitestamina.5cc94e4": "Onbeperkt uithoudingsvermogen",
-  "ui.Applymultipliers.aa68718": "Vermenigvuldigers toepassen"
+  "ui.About.4efca0d": "Over"
 }

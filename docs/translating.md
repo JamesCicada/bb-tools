@@ -85,8 +85,11 @@ Arabic and French drafts were uploaded to the connected Crowdin source file on
 translated and 0% approved for both (538 visible phrases and five hidden source
 entries). Version 0.6.5 adds a permission-guidance message, translated in Arabic,
 French and Simplified Chinese, bringing each local catalog to 544 entries. Draft
-coverage is not native-speaker approval. Translation export pull requests and
-new source-file synchronization still need separate verification.
+coverage is not native-speaker approval. Translation export pull requests #2 and
+#3 have now been merged from Crowdin. Configure Crowdin exports to skip
+untranslated strings instead of filling target JSON with English source text;
+the app already provides English fallback, and missing entries must not inflate
+the translation percentage. New source-file synchronization still needs verification.
 
 Catalogs are embedded in the executable. Translators edit repository JSON files;
 users do not need to copy language packs or install Crowdin. Windows release ZIPs

@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Камера",
   "ui.Workshop.c0086f2": "Мастерская",
   "ui.Settings.74a883a": "Настройки",
+  "ui.Infinitestamina.5cc94e4": "Бесконечная выносливость",
+  "ui.Godmode.c2a056f": "Неуязвимость",
+  "ui.Applymultipliers.aa68718": "Применить множители",
   "ui.Connection.639a40e": "Подключение",
+  "ui.Refresh.0e91610": "Обновить",
+  "ui.Connect.1a2303e": "Подключить",
   "ui.Preferences.66962f7": "Параметры",
   "ui.Hotkeys.c15f153": "Горячие клавиши",
   "ui.Library.dc20b3d": "Библиотека",
   "ui.Backups.3334fee": "Резервные копии",
-  "ui.About.4efca0d": "О программе",
-  "ui.Connect.1a2303e": "Подключить",
-  "ui.Refresh.0e91610": "Обновить",
-  "ui.Godmode.c2a056f": "Неуязвимость",
-  "ui.Infinitestamina.5cc94e4": "Бесконечная выносливость",
-  "ui.Applymultipliers.aa68718": "Применить множители"
+  "ui.About.4efca0d": "О программе"
 }

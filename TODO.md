@@ -41,7 +41,7 @@ New features remain pending live validation even when automated checks pass.
 - ✔️ Add catalog/reference validation and placeholder-format checks to the existing CI test command.
 - ⌛ Native-speaker review, translated-layout testing, Bloodborne terminology and completion of starter catalogs.
 - ✔️ Link the app and contributor guide to [BB Tools on Crowdin](https://crowdin.com/project/bb-tools).
-- ⌛ Enable Crowdin's GitHub integration; do not claim synchronization until an actual translation PR succeeds.
+- ✔️ Verify Crowdin's GitHub integration through merged translation pull requests #2 and #3. Keep untranslated strings omitted from JSON exports so the app's English fallback preserves accurate coverage.
 
 ## Feature checklist
 

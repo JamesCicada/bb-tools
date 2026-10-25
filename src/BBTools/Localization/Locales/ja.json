@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "カメラ",
   "ui.Workshop.c0086f2": "工房",
   "ui.Settings.74a883a": "設定",
+  "ui.Infinitestamina.5cc94e4": "スタミナ無限",
+  "ui.Godmode.c2a056f": "無敵モード",
+  "ui.Applymultipliers.aa68718": "倍率を適用",
   "ui.Connection.639a40e": "接続",
+  "ui.Refresh.0e91610": "更新",
+  "ui.Connect.1a2303e": "接続",
   "ui.Preferences.66962f7": "環境設定",
   "ui.Hotkeys.c15f153": "ホットキー",
   "ui.Library.dc20b3d": "ライブラリ",
   "ui.Backups.3334fee": "バックアップ",
-  "ui.About.4efca0d": "情報",
-  "ui.Connect.1a2303e": "接続",
-  "ui.Refresh.0e91610": "更新",
-  "ui.Godmode.c2a056f": "無敵モード",
-  "ui.Infinitestamina.5cc94e4": "スタミナ無限",
-  "ui.Applymultipliers.aa68718": "倍率を適用"
+  "ui.About.4efca0d": "情報"
 }

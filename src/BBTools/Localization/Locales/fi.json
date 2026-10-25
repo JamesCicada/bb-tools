@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Kamera",
   "ui.Workshop.c0086f2": "Työpaja",
   "ui.Settings.74a883a": "Asetukset",
+  "ui.Infinitestamina.5cc94e4": "Loputon kestävyys",
+  "ui.Godmode.c2a056f": "Haavoittumattomuus",
+  "ui.Applymultipliers.aa68718": "Käytä kertoimia",
   "ui.Connection.639a40e": "Yhteys",
+  "ui.Refresh.0e91610": "Päivitä",
+  "ui.Connect.1a2303e": "Yhdistä",
   "ui.Preferences.66962f7": "Määritykset",
   "ui.Hotkeys.c15f153": "Pikanäppäimet",
   "ui.Library.dc20b3d": "Kirjasto",
   "ui.Backups.3334fee": "Varmuuskopiot",
-  "ui.About.4efca0d": "Tietoja",
-  "ui.Connect.1a2303e": "Yhdistä",
-  "ui.Refresh.0e91610": "Päivitä",
-  "ui.Godmode.c2a056f": "Haavoittumattomuus",
-  "ui.Infinitestamina.5cc94e4": "Loputon kestävyys",
-  "ui.Applymultipliers.aa68718": "Käytä kertoimia"
+  "ui.About.4efca0d": "Tietoja"
 }

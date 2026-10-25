@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Κάμερα",
   "ui.Workshop.c0086f2": "Εργαστήριο",
   "ui.Settings.74a883a": "Ρυθμίσεις",
+  "ui.Infinitestamina.5cc94e4": "Απεριόριστη αντοχή",
+  "ui.Godmode.c2a056f": "Άτρωτος",
+  "ui.Applymultipliers.aa68718": "Εφαρμογή πολλαπλασιαστών",
   "ui.Connection.639a40e": "Σύνδεση",
+  "ui.Refresh.0e91610": "Ανανέωση",
+  "ui.Connect.1a2303e": "Σύνδεση",
   "ui.Preferences.66962f7": "Προτιμήσεις",
   "ui.Hotkeys.c15f153": "Συντομεύσεις",
   "ui.Library.dc20b3d": "Βιβλιοθήκη",
   "ui.Backups.3334fee": "Αντίγραφα ασφαλείας",
-  "ui.About.4efca0d": "Πληροφορίες",
-  "ui.Connect.1a2303e": "Σύνδεση",
-  "ui.Refresh.0e91610": "Ανανέωση",
-  "ui.Godmode.c2a056f": "Άτρωτος",
-  "ui.Infinitestamina.5cc94e4": "Απεριόριστη αντοχή",
-  "ui.Applymultipliers.aa68718": "Εφαρμογή πολλαπλασιαστών"
+  "ui.About.4efca0d": "Πληροφορίες"
 }

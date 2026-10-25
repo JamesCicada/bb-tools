@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Camera",
   "ui.Workshop.c0086f2": "Xưởng",
   "ui.Settings.74a883a": "Cài đặt",
+  "ui.Infinitestamina.5cc94e4": "Thể lực vô hạn",
+  "ui.Godmode.c2a056f": "Bất tử",
+  "ui.Applymultipliers.aa68718": "Áp dụng hệ số",
   "ui.Connection.639a40e": "Kết nối",
+  "ui.Refresh.0e91610": "Làm mới",
+  "ui.Connect.1a2303e": "Kết nối",
   "ui.Preferences.66962f7": "Tùy chọn",
   "ui.Hotkeys.c15f153": "Phím tắt",
   "ui.Library.dc20b3d": "Thư viện",
   "ui.Backups.3334fee": "Bản sao lưu",
-  "ui.About.4efca0d": "Giới thiệu",
-  "ui.Connect.1a2303e": "Kết nối",
-  "ui.Refresh.0e91610": "Làm mới",
-  "ui.Godmode.c2a056f": "Bất tử",
-  "ui.Infinitestamina.5cc94e4": "Thể lực vô hạn",
-  "ui.Applymultipliers.aa68718": "Áp dụng hệ số"
+  "ui.About.4efca0d": "Giới thiệu"
 }

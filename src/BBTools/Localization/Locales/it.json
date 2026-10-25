@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Telecamera",
   "ui.Workshop.c0086f2": "Officina",
   "ui.Settings.74a883a": "Impostazioni",
+  "ui.Infinitestamina.5cc94e4": "Vigore infinito",
+  "ui.Godmode.c2a056f": "Invincibilità",
+  "ui.Applymultipliers.aa68718": "Applica moltiplicatori",
   "ui.Connection.639a40e": "Connessione",
+  "ui.Refresh.0e91610": "Aggiorna",
+  "ui.Connect.1a2303e": "Connetti",
   "ui.Preferences.66962f7": "Preferenze",
   "ui.Hotkeys.c15f153": "Scorciatoie",
   "ui.Library.dc20b3d": "Libreria",
   "ui.Backups.3334fee": "Backup",
-  "ui.About.4efca0d": "Informazioni",
-  "ui.Connect.1a2303e": "Connetti",
-  "ui.Refresh.0e91610": "Aggiorna",
-  "ui.Godmode.c2a056f": "Invincibilità",
-  "ui.Infinitestamina.5cc94e4": "Vigore infinito",
-  "ui.Applymultipliers.aa68718": "Applica moltiplicatori"
+  "ui.About.4efca0d": "Informazioni"
 }

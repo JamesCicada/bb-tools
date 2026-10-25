@@ -7,15 +7,15 @@
   "ui.Camera.03494b0": "Kamera",
   "ui.Workshop.c0086f2": "Verkstad",
   "ui.Settings.74a883a": "Inställningar",
+  "ui.Infinitestamina.5cc94e4": "Obegränsad uthållighet",
+  "ui.Godmode.c2a056f": "Osårbarhet",
+  "ui.Applymultipliers.aa68718": "Tillämpa multiplikatorer",
   "ui.Connection.639a40e": "Anslutning",
+  "ui.Refresh.0e91610": "Uppdatera",
+  "ui.Connect.1a2303e": "Anslut",
   "ui.Preferences.66962f7": "Inställningar",
   "ui.Hotkeys.c15f153": "Snabbtangenter",
   "ui.Library.dc20b3d": "Bibliotek",
   "ui.Backups.3334fee": "Säkerhetskopior",
-  "ui.About.4efca0d": "Om",
-  "ui.Connect.1a2303e": "Anslut",
-  "ui.Refresh.0e91610": "Uppdatera",
-  "ui.Godmode.c2a056f": "Osårbarhet",
-  "ui.Infinitestamina.5cc94e4": "Obegränsad uthållighet",
-  "ui.Applymultipliers.aa68718": "Tillämpa multiplikatorer"
+  "ui.About.4efca0d": "Om"
 }
