@@ -6,7 +6,16 @@ namespace BBTools;
 
 public sealed record AppLanguage(string Code, string NativeName)
 {
-    public string DisplayName => $"{NativeName} — {Translations.Coverage(Translations.Resolve(Code))}%";
+    public string DisplayName
+    {
+        get
+        {
+            var code = Translations.Resolve(Code);
+            // Keep the percentage after the name in this LTR, mixed-script list.
+            var mark = CultureInfo.GetCultureInfo(code).TextInfo.IsRightToLeft ? "\u200E" : "";
+            return $"{mark}{NativeName}{mark} — {Translations.Coverage(code)}%";
+        }
+    }
     public override string ToString() => DisplayName;
 }
 

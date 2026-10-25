@@ -35,6 +35,8 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         catch (ArgumentException) { throw new IOException("Character values failed validation."); }
         var level = Get(0x90);
         if (level is < 4 or > 544) throw new IOException("Blood Level failed validation.");
+        if (memory.Pointer(player.Actor + 0x3C0) != data || memory.Pointer(manager + 8) != data || ReadPlayer().Actor != player.Actor)
+            throw new IOException("Active character changed while reading its values. Wait until loading finishes.");
         return new(data, level, values);
     }
     public void SetEchoes(int value)
@@ -79,7 +81,7 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
             {
                 if (Fingerprints.All(f => memory.Read(candidate + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))) matches.Add(candidate);
             }
-            catch (IOException) { }
+            catch (IOException ex) when (!ProcessAccessErrors.IsAccessDenied(ex)) { }
         }
         return matches.Count == 1 ? matches[0] : throw new IOException("No unique supported Bloodborne 1.09 image found. Load the game; conflicting patches or another build may be unsupported.");
     }
@@ -89,6 +91,16 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
             throw new IOException("Game instructions changed. Disconnect and close other trainers.");
     }
     public PlayerState ReadPlayer()
+    {
+        // Retry bounded, read-only snapshots when a game update changes a pointer
+        // halfway through the chain. Never cache a stale actor for later writes.
+        for (var attempt = 0; ; attempt++)
+        {
+            try { return ReadPlayerSnapshot(); }
+            catch (IOException ex) when (attempt < 2 && !ProcessAccessErrors.IsAccessDenied(ex)) { }
+        }
+    }
+    private PlayerState ReadPlayerSnapshot()
     {
         var world = memory.Pointer(imageBase + WorldPointer,"world character manager");
         var actor = memory.Pointer(world + 0x60,"loaded player");
@@ -100,9 +112,14 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         var maxHp = BitConverter.ToInt32(block, 4);
         var stamina = BitConverter.ToInt32(block, 0x3C);
         var maxStamina = BitConverter.ToInt32(block, 0x40);
-        if (maxHp is < 1 or > 100000 || hp < 0 || hp > maxHp || maxStamina is < 1 or > 10000 || stamina < 0 || stamina > maxStamina)
-            throw new IOException("Player values failed validation. Wait until your character is loaded.");
-        return new(actor, component, hp, maxHp, stamina, maxStamina);
+        // Native attacks/dodges legitimately overdraw stamina below zero. This
+        // is not a lost player; expose an empty gauge while it regenerates.
+        if (maxHp is < 1 or > 100000 || hp < 0 || hp > maxHp || maxStamina is < 1 or > 10000 || stamina < -10000 || stamina > maxStamina)
+            throw new IOException($"Player resource values failed validation (HP {hp}/{maxHp}, stamina {stamina}/{maxStamina}). Wait until your character is loaded.");
+        if (memory.Pointer(imageBase + WorldPointer) != world || memory.Pointer(world + 0x60) != actor ||
+            memory.Pointer(actor + 0x3B0) != modules || memory.Pointer(modules + 0x20) != component || memory.Pointer(component + 8) != actor)
+            throw new IOException("Player ownership changed while reading resources. Wait until loading finishes.");
+        return new(actor, component, hp, maxHp, Math.Max(0, stamina), maxStamina);
     }
     public void RefillResources()
     {

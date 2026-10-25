@@ -541,5 +541,6 @@
   "loot.paused": "Discovery/drops paused: {0} Toggle the option to retry.",
   "links.items": "Bloodborne Wiki · Datamined item IDs ↗",
   "links.weapons": "Weapon IDs ↗",
-  "language.community": "COMMUNITY TRANSLATIONS · Help fill missing text and review terminology."
+  "language.community": "COMMUNITY TRANSLATIONS · Help fill missing text and review terminology.",
+  "connection.accessDenied": "Windows denied access to the game process. Close BB Tools, right-click BBTools.exe and choose Run as administrator, then reconnect. This may be needed when the game or launcher is elevated."
 }

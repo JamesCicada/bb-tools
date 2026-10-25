@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.5 — 2026-10-25
+
+- Complete Arabic and French extracted interface/message catalog drafts, joining Simplified Chinese at 100% coverage. All three include the new permission guidance; native-speaker review and in-game usability checks remain pending.
+- Preserve placeholders, format strings, numeric ranges, internal IDs and brand names. Add embedded-catalog checks for both languages; Arabic retains RTL layout and LTR numeric input.
+- Correct mixed-script language-picker percentage ordering and shorten the French Voyage tab label to fit the minimum window size.
+- Upload Arabic and French to the connected Crowdin source file as unapproved drafts. Crowdin reports 100% translated and 0% approved for both; existing duplicate translations are retained.
+
+- Fix multiplier insertion rejecting the native-created neutral node because its zero-second duration immediately sets its expiration flag. Validate the exact returned node index before attaching the leased row; preserve older expired/foreign nodes and report distinct failure stages.
+- Fix valid players being rejected during ordinary negative-stamina overdraft. Show an empty gauge and keep controls available; retry bounded read-only snapshots and verify ownership again before returning.
+- Preserve Windows access error codes and suggest restarting as administrator only after confirmed access denial. Report permission failures in automatic connection without blocking other accessible supported processes.
+
+Tested and confirmed on Bloodborne PC: multiplier and player-detection fixes. Read-only diagnosis found an unchanged actor during the reported failures and stamina down to −9. Further loading/preset/reconnect coverage and shadPS4-specific retesting remain welcome. Arabic and French Preferences/Discovery layouts were inspected at 860 × 680; native-speaker review and live permission-error testing retain their separate status.
+
+Validation: 481 regression checks pass in both Debug and Release, plus 26 script checks and 103 supported-image fingerprints. Arabic, French and Simplified Chinese each contain all 544 current catalog entries.
+
 ## 0.6.4 — 2026-10-24
 
 - Add an embedded JSON localization system with live interface-language selection, system-language detection, English fallback, preserved numeric-input culture and RTL layout support. Match the 28-language Crowdin list. Simplified Chinese has a complete extracted UI/message draft; other targets have starter labels and need community contributions. Game catalog names and technical diagnostics may remain English; no native-speaker review is claimed.

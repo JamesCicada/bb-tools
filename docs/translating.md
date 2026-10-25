@@ -9,9 +9,9 @@ or contribute a GitHub pull request using the instructions below.
 
 ## Translation status
 
-English is the source. Simplified Chinese (`zh-Hans`) has a draft for the complete
-extracted interface/message catalog; it still needs native-speaker review and
-in-game usability checks. Other languages have starter navigation/control labels
+English is the source. Simplified Chinese (`zh-Hans`), Arabic (`ar`) and French
+(`fr`) have drafts for the complete extracted interface/message catalog; these
+still need native-speaker review and in-game usability checks. Other languages have starter navigation/control labels
 and fall back to English for missing text. A language being selectable does **not**
 mean it is fully translated or reviewed. Settings → Preferences shows coverage.
 
@@ -79,6 +79,14 @@ Translation validation runs with `node --test scripts/*.test.cjs` in desktop CI.
 It rejects unknown keys, malformed placeholders and changed numeric/date formats.
 Runtime fallback also protects against missing entries. Language selection is
 stored by locale code, independently of translated labels and gameplay presets.
+
+Arabic and French drafts were uploaded to the connected Crowdin source file on
+2026-10-24, with 543 keys per uploaded catalog. Crowdin then reported 100%
+translated and 0% approved for both (538 visible phrases and five hidden source
+entries). Version 0.6.5 adds a permission-guidance message, translated in Arabic,
+French and Simplified Chinese, bringing each local catalog to 544 entries. Draft
+coverage is not native-speaker approval. Translation export pull requests and
+new source-file synchronization still need separate verification.
 
 Catalogs are embedded in the executable. Translators edit repository JSON files;
 users do not need to copy language packs or install Crowdin. Windows release ZIPs

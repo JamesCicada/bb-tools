@@ -1,4 +1,4 @@
-> **Version 0.6.4:** adds community translations, discovery boost and guaranteed eligible enemy drops. Live chalice/drop testing and translation review are pending.
+> **Version 0.6.5:** multiplier and player-detection fixes are tested and confirmed on Bloodborne PC. Adds permission guidance and completes Arabic/French catalog drafts alongside Simplified Chinese. shadPS4-specific retesting, chalice/drop testing and translation review remain pending.
 > Ludwig revival and multiplier cleanup fixes from 0.6.2 still need feedback; they have not been thoroughly tested in-game.
 > God mode + Ignore hits and earlier first-encounter boss revival are tested and confirmed on Bloodborne PC.
 > New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
@@ -17,6 +17,17 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.5: combat fixes and translations
+
+- Fix multiplier insertion skipping its newly created, zero-duration native effect.
+- Keep player controls available when attacks/dodges temporarily overdraw stamina.
+- Suggest **Run as administrator** when Windows explicitly denies game-process access.
+- Arabic, French and Simplified Chinese have 100% extracted UI/message draft coverage,
+  with English fallback for missing game catalog names and technical diagnostics.
+
+The multiplier and player-detection fixes are tested and confirmed on Bloodborne PC.
+Further loading/preset/reconnect coverage and shadPS4-specific retesting are welcome.
 
 ## v0.6.4: translations and discovery
 

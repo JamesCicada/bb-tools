@@ -541,5 +541,6 @@
   "message.SaverestoredPreviousfolder0RecoveryZIP1.e836063": "存档已恢复。旧文件夹：{0}；恢复 ZIP：{1}",
   "message.Backupdestinationmustbeoutsidethesavefolder.f824ef4": "备份位置必须在存档文件夹之外。",
   "message.Linksandjunctionsareunsupportedinsavefolders.e5b16c3": "存档文件夹不支持链接或联接点。",
-  "language.community": "社区翻译 · 欢迎补充缺失译文并校对术语。"
+  "language.community": "社区翻译 · 欢迎补充缺失译文并校对术语。",
+  "connection.accessDenied": "Windows 拒绝访问游戏进程。请关闭 BB Tools，右键单击 BBTools.exe 并选择“以管理员身份运行”，然后重新连接。游戏或启动器以管理员权限运行时可能需要此操作。"
 }

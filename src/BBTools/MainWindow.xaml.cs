@@ -127,7 +127,7 @@ public partial class MainWindow : Window
     private async Task ConnectCandidate(ProcessCandidate candidate)
     {
         if (connecting || closing || session != null || saveOperationBusy) return;
-        if (candidate.Started == 0) { Status.Text = Translations.T("message.ThisprocessidentityisrestrictedorunavailableRefresha.f5fe983"); return; }
+        if (candidate.Started == 0) { Status.Text = candidate.AccessError == 5 ? Translations.T("connection.accessDenied") : Translations.T("message.ThisprocessidentityisrestrictedorunavailableRefresha.f5fe983"); return; }
         App.Log?.Write("INFO", $"Connecting to {candidate.Label}, creation ticks {candidate.Started}");
         connecting = true;
         ConnectButton.IsEnabled = RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = false;
@@ -157,7 +157,7 @@ public partial class MainWindow : Window
             Status.Text = Translations.T("message.ConnectedFeaturesstartoffPlayercontrolsbecomeavailab.74ae0b3");
             Poll(this, EventArgs.Empty);
         }
-        catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); pending?.Dispose(); ReleaseOwner(); Status.Text = ex.Message; }
+        catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); pending?.Dispose(); ReleaseOwner(); Status.Text = ConnectionFailureMessage(ex); ConnectionHint.Text = Status.Text; }
         finally
         {
             connecting = false;
@@ -182,8 +182,15 @@ public partial class MainWindow : Window
             UpdateProcessPicker(best);
             await ConnectCandidate(best);
         }
+        catch (Exception ex) when (IsExpected(ex))
+        {
+            App.LogError(ex); Status.Text = ConnectionFailureMessage(ex); ConnectionHint.Text = Status.Text;
+            if (ProcessAccessErrors.IsAccessDenied(ex)) autoPaused = true;
+        }
         finally { discovering = false; }
     }
+    private static string ConnectionFailureMessage(Exception error) => ProcessAccessErrors.IsAccessDenied(error)
+        ? Translations.T("connection.accessDenied") : error.Message;
     private async void AutoConnectChanged(object sender, RoutedEventArgs e)
     {
         if (updating) return;

@@ -20,6 +20,13 @@ internal static partial class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if(args.Contains("--read-player"))
+        {
+            using var process = new ProcessMemory(int.Parse(args[1]),false);
+            var live = new PlayerSession(new ReadOnlyInspectionMemory(process),Convert.ToUInt64(args[2],16));
+            live.ValidateImage();Console.WriteLine(JsonSerializer.Serialize(live.ReadPlayer()));
+            Console.WriteLine($"Character validated; level {live.ReadCharacter().Level}.");return 0;
+        }
         if(args.Contains("--sample-parry"))return SampleParry(int.Parse(args[1]),Convert.ToUInt64(args[2],16));
         if(args.Contains("--inspect-live"))
         {
@@ -383,7 +390,9 @@ internal static partial class Program
             Write(root + 0x5780300, Convert.FromHexString("8B0281E0FFFFFF0081C8000000B08907C3"));
             Write(root + 0x5780400, Convert.FromHexString("C70700000000C3"));
             // Native-owned effect stand-ins: insert a preallocated node, then activate it.
-            Write(root + 0x17E3130, Convert.FromHexString("488B0748894708C740400F270000C3"));
+            // Real row 9999 has zero duration: insertion marks it expired before
+            // the helper installs its leased private row. Return the list index.
+            Write(root + 0x17E3130, Convert.FromHexString("488B07C740400F270000C6402D0148C7405800000000488B570831C94885D20F841F000000FFC148837A58000F8409000000488B5258E9EAFFFFFF48894258E9040000004889470889C8C3"));
             Write(root + 0x17EA980, Convert.FromHexString("C7471C0400000031C0C3"));
             VirtualProtect((nint)(root + 0x17E3000), 4096, 0x20, out _);
             VirtualProtect((nint)(root + 0x17EA000), 4096, 0x20, out _);
@@ -444,8 +453,10 @@ internal static partial class Program
             Check(PlayerSession.FindImage(memory, memory.AllocationBases()) == root, "discover relocated image through VirtualQueryEx");
             var emulatorFixture=new ProcessCandidate(child.Id,"shadPS4",child.StartTime.ToUniversalTime().Ticks);
             Check(ProcessDiscovery.FindBest([emulatorFixture],()=>false)==emulatorFixture,"validated emulator auto-connect requires no experimental opt-in");
+            Check(ProcessDiscovery.FindBest([new(123,"bb-probe",0,5),emulatorFixture],()=>false)==emulatorFixture,"a restricted process does not prevent automatic connection to an accessible verified game");
 
             var session = new PlayerSession(memory, root);
+            PlayerDetectionChecks(memory, session, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
             LootLifecycleChecks(memory,session,root);
@@ -567,20 +578,25 @@ internal static partial class Program
                     memory.Pointer(dispatcher.Payload + 56) == node && BitConverter.ToSingle(memory.Read(node, 4)) == GameActions.MultiplierLeaseSeconds && memory.Int32(node + 0x1C) == 4,
                     "game-thread effect helper attaches the private row only to the native-created player node and activates it");
                 dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
-                Check(memory.Int32(dispatcher.Payload + 48) == 0 && memory.Pointer(node + 0x48) == cloneRow,
+                Check(memory.Int32(dispatcher.Payload + 48) == -3 && memory.Pointer(node + 0x48) == cloneRow,
                     "effect ID collision cannot overwrite an existing effect");
-                var expiredNode=memory.AllocateData(0x80);memory.SetInt32(expiredNode+0x40,9999);memory.Write(expiredNode+0x2D,[1]);
+                var expiredNode=memory.AllocateData(0x80);memory.SetInt32(expiredNode+0x40,9999);memory.Write(expiredNode+0x2D,[1]);memory.Write(expiredNode+0x48,BitConverter.GetBytes(originalRow));
                 memory.Write(container+8,BitConverter.GetBytes(expiredNode));memory.Write(node+0x48,BitConverter.GetBytes(originalRow));
                 dispatcher.ExecuteAsync([new(helper,dispatcher.Payload)],effectPayload).GetAwaiter().GetResult();
-                Check(memory.Int32(dispatcher.Payload+48)==1&&memory.Pointer(node+0x48)==cloneRow&&memory.Read(expiredNode+0x2D,1)[0]==1,
-                    "native multiplier insertion skips an expired collision without waiting for another game frame");
+                Check(memory.Int32(dispatcher.Payload+48)==1&&memory.Pointer(node+0x48)==cloneRow&&memory.Read(expiredNode+0x2D,1)[0]==1&&memory.Pointer(expiredNode+0x48)==originalRow,
+                    "native multiplier insertion attaches the returned nonzero index without reviving an older expired neutral node");
+                memory.Write(container+8,new byte[8]);
+                dispatcher.ExecuteAsync([new(helper,dispatcher.Payload)],effectPayload).GetAwaiter().GetResult();
+                Check(memory.Int32(dispatcher.Payload+48)==-7&&memory.Pointer(node+0x48)==cloneRow&&memory.Read(node+0x2D,1)[0]==1,
+                    "a mismatched native row returns a distinct diagnostic and never activates an unverified node");
                 memory.Write(container + 8, new byte[8]);
                 memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor + 8));
                 dispatcher.ExecuteAsync([new(helper, dispatcher.Payload)], effectPayload).GetAwaiter().GetResult();
-                Check(memory.Int32(dispatcher.Payload + 48) == 0 && BitConverter.ToUInt64(memory.Read(container + 8, 8)) == 0,
+                Check(memory.Int32(dispatcher.Payload + 48) == -2 && BitConverter.ToUInt64(memory.Read(container + 8, 8)) == 0,
                     "changed effect container owner blocks native insertion");
                 memory.Write(container + 0x18, BitConverter.GetBytes(player.Actor));
                 memory.Write(container + 8, BitConverter.GetBytes(node));
+                memory.Write(node + 0x2D, [0]);
                 using (var multiplierActions = new GameActions(memory, session))
                 {
                     var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;

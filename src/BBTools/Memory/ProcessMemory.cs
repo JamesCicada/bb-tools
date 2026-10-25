@@ -11,14 +11,14 @@ public sealed class ProcessMemory : IMemory, IDisposable
     public ProcessMemory(int pid, bool writable = true)
     {
         handle = OpenProcess(0x100000 | 0x400 | 0x10 | (writable ? 0x800u | 0x20u | 0x08u : 0), false, pid);
-        if (handle.IsInvalid) { handle.Dispose(); throw new Win32Exception(Marshal.GetLastWin32Error()); }
+        if (handle.IsInvalid) { var error = Marshal.GetLastWin32Error(); handle.Dispose(); throw new Win32Exception(error); }
     }
     public bool IsAlive => WaitForSingleObject(handle, 0) == 0x102;
     public byte[] Read(ulong address, int size)
     {
         var bytes = new byte[size];
         if (!ReadProcessMemory(handle, (nuint)address, bytes, (nuint)size, out var read) || read != (nuint)size)
-            throw new IOException($"Cannot read game memory at 0x{address:X}. The player may be loading.");
+            throw new IOException($"Cannot read game memory at 0x{address:X}. The player may be loading.", new Win32Exception(Marshal.GetLastWin32Error()));
         return bytes;
     }
     public void Write(ulong address, byte[] value)
@@ -30,7 +30,7 @@ public sealed class ProcessMemory : IMemory, IDisposable
             || address + (ulong)value.Length > (ulong)region.BaseAddress + (ulong)region.RegionSize)
             throw new IOException("Target is not writable game data. No write was performed.");
         if (!WriteProcessMemory(handle, (nuint)address, value, (nuint)value.Length, out var written) || written != (nuint)value.Length)
-            throw new IOException("The game memory write failed.");
+            throw new IOException("The game memory write failed.", new Win32Exception(Marshal.GetLastWin32Error()));
     }
     public IEnumerable<ulong> AllocationBases()
     {

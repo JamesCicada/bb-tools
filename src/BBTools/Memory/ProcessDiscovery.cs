@@ -3,7 +3,7 @@ using System.IO;
 
 namespace BBTools.Memory;
 
-public sealed record ProcessCandidate(int Id, string Name, long Started)
+public sealed record ProcessCandidate(int Id, string Name, long Started, int AccessError = 0)
 {
     public string Label => $"{(ProcessDiscovery.Matches(Name) ? "★ " : "")}{Name}.exe · PID {Id}{(Started == 0 ? " · restricted" : "")}";
     public override string ToString() => Label;
@@ -41,10 +41,11 @@ public static class ProcessDiscovery
             try
             {
                 var name=process.ProcessName;
-                long started=0;
+                long started=0; var accessError=0;
                 try { started=process.StartTime.ToUniversalTime().Ticks; }
-                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException) { }
-                found.Add(new(process.Id,name,started));
+                catch (System.ComponentModel.Win32Exception ex) { accessError=ex.NativeErrorCode; }
+                catch (Exception ex) when (ex is InvalidOperationException or NotSupportedException) { }
+                found.Add(new(process.Id,name,started,accessError));
             }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
         }
@@ -59,10 +60,12 @@ public static class ProcessDiscovery
     public static ProcessCandidate? FindBest(IEnumerable<ProcessCandidate> candidates, Func<bool> cancelled)
     {
         var supported = new List<CheckedCandidate>();
+        var accessDenied = false;
         foreach (var candidate in candidates)
         {
             if (cancelled()) return null;
-            if (!Matches(candidate.Name) || candidate.Started == 0) continue;
+            if (!Matches(candidate.Name)) continue;
+            if (candidate.Started == 0) { accessDenied |= candidate.AccessError == 5; continue; }
             try
             {
                 using var process = Process.GetProcessById(candidate.Id);
@@ -71,11 +74,12 @@ public static class ProcessDiscovery
                 var image = PlayerSession.FindImage(memory, memory.ImageCandidates(candidate.Name.Contains("shadps4",StringComparison.OrdinalIgnoreCase)));
                 var session = new PlayerSession(memory, image);
                 var loaded = false;
-                try { session.ReadCharacter(); loaded = true; } catch (IOException) { }
+                try { session.ReadCharacter(); loaded = true; } catch (IOException ex) when (!ProcessAccessErrors.IsAccessDenied(ex)) { }
                 supported.Add(new(candidate, loaded));
             }
-            catch (Exception ex) when (ex is IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException) { }
+            catch (Exception ex) when (ex is IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException) { accessDenied |= ProcessAccessErrors.IsAccessDenied(ex); }
         }
+        if (supported.Count == 0 && accessDenied) throw new System.ComponentModel.Win32Exception(5);
         return Best(supported);
     }
 }

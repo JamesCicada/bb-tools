@@ -154,7 +154,21 @@ public sealed partial class GameActions
         ulong[] fields = [actor, container, clone, original];
         for (var i = 0; i < fields.Length; i++) BitConverter.GetBytes(fields[i]).CopyTo(payload, i * 8);
         await dispatcher.ExecuteAsync([new(effectHelper, dispatcher.Payload)], payload);
-        if (memory.Int32(dispatcher.Payload + 48) != 1) throw new IOException("The player changed or an effect collision prevented applying multipliers.");
+        var status = memory.Int32(dispatcher.Payload + 48);
+        if (status != 1)
+        {
+            App.Log?.Write("MULTIPLIERS", $"Native insertion failed at stage {status}; actor 0x{actor:X}, container 0x{container:X}.");
+            throw new IOException(status switch
+            {
+                -1 or -2 => "The player or effect owner changed during loading. Wait for the character to settle and apply again.",
+                -3 => "Effect 9999 is already active in the game or another mod. No existing effect was overwritten.",
+                -4 => "The player effect list exceeded its verified limit. Multipliers were not applied.",
+                -5 => "The game rejected multiplier effect insertion. No effect was replaced.",
+                -6 => "The native multiplier effect result was not found in the current player list.",
+                -7 => "The native multiplier effect row differs from the verified neutral row. No effect was replaced.",
+                _ => $"Multiplier insertion returned an unexpected result ({status}). Check the session log."
+            });
+        }
         effectActor = actor; effectContainer = container; effectRow = clone; originalEffectRow = original;
         effectNode = memory.Pointer(dispatcher.Payload + 56);
         lastMultiplierRefresh = Environment.TickCount64;
@@ -182,23 +196,32 @@ public sealed partial class GameActions
         void B(string hex) => writer.Write(Convert.FromHexString(hex));
         void L(string name) => labels[name] = stream.Position;
         void J(string opcode, string label) { B(opcode); branches.Add((stream.Position, label)); writer.Write(0); }
+        void Status(int value) { B("C74330"); writer.Write(value); }
         void Fn(ulong rva) { B("48B8"); writer.Write(imageBase + rva); B("FFD0"); }
         // SysV helper: RBX=payload, R12=container. Six pushes plus 24 local bytes
         // align RSP before calls and reserve the seventh integer argument.
-        B("554889E55341544155415641574883EC184889FB4C8B6308C7433000000000");
+        B("554889E55341544155415641574883EC184889FB4C8B6308"); Status(-1);
         B("488B034C39A0C8010000"); J("0F85", "end");
+        Status(-2);
         B("4939442418"); J("0F85", "end");
         // Check again on the game thread before creating anything.
         B("498B442408B900080000"); L("scan"); B("4885C0"); J("0F84", "insert");
-        B("8178400F270000"); J("0F85", "scanNext"); B("80782D00"); J("0F84", "end"); L("scanNext"); B("488B4058FFC9"); J("0F85", "scan"); J("E9", "end");
+        B("8178400F270000"); J("0F85", "scanNext"); B("80782D00"); J("0F84", "collision"); L("scanNext"); B("488B4058FFC9"); J("0F85", "scan"); Status(-4); J("E9", "end");
         L("insert"); B("4C89E7BE0F27000031D231C94531C04531C948C7042400000000");
         B("B80000803F660F6EC00F28C80F28D00F28D80F28E0"); Fn(0x17E3130);
-        B("498B442408B900080000"); L("find"); B("4885C0"); J("0F84", "end");
-        B("8178400F270000"); J("0F85", "findNext"); B("80782D00"); J("0F84", "attach"); L("findNext"); B("488B4058FFC9"); J("0F85", "find"); J("E9", "end");
-        L("attach"); B("488B531848395048"); J("0F85", "end");
+        // The verified neutral row has duration zero, so native insertion marks
+        // its new node expired immediately. Identify the exact returned index;
+        // never skip that node or revive an older expired node with the same ID.
+        Status(-5); B("85C0"); J("0F88", "end"); B("3D00080000"); J("0F83", "end");
+        B("89C1498B442408"); Status(-6);
+        L("find"); B("4885C0"); J("0F84", "end"); B("85C9"); J("0F84", "attach");
+        B("488B4058FFC9"); J("E9", "find");
+        L("attach"); B("8178400F270000"); J("0F85", "end");
+        Status(-7); B("488B531848395048"); J("0F85", "end");
         B("488B53104889504848BA"); writer.Write(MultiplierLeaseSeconds); writer.Write(MultiplierLeaseSeconds);
         B("488910C6402D00488943384889C7660FEFC0"); Fn(0x17EA980);
-        B("C7433001000000"); L("end"); B("4883C418415F415E415D415C5B5DC3");
+        Status(1); J("E9", "end"); L("collision"); Status(-3);
+        L("end"); B("4883C418415F415E415D415C5B5DC3");
         var length = stream.Position;
         foreach (var fixup in branches) { stream.Position = fixup.At; writer.Write((int)(labels[fixup.Label] - fixup.At - 4)); }
         stream.Position = length; return stream.ToArray();

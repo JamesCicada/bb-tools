@@ -616,3 +616,29 @@ neutralize private controls on loading, and restore only owned instructions on
 normal disable/disconnect. Private pages remain allocated until process exit to
 avoid freeing code cached by native threads. Abnormal trainer termination is not
 claimed to restore these hooks; full game process exit discards them.
+
+## v0.6.5 multiplier/player diagnosis — 2026-10-25
+
+- Reporter log: repeated multiplier failures with an unchanged actor and successful
+  neutral-row lookup/recovery; this error alone did not establish detachment.
+- The private neutral SpEffect 9999 row matches the existing full SHA-256 and has
+  duration 0.0. Native initialization at RVA 0x17EA810 marks node +0x2D expired
+  when that initial duration is zero. Insertion at 0x17E3130 returns a signed list
+  index, computed at 0x17E3642..0x17E367E. The old helper skipped expired nodes and
+  consequently rejected the very node it had just created.
+- The replacement checks that index (0..2047), traverses to that exact node on the
+  game thread, verifies ID 9999 and the original row pointer, then attaches the
+  five-second private clone and clears expiration before native activation. It
+  does not revive an older expired node or overwrite a foreign active effect.
+  Separate negative stage codes distinguish ownership, collision, bounds,
+  insertion, returned-node and row failures.
+- Read-only Bloodborne PC sampling while the user attacked/dodged observed raw
+  stamina down to -9 with stable valid player ownership. ReadPlayer previously
+  rejected all negative stamina, disabling otherwise valid controls. It now permits
+  bounded overdraft, presents an empty gauge without writing the raw value, and
+  checks the full pointer/owner chain again after reading. Up to three read-only
+  attempts tolerate a transient torn snapshot; persistent mismatches still reject.
+- Isolated synthetic checks now model immediate zero-duration expiration and
+  nonzero returned indices, with explicit collision/foreign-row protection. No
+  native multiplier write was performed against the user's live game during this
+  investigation. Live multiplier verification remains pending on both runtimes.

@@ -17,6 +17,14 @@ New features remain pending live validation even when automated checks pass.
 | --- | :---: | :---: | --- |
 | Camera → Movement controls ([#1](https://github.com/JamesCicada/bb-tools/issues/1)) | ✔️ | ⌛ | Re-enable speed/gravity toggles and sliders once a player validates, including after loading. UI/native checks cover selection, application and restoration; live retest pending. |
 
+## Reported regressions — v0.6.5
+
+- ✔️ Fix zero-duration native multiplier insertion by validating its returned node index; preserve expired/foreign effects and add distinct failure diagnostics.
+- ✔️ Accept normal negative stamina without losing the player; retain owner checks and bounded read-only snapshot retries.
+- ✔️ Suggest restarting as administrator after confirmed Windows access denial, including automatic discovery; distinguish loading from permissions.
+- ✔️ Tested and confirmed on Bloodborne PC: multiplier and player-detection fixes.
+- ⌛ Additional multiplier death/loading, preset and reconnect regression coverage, plus shadPS4-specific retesting. Permission guidance and native-speaker review retain their separate status.
+
 ## Item discovery and eligible enemy drops — v0.6.4
 
 - ✔️ Verify a separate discovery-effect path in the private 1.09 image at RVA `0x1581830`: effect state `0x42`, bonus field `+0x1FC`, added to the Arcane-derived baseline. Base attributes do not need editing.
@@ -28,6 +36,8 @@ New features remain pending live validation even when automated checks pass.
 
 - ✔️ Embed English source and all 28 configured locale catalogs; add live language switching, system detection, English fallback, RTL layout and a persisted UI language independent of gameplay presets.
 - ✔️ Draft the extracted Simplified Chinese interface/message catalog. Other targets have starter labels. Add Preferences/About contribution links and file-based Crowdin mapping; preserve IDs, placeholders and numeric parsing.
+- ✔️ Complete Arabic and French catalog drafts, joining Simplified Chinese at 100% extracted coverage in v0.6.5, including the new permission message. Native-speaker and live usability review remain pending.
+- ✔️ Upload both drafts to Crowdin; verify 100% translated and 0% approved. Retain existing duplicate translations and keep native-speaker approval pending.
 - ✔️ Add catalog/reference validation and placeholder-format checks to the existing CI test command.
 - ⌛ Native-speaker review, translated-layout testing, Bloodborne terminology and completion of starter catalogs.
 - ✔️ Link the app and contributor guide to [BB Tools on Crowdin](https://crowdin.com/project/bb-tools).
