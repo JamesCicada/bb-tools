@@ -48,3 +48,16 @@ manual correction rather than creating a duplicate version.
 
 The desktop app never contains or uses this API key. Upload permission and a live
 upload are validated separately from mocked workflow checks.
+
+
+## Separate Linux beta file
+
+Linux `0.6.6-linux-beta.1` is **Beta — NOT TESTED IN-GAME**. Its CI build produces
+`BBTools-v0.6.6-linux-beta.1-linux-x64.zip`, containing the native desktop executable
+and README only. Use a separate **Optional files** group and keep the main Windows
+file and overall mod version unchanged. The initial Linux file group must be
+created on Nexus before its file ID can be used by the official uploader.
+
+[Linux file name, description and upload settings](nexusmods-linux-beta.md) are
+ready to paste. The stable Windows workflow deliberately excludes prereleases;
+a Linux beta cannot accidentally replace the Windows main download.

@@ -1,10 +1,10 @@
-# Linux desktop preview
+# Linux beta — NOT TESTED IN-GAME
 
-BB Tools now has a native Linux desktop preview and a separate read-only connection
+BB Tools now has a native Linux desktop beta and a separate read-only connection
 probe. Both target **Linux x86-64 with glibc and Bloodborne 1.09**. Live attachment to
 Bloodborne has not been tested on Linux. No runtime or distribution is marked
 **tested and confirmed** for the game on the strength of source review or CI alone.
-The Windows release and its version/tag are unchanged by this preview.
+Version: **0.6.6-linux-beta.1**. This beta has its own GitHub prerelease and separate Nexus optional-file package; it does not replace the stable Windows download.
 
 ## What's implemented
 
@@ -29,7 +29,7 @@ available so cleanup can be retried after the character loads.
 
 ## Run the desktop
 
-Extract `BBTools-LinuxDesktop-preview-linux-x64.tar.gz` and run:
+Extract `BBTools-v0.6.6-linux-beta.1-linux-x64.tar.gz` and run:
 
 ```sh
 chmod +x BBTools.LinuxDesktop
@@ -122,3 +122,14 @@ Public information cannot validate the game's behavior end to end. Remaining wor
 is live game confirmation, additional runtime/distro profiles, native game actions
 and the rest of the Windows feature set. Source research is recorded separately in
 `docs/linux-compatibility-research.md` with primary sources.
+
+## Beta downloads and reports
+
+The desktop is available as `.tar.gz` and as a Nexus-friendly `.zip`; both contain
+only `BBTools.LinuxDesktop` and `README.md`. The probe is a separate diagnostic
+archive. **Beta — not tested in-game** applies to every Linux download, including
+when native CI succeeds. Report distro, desktop/display server, runtime version,
+connection result and relevant logs on GitHub. Native testers are needed.
+
+Insight editing and free level-up/weapon-upgrade controls are Windows-only in this
+release, alongside the other native-call/hook features listed as unavailable above.

@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>BBTools.LinuxProbe</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <Version>0.6.5</Version>
+    <Version>0.6.6-linux-beta.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../BBTools.LinuxCore/BBTools.LinuxCore.csproj" />

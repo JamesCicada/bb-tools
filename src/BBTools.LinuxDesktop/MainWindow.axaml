@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  x:Class="BBTools.LinuxDesktop.MainWindow" Width="1040" Height="780" MinWidth="860" MinHeight="680"
- Title="BB Tools · Linux preview" Background="#101318">
+ Title="BB Tools · Linux beta · NOT TESTED" Background="#101318">
  <Window.Styles>
   <Style Selector="Button"><Setter Property="Margin" Value="0,4,8,4"/><Setter Property="MinHeight" Value="36"/></Style>
   <Style Selector="TextBox"><Setter Property="MinHeight" Value="36"/><Setter Property="FlowDirection" Value="LeftToRight"/></Style>
@@ -12,7 +12,7 @@
   <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,18">
    <Image Source="avares://BBTools.LinuxDesktop/Assets/BBTools.png" Width="46" Height="46" Margin="0,0,14,0"/>
    <StackPanel Grid.Column="1"><TextBlock Text="BB TOOLS" FontSize="24" FontWeight="Bold" Foreground="#CBA96E"/>
-    <TextBlock Text="Linux desktop preview · experimental · game compatibility unverified" Foreground="#ABB2BF"/>
+    <TextBlock Text="LINUX BETA · NOT TESTED IN-GAME · 0.6.6-linux-beta.1" Foreground="#ABB2BF"/>
    </StackPanel>
    <TextBlock x:Name="ConnectionBadge" Grid.Column="2" Text="READ-ONLY · DISCONNECTED" VerticalAlignment="Center"/>
   </Grid>
@@ -97,7 +97,7 @@
    </StackPanel></ScrollViewer></TabItem>
   </TabControl>
   <Border Grid.Row="2" Background="#1A1F27" Padding="12" CornerRadius="8" Margin="0,16,0,0">
-   <StackPanel Spacing="8"><TextBlock x:Name="Status" Text="Linux preview · read-only until editing is explicitly enabled."/><TextBlock Text="Made with 🖤 By James Cicada · github.com/JamesCicada/bb-tools" Foreground="#ABB2BF" FontSize="12"/></StackPanel>
+   <StackPanel Spacing="8"><TextBlock x:Name="Status" Text="Linux beta · not tested in-game · read-only until editing is explicitly enabled."/><TextBlock Text="Made with 🖤 By James Cicada · github.com/JamesCicada/bb-tools" Foreground="#ABB2BF" FontSize="12"/></StackPanel>
   </Border>
  </Grid>
 </Window>

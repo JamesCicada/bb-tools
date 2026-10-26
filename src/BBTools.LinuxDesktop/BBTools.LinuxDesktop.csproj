@@ -4,8 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.6.5</Version>
-    <InformationalVersion>0.6.5-linux-preview</InformationalVersion>
+    <Version>0.6.6-linux-beta.1</Version>
+    <InformationalVersion>0.6.6-linux-beta.1</InformationalVersion>
     <AssemblyName>BBTools.LinuxDesktop</AssemblyName>
   </PropertyGroup>
   <ItemGroup>

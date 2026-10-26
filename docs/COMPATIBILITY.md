@@ -1,6 +1,6 @@
 # Launcher and emulator compatibility
 
-Last updated: 2026-10-25. Results apply to the tested BB Tools/game/runtime combination;
+Last updated: 2026-10-26. Results apply to the tested BB Tools/game/runtime combination;
 a launcher appearing in the process picker does not establish compatibility.
 
 ## Status key
@@ -17,17 +17,17 @@ a launcher appearing in the process picker does not establish compatibility.
 
 | Launcher / emulator | Process | Game profile | BB Tools | Status | Test scope / limitations |
 | --- | --- | --- | --- | --- | --- |
-| [Supermedo Bloodborne PC](https://github.com/Supermedo/bloodborne_pc) native Windows launcher | `bb-probe.exe` (runtime), `Bloodborne.exe` (launcher) | CUSA03173 1.09 | 0.4.0 | ✅ Perfectly fine | Confirmed player/combat tools, spawning, travel, supported boss revival/retry, presets/startup FOV, hotkeys, library, save tools, logging and diagnostics. Durability is a separate outstanding feature issue below. Exact launcher build was not recorded. |
-| [shadPS4](https://github.com/shadps4-emu/shadPS4) | `shadPS4.exe` | CUSA03173 1.09 | 0.4.0 development | ✅ Perfectly fine | Tested and confirmed on 2026-10-18; officially supported. Manual and automatic connection require no experimental opt-in. Exact emulator build/patch list was not recorded. Noclip/free camera were disabled in the confirmed build; photo mode/noclip remain disabled and hidden in local 0.6.0. New live enemy tracking in 0.6.0 also awaits live validation. |
+| [Supermedo Bloodborne PC](https://github.com/Supermedo/bloodborne_pc) native Windows launcher | `bb-probe.exe` (runtime), `Bloodborne.exe` (launcher) | CUSA03173 1.09 | 0.6.6 | ✅ Perfectly fine | Confirmed player/combat tools, spawning, travel, supported boss revival/retry, presets/startup FOV, hotkeys, library, save tools, logging and diagnostics. Active features, including durability, are tested and confirmed for 0.6.6. Exact launcher build was not recorded. |
+| [shadPS4](https://github.com/shadps4-emu/shadPS4) | `shadPS4.exe` | CUSA03173 1.09 | 0.4.0 development | ✅ Perfectly fine | Tested and confirmed on 2026-10-18; officially supported. Manual and automatic connection require no experimental opt-in. Exact emulator build/patch list was not recorded. Noclip/free camera were disabled in the confirmed build; photo mode/noclip remain disabled and hidden in local 0.6.0. Active target tools are included in the 0.6.6 confirmation. |
 | Other Bloodborne PC forks / launchers | Varies | Varies | Upcoming test build | ⌛ Not tested | Test each fork/build separately, including loaded image checks and game-thread operations. Native launcher compatibility does not transfer automatically. |
 
 ## Feature-specific exceptions
 
 | Configuration / feature | Status | Notes |
 | --- | --- | --- |
-| Native PC 1.09: weapon repair, threshold auto-repair and keep-full durability | ⛔ Not working | Reported to possibly repair only the left-hand gun; right-hand repair is unconfirmed. A native inventory repair-path replacement is implemented in the development build. Await the next live retest before changing this status. |
+| Native PC 1.09: weapon repair, threshold auto-repair and keep-full durability | ✅ Perfectly fine | Tested and confirmed with the active Windows features in 0.6.6; the earlier report is superseded. |
 | Native PC 1.09: FOV and camera distance/height overrides | ⚠️ Unstable | Controls are tested and confirmed, but overrides can cause performance drops and visual issues. Restore defaults if problems occur. |
-| Native PC 1.09: Micolash, Gehrman and Moon Presence revival | ⌛ Not tested | Experimental profiles are enabled in the development build. Ending bosses modify story-route flags; use a separate practice save. |
+| Native PC 1.09: Micolash, Gehrman and Moon Presence revival | ✅ Perfectly fine | Active boss controls are included in the 0.6.6 confirmation. Ending bosses modify story-route flags; use a separate practice save. |
 
 ## Version 0.6.0
 
@@ -63,3 +63,16 @@ entries distinct from tested failures.
 See the [Linux preview guide](linux-support.md) and [source research](linux-compatibility-research.md).
 The Windows release remains supported on its recorded configurations; Linux preview
 scope does not change those results.
+
+## Version 0.6.6 confirmation
+
+All currently active Windows features are tested and confirmed as of 2026-10-26,
+including Insight, free level-ups/upgrades, durability, target tools, discovery,
+presets and existing player/combat/travel controls. Hidden photo/freecam/flight/
+noclip and unimplemented roadmap entries are excluded. FOV/camera instability
+warnings remain relevant. Runtime versions and mod lists were not recorded, so
+this does not certify every launcher build or future runtime update.
+
+**Linux 0.6.6-linux-beta.1 is BETA — NOT TESTED IN-GAME.** Ubuntu synthetic memory,
+UI and startup checks do not establish game compatibility. It is a separate,
+limited desktop build; no Linux game feature is marked tested and confirmed.

@@ -1,12 +1,17 @@
-name: Linux desktop preview
+name: Linux beta
 
 on:
   workflow_dispatch:
+    inputs:
+      draft_release:
+        description: Create a Linux beta draft after all checks pass
+        type: boolean
+        default: false
   pull_request:
-    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md']
+    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md', 'docs/releases/*linux-beta*.md', 'src/BBTools/BBTools.csproj', 'scripts/*linux*.cjs']
   push:
     branches: [main, codex/linux-desktop-preview]
-    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md']
+    paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md', 'docs/releases/*linux-beta*.md', 'src/BBTools/BBTools.csproj', 'scripts/*linux*.cjs']
 
 permissions:
   contents: read
@@ -37,24 +42,32 @@ jobs:
         run: dotnet run --project tests/BBTools.LinuxDesktopChecks -c Release -- artifacts/ui
       - name: Native X11 desktop startup
         run: xvfb-run -a dotnet run --project src/BBTools.LinuxDesktop -c Release --no-build -- --smoke-test
-      - name: Package self-contained glibc x64 development apps
+      - name: Package Linux beta desktop, Nexus ZIP and read-only probe
         if: matrix.os == 'ubuntu-22.04'
         run: bash scripts/package-linux.sh
       - name: Smoke-test packaged apps without an installed dotnet runtime
         if: matrix.os == 'ubuntu-22.04'
         run: |
           mkdir -p artifacts/desktop-smoke artifacts/probe-smoke
-          tar -xzf artifacts/BBTools-LinuxDesktop-preview-linux-x64.tar.gz -C artifacts/desktop-smoke
-          tar -xzf artifacts/BBTools-LinuxProbe-preview-linux-x64.tar.gz -C artifacts/probe-smoke
+          tar -xzf artifacts/BBTools-v*-linux-x64.tar.gz -C artifacts/desktop-smoke
+          tar -xzf artifacts/BBTools-LinuxProbe-v*-linux-x64.tar.gz -C artifacts/probe-smoke
+          python3 - <<'PY'
+          import glob, zipfile
+          with zipfile.ZipFile(glob.glob('artifacts/BBTools-v*-linux-x64.zip')[0]) as archive:
+              assert sorted(archive.namelist()) == ['BBTools.LinuxDesktop', 'README.md']
+              assert archive.testzip() is None
+              assert archive.getinfo('BBTools.LinuxDesktop').external_attr >> 16 & 0o111
+          PY
           artifacts/probe-smoke/BBTools.LinuxProbe --help
           env DOTNET_ROOT=/nonexistent xvfb-run -a artifacts/desktop-smoke/BBTools.LinuxDesktop --smoke-test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Linux-preview-${{ matrix.os }}
+          name: Linux-beta-${{ matrix.os }}
           path: |
-            artifacts/BBTools-*-preview-linux-x64.tar.gz
-            artifacts/BBTools-Linux-SHA256SUMS.txt
+            artifacts/BBTools-*-linux-x64.tar.gz
+            artifacts/BBTools-*-linux-x64.zip
+            artifacts/SHA256SUMS-linux.txt
             artifacts/linux-publish.log
             artifacts/ui/*.png
           if-no-files-found: warn
@@ -73,3 +86,38 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet run --project tests/BBTools.LinuxChecks -c Release
       - run: dotnet run --project tests/BBTools.LinuxDesktopChecks -c Release -- artifacts/ui
+
+  draft-release:
+    name: Tag and prepare Linux beta draft
+    needs: [glibc, portable]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.draft_release == true)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: bbtools-linux-beta-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Detect a new Linux beta tag
+        id: version
+        env:
+          MANUAL_DRAFT: ${{ inputs.draft_release }}
+        run: |
+          tag=$(node -e "console.log(require('./scripts/linux-release-metadata.cjs')(process.cwd()).tag)")
+          if [[ $MANUAL_DRAFT == true || -z $(git tag --list "$tag") ]]; then echo 'changed=true' >> "$GITHUB_OUTPUT"; else echo 'changed=false' >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/download-artifact@v4
+        if: steps.version.outputs.changed == 'true'
+        with:
+          name: Linux-beta-ubuntu-22.04
+          path: linux-release-artifacts
+      - name: Create separate prerelease tag and draft
+        if: steps.version.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await require('./scripts/draft-linux-release.cjs')({ github, context, core });

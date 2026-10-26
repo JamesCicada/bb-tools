@@ -4,27 +4,33 @@
 marked tested and confirmed only after explicit live confirmation of that specific feature in Bloodborne PC 1.09.
 New features remain pending live validation even when automated checks pass.
 
-## Progression controls — next update
+On 2026-10-26, all currently active Windows features were confirmed tested and working.
+This supersedes earlier pending notes for active Windows features below; old scenario
+lists remain useful for regression testing. It does not mark future/unimplemented
+features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
+any Linux game feature as confirmed.
+
+## v0.6.6 active Windows features — tested and confirmed
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Set Insight | ✔️ | ⌛ | Player → Insight, 0–99. Read-only inspection verified the loaded value and instructions. Test 0, 99, spending, reloading and another character. |
-| Free level-ups | ✔️ | ⌛ | Workshop; reversible level-cost curve override, normal caps. Test zero Echoes, multiple planned levels, cancel/confirm, disabling and reconnect. |
-| Free weapon upgrades | ✔️ | ⌛ | Workshop; zero native Echo/material costs. Test zero resources, all stone tiers through +10, DLC weapons, cancel/confirm and restoring normal costs. |
-| Progression presets | ✔️ | ⌛ | Separate cost toggles in saved/startup presets; older presets default off. Insight balances are deliberate edits and are not saved in presets. |
+| Set Insight | ✔️ | ✔️ | Tested and confirmed. Player → Insight, 0–99. Range 0–99; native reader and write readback validated.|
+| Free level-ups | ✔️ | ✔️ | Tested and confirmed. Workshop; reversible level-cost curve override, native caps and restoration.|
+| Free weapon upgrades | ✔️ | ✔️ | Tested and confirmed. Workshop; zero native Echo/material costs, native reinforcement limits and restoration.|
+| Progression presets | ✔️ | ✔️ | Tested and confirmed. Separate cost toggles in saved/startup presets; older presets default off. Insight balances are deliberate edits and are not saved in presets.|
 
 ## Reported regressions — v0.6.2
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Ludwig revival | ✔️ | ⌛ | Reset separate defeat gate 9471 and Ludwig entry/phase state. Check repeat and first-encounter modes, fog, both phases and post-fight behavior. |
-| Multiplier cleanup and legacy-effect recovery | ✔️ | ⌛ | Finite renewable effects; setting both multipliers to 1 and applying removes identifiable old trainer effects. Check repeated 2× application, disconnect, force-close, warp, death and full process restart. Persistence across a full restart has not been reproduced. |
+| Ludwig revival | ✔️ | ✔️ | Tested and confirmed. Reset separate defeat gate 9471 and Ludwig entry/phase state. Check repeat and first-encounter modes, fog, both phases and post-fight behavior.|
+| Multiplier cleanup and legacy-effect recovery | ✔️ | ✔️ | Tested and confirmed. Finite renewable effects; setting both multipliers to 1 and applying removes identifiable old trainer effects. Check repeated 2× application, disconnect, force-close, warp, death and full process restart. Persistence across a full restart has not been reproduced.|
 
 ## Reported regressions — v0.6.3
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Camera → Movement controls ([#1](https://github.com/JamesCicada/bb-tools/issues/1)) | ✔️ | ⌛ | Re-enable speed/gravity toggles and sliders once a player validates, including after loading. UI/native checks cover selection, application and restoration; live retest pending. |
+| Camera → Movement controls ([#1](https://github.com/JamesCicada/bb-tools/issues/1)) | ✔️ | ✔️ | Tested and confirmed. Re-enable speed/gravity toggles and sliders once a player validates, including after loading. UI/native checks cover selection, application and restoration; |
 
 ## Reported regressions — v0.6.5
 
@@ -148,16 +154,16 @@ separately. Automated checks and package startup checks do not replace live resu
 - ✔️ Hotkeys use physical-state polling with a visible shortcut summary and selectable modifiers, including None for F-keys alone.
 - ✔️ Camera page warns that FOV/distance/height overrides are unstable and can cause performance and visual issues.
 - ✔️ Boss revival/retry, hotkeys and the other implemented additions are tested and confirmed.
-- ⌛ Weapon durability remains unresolved: repair-now, threshold auto-repair and keep-full mode are deferred to the next development session.
+- ✔️ Weapon durability: repair-now, threshold auto-repair and keep-full mode are tested and confirmed in 0.6.6; the earlier deferral is superseded.
 
 ### Test this batch
 
 Current fixes: 209 automated checks passed in both Debug and Release; all 60 native-image
 fingerprints verified. These checks use isolated synthetic processes. Live confirmation
-is recorded for the implemented additions except weapon durability.
+is recorded for the implemented additions; the earlier durability exception is superseded by 0.6.6.
 
 - ✔️ Startup: save FOV 100°, restart, connect/load; verify FOV resumes. Bind a full preset, reconnect and check all stored toggles and hotkeys.
-- ⌛ Durability: damage an equipped weapon, test repair-now, threshold repair and full-durability mode; swap/transform weapons and load another area.
+- ✔️ Tested and confirmed — Durability: damage an equipped weapon, test repair-now, threshold repair and full-durability mode; swap/transform weapons and load another area.
 - ✔️ Revival: use a separate practice save. From any area select a supported boss, revive/retry, verify fog and boss, then test entrance placement/refill/timer. Original flag journals are in `%LOCALAPPDATA%\BBTools\boss-revival`.
 - ✔️ Retry cancellation: cancel during loading; entrance placement must stay cancelled. Already requested area travel and saved revival flags remain applied.
 - ✔️ Presets/library: rename, duplicate, group/search, export/import and SQLite backup; verify old presets still load and importing does not run game actions.
@@ -168,21 +174,21 @@ is recorded for the implemented additions except weapon durability.
 - ✔️ Save restore: close game/launcher, use a disposable save-folder copy, restore a backup and check retained recovery folder/ZIP.
 - ✔️ Session logs and redacted diagnostics export.
 
-### Development build awaiting live tests
+### Active Windows implementation — tested and confirmed in 0.6.6
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Native inventory weapon repair | ✔️ | ⌛ | Replaces the unreliable cache writes. Test all four weapon slots, manual repair, threshold and keep-full modes. |
-| Player movement multiplier | ✔️ | ⌛ | Player-only transient movement scale; one shared multiplier, not independent walk/run/sprint controls. |
-| World gravity | ✔️ | ⌛ | Affects all actors and physics; restores captured values. |
-| Active poison cure | ✔️ | ⌛ | Removes slow/rapid poison effects while preserving unrelated effects. |
-| Loaded-character inspector | ✔️ | ⌛ | Live lock-on tracking and retained snapshots implemented; live validation pending. |
-| Micolash, Gehrman and Moon Presence revival | ✔️ | ⌛ | Experimental event profiles; ending bosses can alter story/NG progression. |
-| Game-owned item-name catalog import | ✔️ | ⌛ | Import English names from your own game files; search by name or ID. |
-| HUD visibility and detached free camera | ✔️ | ⌛ | HUD available; photo mode disabled and hidden pending movement/HUD fixes. |
+| Native inventory weapon repair | ✔️ | ✔️ | Tested and confirmed. Replaces the unreliable cache writes. Test all four weapon slots, manual repair, threshold and keep-full modes.|
+| Player movement multiplier | ✔️ | ✔️ | Tested and confirmed. Player-only transient movement scale; one shared multiplier, not independent walk/run/sprint controls.|
+| World gravity | ✔️ | ✔️ | Tested and confirmed. Affects all actors and physics; restores captured values.|
+| Active poison cure | ✔️ | ✔️ | Tested and confirmed. Removes slow/rapid poison effects while preserving unrelated effects.|
+| Loaded-character inspector | ✔️ | ✔️ | Tested and confirmed. Live lock-on tracking and retained snapshots implemented; |
+| Micolash, Gehrman and Moon Presence revival | ✔️ | ✔️ | Tested and confirmed. Experimental event profiles; ending bosses can alter story/NG progression.|
+| Game-owned item-name catalog import | ✔️ | ✔️ | Tested and confirmed. Import English names from your own game files; search by name or ID.|
+| HUD visibility | ✔️ | ✔️ | Tested and confirmed. Detached free camera remains disabled/hidden and is tracked separately. |
 | Flight and noclip | ✔️ | ⌛ | Flight/noclip disabled and hidden pending further fixes. |
-| Chalice coordinate bookmarks | ✔️ | ⌛ | Restricted to the same connection, character, altar and dungeon progress snapshot. |
-| Expanded advanced presets | ✔️ | ⌛ | Movement, world gravity and HUD; flight/free camera are explicit session actions. |
+| Chalice coordinate bookmarks | ✔️ | ✔️ | Tested and confirmed. Restricted to the same connection, character, altar and dungeon progress snapshot.|
+| Expanded advanced presets | ✔️ | ✔️ | Tested and confirmed.  Movement, world gravity and HUD; flight/free camera are explicit session actions. |
 | Official shadPS4 support | ✔️ | ✔️ | Tested and confirmed; no experimental opt-in. Image/player validation retained. |
 
 See [the test plan](docs/1.0-test-plan.md) and [compatibility results](docs/COMPATIBILITY.md).
@@ -196,7 +202,7 @@ Earlier live confirmations remain valid only for their recorded feature/configur
 - ⌛ Camera shake and shoulder offset.
 - ⌛ Jump-height control independent of world gravity.
 - ⌛ Persistent generated-dungeon bookmarks across reconnection/progress changes.
-- ✔️ Exact lock-on target inspection implemented; ⌛ live validation and full enemy defense/limb statistics.
+- ✔️ Exact lock-on target inspection is tested and confirmed. Full enemy defense/limb statistics remain future work.
 
 These need verified engine paths. They are not represented by placeholder controls.
 
@@ -234,25 +240,25 @@ and tested-and-confirmed status are tracked separately; pending live checks rema
 | Database backup and import/export     |     ✔️      |          ✔️          | Versioned JSON for presets, bookmarks and favorites, transactional validated imports and consistent SQLite backups.                                                                                            |
 | Boss retry workflow                   |     ✔️      |          ✔️          | 22 base-game/DLC profiles (three experimental). From any loaded area: journal original encounter flags, revive, reload area, place outside fog, refill health/stamina and start timer. Micolash/Gehrman/Moon Presence await live tests. |
 | Encounter timer                       |     ✔️      |          ✔️          | Manual start/finish or automatic retry start; pause while loading/dead; attempts, deaths and session best. Tested and confirmed.                                                                   |
-| Enemy information panel               |     ✔️      |          ⌛          | Dedicated live target page with retained data, status effects and super-armor readings; live validation pending.                                                                                                                                           |
+| Enemy information panel               |     ✔️      | ✔️ | Tested and confirmed. Dedicated live target page with retained data, status effects and super-armor readings; |
 | Searchable common items and favorites |     ✔️      |          ✔️          | Search bundled common items and saved custom-ID favorites by name/ID; load favorites before explicit spawning. Optional full game-owned English name import implemented; live test pending.                                                |
 | Weapon setup editor                   |     ⌛      |          ⌛          | Inspect reinforcement and gem slots with valid-value checks and preview before applying.                                                                                                                       |
-| Unlimited weapon durability           |     ✔️      |          ⌛          | Native inventory repair replacement implemented; live both-hand validation pending. |
-| Automatic weapon repair               |     ✔️      |          ⌛          | Native inventory repair replacement implemented; live both-hand validation pending. |
+| Unlimited weapon durability           |     ✔️      | ✔️ | Tested and confirmed. Native inventory repair replacement implemented; |
+| Automatic weapon repair               |     ✔️      | ✔️ | Tested and confirmed. Native inventory repair replacement implemented; |
 | Status-effect controls                |     ⌛      |          ⌛          | Clear poison/frenzy and optionally prevent buildup without changing unrelated effects.                                                                                                                         |
 | Field-of-view (FOV) slider            |     ✔️      |          ✔️          | Live vertical FOV override and original-value restore. 38–120° vertical, with automatic reversible clamp removal above 48°.                                                                                    |
 | Wider FOV without an external patch   |     ✔️      |          ✔️          | Verified four-byte in-memory clamp update; preserves preexisting uncap, restores owned changes and rejects unknown code.                                                                                       |
-| Player movement speed                 |     ✔️      |          ⌛          | Shared player-only movement scale implemented; independent walk/run/sprint controls remain research.                                                                                                |
+| Player movement speed                 |     ✔️      | ✔️ | Tested and confirmed. Shared player-only movement scale implemented; independent walk/run/sprint controls remain research.|
 | Player action speed                   |     ⌛      |          ⌛          | Optional player animation speed multiplier; verify attacks, dodges and interactions independently of movement.                                                                                                 |
 | Game speed and slow motion            |     ⌛      |          ⌛          | Adjustable simulation speed for practice with a quick reset; verify menus, audio and loading behavior.                                                                                                         |
 | Camera distance and height            |     ✔️      |          ✔️          | Distance/look-at-height scales 0.5–2.0, original-value restoration, loading recovery and preset support. Shoulder offset remains unimplemented.                                                                |
 | Camera and screenshot tools           |     ⌛      |          ⌛          | Hide HUD, toggle camera shake and add a verified free camera with adjustable speed and restoration.                                                                                                            |
 | Gravity and jump controls             |     ⌛      |          ⌛          | Optional player gravity and jump-height settings for exploration; verify collision and restore normal values.                                                                                                  |
 | Flight and noclip exploration         |     ✔️      |          ⌛          | Flight/noclip disabled and hidden pending further fixes.                                                                                                      |
-| Chalice-aware location bookmarks      |     ✔️      |          ⌛          | Connection/character/altar/progress snapshot required; reconnect expires the bookmark.                                                                                                                       |
+| Chalice-aware location bookmarks      |     ✔️      | ✔️ | Tested and confirmed. Connection/character/altar/progress snapshot required; reconnect expires the bookmark.|
 | Backup history and restore assistant  |     ✔️      |          ✔️          | List BB Tools ZIPs; verify paths/sizes/CRC, require game closed, retain prior folder and recovery ZIP before replacement.                                                                                      |
 | Diagnostics export                    |     ✔️      |          ✔️          | App/runtime versions and redacted status/config summary, excluding save contents and personal filesystem paths.                                                                                                |
-| Expanded runtime compatibility        |     ✔️      |          ⌛          | shadPS4 officially supported, tested and confirmed. Other runtime profiles remain unverified.                                                                                                                                     |
+| Expanded runtime compatibility        |     ✔️      | ✔️ | Tested and confirmed. shadPS4 officially supported, tested and confirmed. Other runtime profiles remain unverified.|
 
 ## Release automation
 
@@ -269,28 +275,28 @@ code and automated checks do not establish live functionality.
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Top navigation and section tabs | ✔️ | ⌛ | Compact header; Combat/Travel/Camera/Settings section tabs. |
-| Search inside selection menus | ✔️ | ⌛ | Processes, items, lamps, locations and presets; IDs/categories retained. |
+| Top navigation and section tabs | ✔️ | ✔️ | Tested and confirmed. Compact header; Combat/Travel/Camera/Settings section tabs.|
+| Search inside selection menus | ✔️ | ✔️ | Tested and confirmed. Processes, items, lamps, locations and presets; IDs/categories retained.|
 | First-encounter boss revival | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC. Optional met/intro reset; journal records mode and requested changes. Multi-phase/ending profiles retain separate test status. |
-| Keep Blood Echoes on death | ✔️ | ⌛ | Native IsDeathPenaltySkip flag; no balance refill. Test respawn, bloodstains, loads and restoration. |
-| Discord Rich Presence | ✔️ | ⌛ | Default on; Settings opt-out; desktop IPC, reconnect and explicit activity clear. |
+| Keep Blood Echoes on death | ✔️ | ✔️ | Tested and confirmed. Native IsDeathPenaltySkip flag; no balance refill. Test respawn, bloodstains, loads and restoration.|
+| Discord Rich Presence | ✔️ | ✔️ | Tested and confirmed. Default on; Settings opt-out; desktop IPC, reconnect and explicit activity clear.|
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | Standalone photo mode/free camera | ✔️ | ⌛ | Disabled and hidden; movement/HUD fixes need further work. |
-| Configurable camera controls | ✔️ | ⌛ | WASD/EQ/arrows/ZC, Shift/Alt modifiers, reset/exit. Save/restart and custom bindings. |
+| Configurable camera controls | ✔️ | ⌛ | Hidden photo-mode controls; not part of active-feature confirmation. WASD/EQ/arrows/ZC, Shift/Alt modifiers, reset/exit. |
 | Photo FOV, roll and camera speeds | ✔️ | ⌛ | Separate 10–120° photo FOV; reset restores entry composition. |
 | Photo HUD and hunter movement lock | ✔️ | ⌛ | Optional; restore original state on exit, death/loading and disconnect. World simulation remains running. |
 | Flight/noclip | ✔️ | ⌛ | Disabled and hidden pending further work. |
 
 Version 0.6.0 is approved for push. Unconfirmed features retain their individual test status.
-Enemy details is available for live testing; unknown effects keep native IDs.
+Enemy details is tested and confirmed; unknown effects keep native IDs.
 
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
-| Live target details and retention | ✔️ | ⌛ | Real lock-on selection, HP/stamina, distance, buildup/limits, effect IDs/states/timers and super armor. Keeps last readings across unload/disconnect. |
-| Less crowded navigation | ✔️ | ⌛ | Top navigation replaces sidebar; section tabs replace crowded expanders; connections in Settings. |
-| Rapid-poison cure mapping | ✔️ | ⌛ | Select native states 2/6; preserve legacy disease state 5. |
+| Live target details and retention | ✔️ | ✔️ | Tested and confirmed. Real lock-on selection, HP/stamina, distance, buildup/limits, effect IDs/states/timers and super armor. Keeps last readings across unload/disconnect.|
+| Less crowded navigation | ✔️ | ✔️ | Tested and confirmed. Top navigation replaces sidebar; section tabs replace crowded expanders; connections in Settings.|
+| Rapid-poison cure mapping | ✔️ | ✔️ | Tested and confirmed. Select native states 2/6; preserve legacy disease state 5.|
 
 
 ## Parry practice
@@ -298,14 +304,13 @@ Enemy details is available for live testing; unknown effects keep native IDs.
 | Feature | Priority | Implemented | Tested and confirmed | Notes |
 | --- | --- | :---: | :---: | --- |
 | Practice setup / restore previous combat setup | First | ✔️ | ✔️ | Tested and confirmed. Protection, infinite bullets/stamina, 0.1× damage; conflicting overrides off; rewards unchanged. |
-| Keep targeted enemy alive / restore living target HP | First | ✔️ | ⌛ | Native cannot-die bit, preserve damage/reactions, transfer on new lock-on, disarm on context loss; no revival. |
+| Keep targeted enemy alive / restore living target HP | First | ✔️ | ✔️ | Tested and confirmed. Native cannot-die bit, preserve damage/reactions, transfer on new lock-on, disarm on context loss; no revival.|
 | Verified firearm-parry success / visceral-opening indicator | High | ⌛ | ➖ | Requires a verified native event, distinct from ordinary stagger, backstab and limb break. |
 | Automatic attempts/successes/streaks/visceral follow-ups | High | ⌛ | ➖ | Depends on reliable shot and parry attribution; no guessed counts. |
 | Auto-parry | High | ⌛ | ➖ | Independent normal-play toggle, separate from practice setup; no automatic protection/resources/damage changes. Verify firearm eligibility, attack timing and native shot request first. |
 | Adjustable firearm-parry window | High | ⌛ | ➖ | Trace the native firearm eligibility check; generic parry flags and thrust-counter effect 31 do not establish it. No guessed parameter slider. |
 
-New target controls are manual per session, excluded from startup presets, and
-remain unconfirmed until tested on Bloodborne PC and shadPS4.
+Target controls are tested and confirmed, remain manual per session and are excluded from startup presets.
 
 
 ## Photo and targeting fixes / quality controls
@@ -313,7 +318,7 @@ remain unconfirmed until tested on Bloodborne PC and shadPS4.
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | Native camera task/controller resolution | ✔️ | ⌛ | Wrong owning object fixed. Actual Bloodborne PC task, controller and frame read-only validation passed; movement/exit/load tests pending. |
-| Authoritative lock-on selection | ✔️ | ⌛ | Actual enemy identity, HP, effects and modules read successfully while the camera mirror was null. UI/protection writes still need live confirmation. |
+| Authoritative lock-on selection | ✔️ | ✔️ | Tested and confirmed. Actual enemy identity, HP, effects and modules read successfully while the camera mirror was null. UI/protection writes still need live confirmation.|
 | PNG capture and output folder | ✔️ | ⌛ | Capture key/default F12, countdown, physical displayed client resolution; original always preserved. |
 | Photo filters and adjustments | ✔️ | ⌛ | Noir/Warm/Cool/Sepia, exposure, contrast, saturation, vignette, preview and separate edited PNGs. Defaults persist. |
 | Larger internal render resolution / supersampling | ⌛ | ➖ | Separate renderer research; resizing a saved photo is not a substitute. |
@@ -333,7 +338,7 @@ remain unconfirmed until tested on Bloodborne PC and shadPS4.
 | Feature | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | God mode + Ignore hits together | ✔️ | ✔️ | Tested and confirmed on Bloodborne PC after the polling update. Earlier lag/crash report does not establish a renderer crash cause. |
-| Avoid redundant combat/stamina writes | ✔️ | ⌛ | Poll still validates/reapplies cleared flags and follows loading; stable flags produce no writes. Combined-toggle native regression checks pass; no claim of a crash fix. |
+| Avoid redundant combat/stamina writes | ✔️ | ✔️ | Tested and confirmed. Poll still validates/reapplies cleared flags and follows loading; stable flags produce no writes. Combined-toggle native regression checks pass; no claim of a crash fix.|
 
 
 ## v0.6.1 Discord branding and optional details

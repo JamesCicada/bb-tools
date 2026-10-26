@@ -1,20 +1,65 @@
 # Changelog
 
-## Unreleased — Insight and free progression
+## 0.6.6 — 2026-10-26
 
-- Add Player → Insight: view and set the current balance from 0–99, with instruction/character validation and readback. The game can save the edited balance.
-- Add separate Workshop toggles for free level-ups and free weapon upgrades, including Blood Echo and material requirements. Keep native stat and upgrade caps; support saved/startup presets, restore normal runtime costs on disable/disconnect, and preserve conflicting external edits. Reopen the relevant game menu after changing a toggle.
-- Add English, Simplified Chinese, Arabic and French strings for the new controls; all three complete translation drafts retain full coverage.
+### New
 
-Validation: all 522 synthetic regression checks pass, including Insight limits, independent toggles, table reloads, cleanup, foreign-edit protection and preset compatibility. All 112 supported-image fingerprints match. Read-only live inspection verified Insight 72 and the relevant cost sites. No live character or cost writes were performed; actual leveling/upgrading/spending still needs testing.
+- **Free level-ups:** use the normal Level up menu without spending Blood Echoes.
+- **Free weapon upgrades:** fortify weapons without Blood Echoes or upgrade materials. Normal reinforcement limits remain.
+- **Insight editor:** view and set the current balance from 0–99 in Player.
+- Save both free-progression toggles in presets, including startup presets. Reopen the relevant game menu after changing them; costs restore when disabled or disconnected.
 
-## Unreleased — Native action compatibility
+### Fixes and polish
 
-- Check only the native instructions used by each request: item spawning, lamp/chalice warping, saved-location restoration or the shared dispatcher. An unrelated modified warp routine no longer blocks spawning, menus, repair or multipliers. Keep exact validation of every required instruction.
-- Report relative/absolute mismatch addresses and expected/actual bytes in compatibility errors. Log the parsed item ID, category and quantity before submission.
-- Investigate the 0.6.5 report where both spawning and warping fail before submission. Decimal `7100000` is Saw Spear (Weapon category, quantity 1). The supplied log does not identify the changed instruction or establish whether a runtime update or mod caused it. Live confirmation on the affected installation remains pending.
+- Native actions validate only the instructions they use, so an unrelated patched warp routine no longer disables item spawning, menus, repair or multipliers.
+- Compatibility failures now record exact mismatched addresses and expected/actual bytes. Spawn attempts record the item ID, category and quantity.
+- Add Simplified Chinese, Arabic and French translations for the new controls, maintaining full extracted-catalog coverage.
 
-Validation: Release build succeeds and all 500 synthetic regression checks pass, including action-specific mismatch isolation and read-only compatibility diagnostics. This does not confirm item granting on the affected runtime.
+### Test status
+
+**All currently active Windows features are tested and confirmed.** This includes the new progression/Insight controls and existing durability, discovery, target, combat, travel, preset and player features. Photo mode/freecam and flight/noclip remain disabled and hidden; future roadmap features are excluded. Camera/FOV instability warnings remain relevant.
+
+Automated validation: 522 Windows regression checks and 112 supported-image fingerprints; release-automation checks run in CI. Translation drafts still welcome native-speaker review.
+
+### Linux is a separate beta
+
+[Linux v0.6.6-linux-beta.1](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.6-linux-beta.1) is **BETA — NOT TESTED IN-GAME** and has fewer features than Windows. Its desktop, read-only probe and Nexus-friendly ZIP are separate downloads; Windows confirmations do not apply to Linux.
+
+Windows ZIP contents: `BBTools.exe` and `README.md` only. No version 0.6.5 tag or published asset is replaced.
+
+## 0.6.6-linux-beta.1 — 2026-10-26 — BETA, NOT TESTED IN-GAME
+
+**This is a separate experimental Linux desktop build. It has NOT been tested in-game on Linux. Testers and feedback are needed.** It does not replace the Windows stable release and does not include every Windows feature.
+
+### Included
+
+- Native Linux x64/glibc desktop using Avalonia; X11/XWayland display support.
+- Show/filter all processes, rank likely Bloodborne engines first, and validate the game image and loaded character.
+- Read-only connection by default; opt-in health, Blood Echoes and attribute editing plus selected health/stamina/combat flags.
+- Literal-argument launcher support and process-access/Yama diagnostics, without changing system permissions.
+- Shared translations/RTL, per-session logs with five retained, and ownership-aware cleanup.
+- Separate always-read-only probe for connection and permission reports.
+
+### Unavailable in this beta
+
+Item spawning, native menus/warps, boss revival, multipliers, discovery/drop hooks, FOV, Insight editing, free level-ups/upgrades, presets, hotkeys, Discord and save restore require further Linux implementation. Photo/freecam/noclip remain hidden.
+
+### Downloads
+
+- `BBTools-v0.6.6-linux-beta.1-linux-x64.tar.gz`: desktop.
+- `BBTools-v0.6.6-linux-beta.1-linux-x64.zip`: identical desktop, suitable for the separate Nexus optional file.
+- `BBTools-LinuxProbe-v0.6.6-linux-beta.1-linux-x64.tar.gz`: read-only diagnostics.
+- `SHA256SUMS-linux.txt`: checksums.
+
+Each archive contains only its executable and `README.md`. The desktop executable is `BBTools.LinuxDesktop`; run `chmod +x BBTools.LinuxDesktop` if needed.
+
+### Compatibility and testing
+
+Target: native bbport, original Bloodborne 1.09, x86-64 glibc. musl/Alpine, ARM64 and Wayland-only sessions are outside this beta. Linux game attachment and gameplay are **not tested in-game** on any distribution/runtime.
+
+Ubuntu 22.04/24.04 synthetic process/profile checks, headless UI checks, X11 startup and self-contained packaging are checked in CI. Passing CI is platform/build evidence, not live Bloodborne compatibility. Keep a backup of your save before testing opt-in edits.
+
+Please report distro, display server, runtime version, connection result and relevant logs through [GitHub issues](https://github.com/JamesCicada/bb-tools/issues). [Linux guide](https://github.com/JamesCicada/bb-tools/blob/main/docs/linux-support.md).
 
 ## 0.6.5 — 2026-10-25
 
@@ -30,13 +75,6 @@ Validation: Release build succeeds and all 500 synthetic regression checks pass,
 Tested and confirmed on Bloodborne PC: multiplier and player-detection fixes. Read-only diagnosis found an unchanged actor during the reported failures and stamina down to −9. Further loading/preset/reconnect coverage and shadPS4-specific retesting remain welcome. Arabic and French Preferences/Discovery layouts were inspected at 860 × 680; native-speaker review and live permission-error testing retain their separate status.
 
 Validation: 481 regression checks pass in both Debug and Release, plus 26 script checks and 103 supported-image fingerprints. Arabic, French and Simplified Chinese each contain all 544 current catalog entries.
-
-## Unreleased — Linux desktop preview
-
-- Add an Avalonia desktop preview for native Linux x64/glibc, with a shared game core and a separate read-only probe. Start each connection read-only; expose experimental health/Echoes/attribute edits and selected resource/combat flags only after explicit opt-in and image/player validation.
-- Add checked Linux process reads/data-only writes, PID/start-time validation, bounded/cancellable image discovery, cleanup ownership, a per-game edit lock, five-session logs and shared translation catalogs. Keep native-call/hook features unavailable until their Linux execution path is implemented and verified.
-- Research upstream bbport, Linux forks, bbhost, kernel process-access rules and native tooling. Add literal-argument launch-from-tool and Yama/container diagnostics without changing system policy. Record sources and a compatibility matrix; no live Linux game result is claimed.
-- Add Ubuntu 22.04/24.04 native synthetic checks, headless localization/UI checks, real X11 startup and standalone development packaging. Both Ubuntu jobs pass 37 native/profile checks and five UI checks; X11 and packaged-app startup pass. Windows regression CI also passes. These results do not establish live Linux game compatibility.
 
 ## 0.6.4 — 2026-10-24
 

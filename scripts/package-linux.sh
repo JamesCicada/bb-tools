@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+version=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$project_root/src/BBTools.LinuxDesktop/BBTools.LinuxDesktop.csproj")
+if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+-linux-beta\.[1-9][0-9]*$ ]]; then
+  echo 'Expected an explicit Linux beta version.' >&2; exit 1
+fi
 mkdir -p "$project_root/artifacts"
 package_stage=$(mktemp -d "$project_root/artifacts/linux-package.XXXXXX")
 cleanup() {
@@ -17,8 +21,17 @@ for target in LinuxDesktop LinuxProbe; do
     echo "Unexpected $target sidecars: packaging must contain its executable and README.md only." >&2
     exit 1
   fi
-  archive="BBTools-$target-preview-linux-x64.tar.gz"
+  if [[ $target == LinuxDesktop ]]; then archive="BBTools-v$version-linux-x64.tar.gz"; else archive="BBTools-LinuxProbe-v$version-linux-x64.tar.gz"; fi
   tar -czf "$project_root/artifacts/$archive" -C "$package_stage/$target" "BBTools.$target" README.md
+  if [[ $target == LinuxDesktop ]]; then
+    python3 - "$package_stage/$target" "$project_root/artifacts/BBTools-v$version-linux-x64.zip" <<'PY'
+import pathlib, sys, zipfile
+source = pathlib.Path(sys.argv[1])
+with zipfile.ZipFile(sys.argv[2], 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    for name in ('BBTools.LinuxDesktop', 'README.md'):
+        archive.write(source / name, name)
+PY
+  fi
 done > "$project_root/artifacts/linux-publish.log"
-(cd "$project_root/artifacts" && sha256sum BBTools-LinuxDesktop-preview-linux-x64.tar.gz BBTools-LinuxProbe-preview-linux-x64.tar.gz > BBTools-Linux-SHA256SUMS.txt)
-echo 'Packaged Linux desktop preview and read-only probe.'
+(cd "$project_root/artifacts" && sha256sum "BBTools-v$version-linux-x64.tar.gz" "BBTools-v$version-linux-x64.zip" "BBTools-LinuxProbe-v$version-linux-x64.tar.gz" > SHA256SUMS-linux.txt)
+echo 'Packaged Linux beta (not tested in-game), Nexus ZIP and read-only probe.'

@@ -1,12 +1,6 @@
-> **Version 0.6.5:** multiplier and player-detection fixes are tested and confirmed on Bloodborne PC. Adds permission guidance and completes Arabic/French catalog drafts alongside Simplified Chinese. shadPS4-specific retesting, chalice/drop testing and translation review remain pending.
-> Ludwig revival and multiplier cleanup fixes from 0.6.2 still need feedback; they have not been thoroughly tested in-game.
-> God mode + Ignore hits and earlier first-encounter boss revival are tested and confirmed on Bloodborne PC.
-> New features and the native weapon-repair replacement need live testing. See [test plan](docs/1.0-test-plan.md).
-> **Bloodborne PC and shadPS4 are officially supported** for CUSA03173 1.09. Tested and confirmed.
-> Select the game/emulator process or use auto-connect; no experimental opt-in is needed.
-> Photo mode/free camera and flight/noclip are disabled and hidden for this version.
-> Enemy details now has its own live tracking page; awaiting live validation.
-
+> **Version 0.6.6:** active Windows features are tested and confirmed, including Insight editing, free level-ups, free weapon upgrades, durability, discovery, target tools and presets.
+> **Linux 0.6.6-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
+> Bloodborne PC and shadPS4 remain officially supported for game 1.09. Photo mode/free camera and flight/noclip remain disabled and hidden.
 
 # BB Tools
 
@@ -18,16 +12,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
-## v0.6.5: combat fixes and translations
+## v0.6.6: free progression, Insight and Linux beta
 
-- Fix multiplier insertion skipping its newly created, zero-duration native effect.
-- Keep player controls available when attacks/dodges temporarily overdraw stamina.
-- Suggest **Run as administrator** when Windows explicitly denies game-process access.
-- Arabic, French and Simplified Chinese have 100% extracted UI/message draft coverage,
-  with English fallback for missing game catalog names and technical diagnostics.
-
-The multiplier and player-detection fixes are tested and confirmed on Bloodborne PC.
-Further loading/preset/reconnect coverage and shadPS4-specific retesting are welcome.
+- Player: view and set Insight from 0–99.
+- Workshop: separate free level-up and free weapon-upgrade toggles remove Echo and material costs; save them in presets, including startup presets.
+- Validate only the native instructions needed by an action; log exact compatibility mismatches and item parameters.
+- Active Windows features are tested and confirmed. Hidden photo/flight/noclip features stay outside that confirmation.
+- Separate [Linux beta](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.6-linux-beta.1): native x64/glibc desktop and a read-only probe. **Not tested with a live Linux game; fewer features than Windows.**
 
 ## v0.6.4: translations and discovery
 
@@ -63,11 +54,10 @@ Please include your runtime/version, reproduction steps and session log in repor
 
 ### Linux development
 
-A native Linux x64/glibc desktop preview and a separate read-only probe are in
-development for bbport (`deadinside28/bloodborne_pc`). The preview starts read-only
+A native Linux x64/glibc desktop beta and a separate read-only probe are available separately for bbport (`deadinside28/bloodborne_pc`). The preview starts read-only
 and includes experimental data editing; it is not yet the full Windows feature set.
-See the [Linux preview guide](https://github.com/JamesCicada/bb-tools/blob/codex/linux-desktop-preview/docs/linux-support.md)
-and [source research](https://github.com/JamesCicada/bb-tools/blob/codex/linux-desktop-preview/docs/linux-compatibility-research.md).
+See the [Linux preview guide](https://github.com/JamesCicada/bb-tools/blob/main/docs/linux-support.md)
+and [source research](https://github.com/JamesCicada/bb-tools/blob/main/docs/linux-compatibility-research.md).
 Linux game compatibility remains unconfirmed; synthetic CI does not replace live testing.
 
 ## v0.6.1 patch
@@ -198,7 +188,7 @@ disconnecting does not undo those changes.
   resume once the player validates. New connections start with toggles off.
 - Set Blood Echoes or add 10,000; supported balance range is 0–999,999,999.
 - Set current Insight from 0–99 in Player. The game may save the new balance.
-- Workshop: separate free level-up and free weapon-upgrade toggles remove Blood Echo and upgrade-material costs. Enable before opening the relevant menu; reopen it after changing the setting. Normal stat/upgrade limits remain. Both toggles support saved/startup presets and restore runtime costs when disabled or disconnected. New options await live testing.
+- Workshop: separate free level-up and free weapon-upgrade toggles remove Blood Echo and upgrade-material costs. Enable before opening the relevant menu; reopen it after changing the setting. Normal stat/upgrade limits remain. Both toggles support saved/startup presets and restore runtime costs when disabled or disconnected. Tested and confirmed.
 - Edit Vitality, Endurance, Strength, Skill, Bloodtinge and Arcane from 1–99.
   Blood Level follows the attribute-point change, within 4–544. Apply while idle,
   then quit to title and reload to refresh derived stats.
