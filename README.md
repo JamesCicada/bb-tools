@@ -61,6 +61,15 @@ Automated checks pass, but both fixes need live feedback on Bloodborne PC and sh
 Persistence of Echoes scaling across a full game restart has not been reproduced.
 Please include your runtime/version, reproduction steps and session log in reports.
 
+### Linux development
+
+A native Linux x64/glibc desktop preview and a separate read-only probe are in
+development for bbport (`deadinside28/bloodborne_pc`). The preview starts read-only
+and includes experimental data editing; it is not yet the full Windows feature set.
+See the [Linux preview guide](https://github.com/JamesCicada/bb-tools/blob/codex/linux-desktop-preview/docs/linux-support.md)
+and [source research](https://github.com/JamesCicada/bb-tools/blob/codex/linux-desktop-preview/docs/linux-compatibility-research.md).
+Linux game compatibility remains unconfirmed; synthetic CI does not replace live testing.
+
 ## v0.6.1 patch
 
 Fix: replaced placeholder Discord presence details with actual game data. Optional

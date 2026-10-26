@@ -52,6 +52,21 @@ New features remain pending live validation even when automated checks pass.
 - ✔️ Link the app and contributor guide to [BB Tools on Crowdin](https://crowdin.com/project/bb-tools).
 - ✔️ Verify Crowdin's GitHub integration through merged translation pull requests #2 and #3. Keep untranslated strings omitted from JSON exports so the app's English fallback preserves accurate coverage.
 
+## Linux support — unreleased
+
+First target: native `deadinside28/bloodborne_pc` (bbport), Linux x64, game 1.09.
+Aim for broad distro compatibility; none is marked supported until live testing.
+See [Linux development and tester guide](docs/linux-support.md).
+
+| Milestone | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Read-only connection probe | ✔️ | ⌛ | Shared image/player checks, maps, process reads and permission diagnostics. Native synthetic CI and live game results are distinct. |
+| Linux CI and development artifacts | ✔️ | ⌛ | Ubuntu 22.04/24.04 pass 37 native/profile checks and five UI checks each; X11 and packaged startup pass. glibc x64 preview archives generated. Synthetic platform evidence only; live game pending, musl deferred. |
+| Cross-platform desktop preview and shared core | ✔️ | ⌛ | Avalonia preview, process picker, parent launch, locales/RTL and logs; Windows desktop remains intact. Live game behavior unconfirmed. |
+| Experimental data editing | ✔️ | ⌛ | Opt-in health/Echoes/attributes and selected owned resource/combat flags; checked non-executable data writes and per-process edit lock. Native synthetic checks do not establish live compatibility. |
+| Native game actions and hooks | ⌛ | ⌛ | Allocation, thread coordination and dispatcher before spawning, menus, warp, revival, multipliers, discovery or FOV patches. |
+| Hotkeys, Discord and save integration | ⌛ | ⌛ | Desktop/sandbox paths, Unix sockets and Wayland/X11 behavior. |
+
 ## Feature checklist
 
 | Feature                                              | Implemented | Tested and confirmed | Notes                                                                                            |
