@@ -155,7 +155,7 @@
   "ui.Goods199Equipment1CustomIDsmustexistinyourgameThegam.c42ee31": "Goods: 1–99. Equipment: 1. Custom IDs must exist in your game. The game handles inventory limits and storage; check your inventory after the request completes.",
   "ui.WORKSHOPMENUS.67910f5": "WORKSHOP MENUS",
   "ui.Openselectedmenu.0a5b46c": "Open selected menu",
-  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Normal Echoes and material costs apply. Close normally in the game.",
+  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "Level up, fortify, repair, storage, blood gems and Caryll runes. Close other menus first and use while idle. Costs apply unless the matching free option above is enabled. Close normally in the game.",
   "ui.Lamps.4960826": "Lamps",
   "ui.WARPTOLAMP.a4b783a": "WARP TO LAMP",
   "ui.FilterlampsbynameorDLC.dcfb2c7": "Filter lamps by name or DLC",
@@ -542,5 +542,15 @@
   "links.items": "Bloodborne Wiki · Datamined item IDs ↗",
   "links.weapons": "Weapon IDs ↗",
   "language.community": "COMMUNITY TRANSLATIONS · Help fill missing text and review terminology.",
-  "connection.accessDenied": "Windows denied access to the game process. Close BB Tools, right-click BBTools.exe and choose Run as administrator, then reconnect. This may be needed when the game or launcher is elevated."
+  "connection.accessDenied": "Windows denied access to the game process. Close BB Tools, right-click BBTools.exe and choose Run as administrator, then reconnect. This may be needed when the game or launcher is elevated.",
+  "insight.heading": "INSIGHT",
+  "insight.amount": "Insight amount",
+  "insight.set": "Set Insight",
+  "insight.hint": "0–99. Changes the current balance; the game may save it.",
+  "insight.updated": "Insight updated.",
+  "progression.heading": "PROGRESSION COSTS",
+  "progression.levels": "Free level-ups",
+  "progression.upgrades": "Free weapon upgrades",
+  "progression.hint": "Enable before opening Level up or Fortify weapons. Costs no Blood Echoes or upgrade materials. Reopen the menu after changing these settings. Normal level and upgrade limits still apply. Costs restore when disabled or disconnected.",
+  "progression.paused": "Progression costs paused: {0} Toggle the setting to retry."
 }
