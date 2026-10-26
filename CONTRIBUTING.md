@@ -68,6 +68,13 @@ success or failure. Only the ZIP and checksum remain in artifacts.
 
 ## Prepare a version bump
 
+Keep public changelogs focused on major features and meaningful fixes. Omit minor
+promotional or support-link changes.
+
+The optional Ko-fi link is `https://ko-fi.com/jcicada`. When added, show it clearly
+in the About tab only. Do not add donation popups, reminders, startup prompts,
+footer links or other promotional placements. Do not mention it in changelogs.
+
 Update the project version, CHANGELOG.md and `docs/releases/vX.Y.Z.md` together.
 `node --test scripts/draft-release.test.cjs` checks that the current version has
 nonempty release notes before CI can proceed to tagging and draft creation.

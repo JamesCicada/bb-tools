@@ -3,11 +3,11 @@
 Destination: [BB TOOLS, Bloodborne mod 614](https://www.nexusmods.com/bloodborne/mods/614?tab=files).
 
 - **File name:** BB Tools Linux x64 BETA — NOT TESTED
-- **Version:** `0.6.6-linux-beta.1`
+- **Version:** `0.6.7-linux-beta.1`
 - **Category:** Optional files
-- **Archive:** `BBTools-v0.6.6-linux-beta.1-linux-x64.zip`
+- **Archive:** `BBTools-v0.6.7-linux-beta.1-linux-x64.zip`
 - **Mod-manager download:** Disabled (standalone desktop tool)
-- **Update the overall mod version:** No; Windows remains `0.6.6`
+- **Update the overall mod version:** No; Windows remains `0.6.7`
 - **Replace/archive the Windows file:** No
 
 ## File description

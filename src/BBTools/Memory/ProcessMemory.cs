@@ -150,6 +150,25 @@ public sealed class ProcessMemory : IMemory, IDisposable
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
     }
+    internal void ReplaceShoulderCode(ulong imageBase, byte[] expected, byte[] replacement)
+    {
+        if (expected.Length != ShoulderCamera.Original.Length || replacement.Length != expected.Length)
+            throw new ArgumentException("Invalid shoulder camera patch size.");
+        var at = imageBase + ShoulderCamera.Offset;
+        if (!Read(at, expected.Length).SequenceEqual(expected)) throw new IOException("Shoulder camera instructions changed externally.");
+        if (!VirtualProtectEx(handle, (nuint)at, (nuint)expected.Length, 0x40, out var protection)) throw new IOException("Shoulder camera code is unavailable.");
+        try
+        {
+            if (!WriteProcessMemory(handle, (nuint)at, replacement, (nuint)replacement.Length, out var count) || count != (nuint)replacement.Length)
+                throw new IOException("Shoulder camera patch write failed.");
+        }
+        finally
+        {
+            var flushed = FlushInstructionCache(handle, (nuint)at, (nuint)expected.Length);
+            var restored = VirtualProtectEx(handle, (nuint)at, (nuint)expected.Length, protection, out _);
+            if (!flushed || !restored) throw new IOException("Shoulder camera protection/cache restoration failed.");
+        }
+    }
     // Only the two independently verified loot sites may use this write path.
     internal void ReplaceLootCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
     {

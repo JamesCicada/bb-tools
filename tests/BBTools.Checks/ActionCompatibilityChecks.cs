@@ -34,6 +34,7 @@ internal static partial class Program
             var expected = f.Offset switch
             {
                 0x18FD960 or 0x18F7891 => kinds,
+                0x17D89F0 or 0x17D8A7C or 0x1A8BC00 => [GameActionKind.Item, GameActionKind.Gem],
                 0x154B110 => [GameActionKind.RestoreLocation],
                 0x156D110 or 0x156D0E0 or 0x132E050 => [GameActionKind.Warp],
                 _ => new[] { GameActionKind.Item }

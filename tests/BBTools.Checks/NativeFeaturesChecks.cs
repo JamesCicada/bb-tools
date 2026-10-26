@@ -37,6 +37,7 @@ internal static partial class Program
             Ptr(motion+8,actor+0x1000);Check(get((nint)motion,(nint)argument)==3,"movement hook preserves foreign actor speed");Ptr(motion+8,actor);
             memory.ReplaceMovementCode(root,patch,MovementSpeed.Original);Check(get((nint)motion,(nint)argument)==3&&memory.Read(root+MovementSpeed.Offset,14).SequenceEqual(MovementSpeed.Original),"movement reset restores original executable bytes");
             Reject<ArgumentException>(()=>movement.Apply(float.NaN),"invalid movement scale rejected before patching");
+            ShoulderHookChecks(memory,session,root,world,actor);
             foreach(var f in PlayerSession.FeatureFingerprints)Bytes(root+f.Offset,f.Bytes);
             var actionFlags=memory.AllocateData(0x300);Ptr(modules+8,actionFlags);
             var nativeHitGate=memory.AllocateCode(Convert.FromHexString("8B8FE1010000F7C100400004751D488B8FB0030000488B49088B89BC010000F6C101750783E102D1E988C8C3"));

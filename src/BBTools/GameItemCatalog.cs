@@ -16,7 +16,8 @@ public static class GameItemCatalog
         var file=Path.Combine(root,"msg",language,"item.msgbnd.dcx");using var input=File.OpenRead(file);if(input.Length>64*1024*1024)throw new IOException("Item message archive is too large.");
         using var source=new MemoryStream();input.CopyTo(source);return ParseArchive(source.ToArray());
     }
-    internal static ItemChoice[] ParseArchive(byte[] source)
+    internal static ItemChoice[] ParseArchive(byte[] source) => ParseTables(source, new Dictionary<int,uint> { [10]=0x40000000, [11]=0, [12]=0x10000000, [13]=0x20000000 });
+    internal static ItemChoice[] ParseTables(byte[] source, IReadOnlyDictionary<int,uint> tables)
     {
         var data=source;
         if(source.AsSpan().StartsWith("DCX\0"u8))
@@ -31,7 +32,7 @@ public static class GameItemCatalog
         Range(data,0x40,count*stride);var result=new Dictionary<(uint,int),ItemChoice>();
         for(var i=0;i<count;i++)
         {
-            var header=checked((int)(0x40+i*stride));var id=BitConverter.ToInt32(data,header+0x1C);uint category=id switch{10=>0x40000000,11=>0,12=>0x10000000,13=>0x20000000,_=>uint.MaxValue};if(category==uint.MaxValue)continue;
+            var header=checked((int)(0x40+i*stride));var id=BitConverter.ToInt32(data,header+0x1C);if(!tables.TryGetValue(id,out var category))continue;
             var size=BitConverter.ToInt64(data,header+0x10);var offset=BitConverter.ToUInt32(data,header+0x18);Range(data,offset,size);if(size>16*1024*1024)throw new IOException("Item-name table exceeds the limit.");
             var b=data.AsSpan((int)offset,(int)size).ToArray();Range(b,0,0x28);if(b[1]!=0||b[2]!=2)throw new IOException("Only little-endian FMG v2 item names are supported.");
             var groups=BitConverter.ToInt32(b,12);var strings=BitConverter.ToInt32(b,16);var pointers=BitConverter.ToInt64(b,24);
@@ -43,8 +44,8 @@ public static class GameItemCatalog
                 for(var entry=first;entry<=last;entry++)
                 {
                     var text=BitConverter.ToInt64(b,checked((int)(pointers+((long)index+entry-first)*8)));if(text==0||entry==0||entry>=0x0FFFFFFF)continue;Range(b,text,2);
-                    var end=text;while(end+2<=b.Length&&end-text<=512&&BitConverter.ToUInt16(b,(int)end)!=0)end+=2;
-                    if(end+2>b.Length||end-text>512)throw new IOException("Invalid item-name string.");var name=Encoding.Unicode.GetString(b,(int)text,(int)(end-text)).Trim();if(string.IsNullOrWhiteSpace(name))continue;
+                    var end=text;while(end+2<=b.Length&&end-text<=4096&&BitConverter.ToUInt16(b,(int)end)!=0)end+=2;
+                    if(end+2>b.Length||end-text>4096)throw new IOException("Invalid item-name string.");var name=Encoding.Unicode.GetString(b,(int)text,(int)(end-text)).Trim();if(string.IsNullOrWhiteSpace(name))continue;
                     result[(category,entry)]=new(name,entry,category);
                 }
             }

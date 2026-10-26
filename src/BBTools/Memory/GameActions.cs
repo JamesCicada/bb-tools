@@ -13,7 +13,7 @@ public sealed record LampChoice(string Name, int Entity)
     public override string ToString() => Label;
 }
 
-public enum GameActionKind { Dispatcher, Item, Warp, RestoreLocation }
+public enum GameActionKind { Dispatcher, Item, Warp, RestoreLocation, Gem }
 
 public sealed partial class GameActions(ProcessMemory memory, PlayerSession session) : IDisposable
 {
@@ -51,6 +51,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
         {
             GameActionKind.Dispatcher => [0, 1],
             GameActionKind.Item => [0, 1, 2, 3, 4, 5, 6],
+            GameActionKind.Gem => [0, 1, 2, 3, 6],
             GameActionKind.Warp => [0, 1, 8, 9, 10],
             GameActionKind.RestoreLocation => [0, 1, 7],
             _ => throw new ArgumentOutOfRangeException(nameof(kind))

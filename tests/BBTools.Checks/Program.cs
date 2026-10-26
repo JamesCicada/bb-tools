@@ -37,6 +37,7 @@ internal static partial class Program
         }
         if (args.Contains("--fixture")) return Fixture();
         if (args.Contains("--render")) return Render(args[1], args.Length > 2 ? int.Parse(args[2]) : 1040, args.Length > 3 ? int.Parse(args[3]) : 860, args.Length > 4 ? args[4] : "Player", args.Length > 5 ? double.Parse(args[5], System.Globalization.CultureInfo.InvariantCulture) : 0);
+        if(args.Contains("--verify-gem-text")){var effects=GemTextCatalog.Load(args.Last());Check(effects.Any(x=>x.Id==13101&&x.Name=="Add blood ATK +0.5"),"private menu FMG resolves blood-gem effect descriptions by GemeffectParam ID");Console.WriteLine($"PASS {effects.Length} blood-gem descriptions read from private game files.");return 0;}
         if(args.Contains("--verify-catalog")){var items=GameItemCatalog.Load(args.Last());Check(items.Any(x=>x.Id==7000000&&x.Category==0&&x.Name.Contains("Saw Cleaver")),"private game catalog resolves the Saw Cleaver name and weapon ID");Check(items.Any(x=>x.Id==1000&&x.Category==0x40000000&&x.Name=="Blood Vial"),"private game catalog separates goods and weapon categories");Console.WriteLine($"PASS {items.Length} item-name entries read from private game files.");return 0;}
         if (args.Contains("--verify-elf")) return VerifyElf(args.Last());
         if (args.Contains("--check-updates"))
@@ -46,7 +47,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); GemNativeHelperChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -223,7 +224,7 @@ internal static partial class Program
     }
     private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
     {
-        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint})) memory.Write(root+f.Offset,f.Bytes);
+        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)})) memory.Write(root+f.Offset,f.Bytes);
         memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
         var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
         var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
@@ -458,6 +459,7 @@ internal static partial class Program
             var session = new PlayerSession(memory, root);
             PlayerDetectionChecks(memory, session, root);
             ProgressionChecks(memory, session, root);
+            GemChecks(memory, session, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
             LootLifecycleChecks(memory,session,root);
@@ -768,6 +770,8 @@ internal static partial class Program
         PreviewLanguage("zh-Hans");Check(((System.Windows.Controls.Button)window.FindName("NavPlayer")).Content.ToString()=="猎人"&&((System.Windows.Controls.Button)window.FindName("NavItems")).Tag.ToString()=="Items","live Chinese switching translates labels while preserving navigation identity");
         PreviewLanguage("ar");Check(window.FlowDirection==FlowDirection.RightToLeft&&((System.Windows.Controls.TextBox)window.FindName("ItemId")).FlowDirection==FlowDirection.LeftToRight,"RTL interface keeps numeric and item-ID input left to right");
         PreviewLanguage("en");
+        Check(((System.Windows.Controls.TextBlock)window.FindName("GemsTestStatus")).Text=="Not tested in-game"&&((System.Windows.Controls.TextBlock)window.FindName("ShoulderTestStatus")).Text=="Not tested in-game",
+            "both unconfirmed features keep persistent in-game testing labels beside their controls");
         var movementToggle=(System.Windows.Controls.CheckBox)window.FindName("MovementEnabled");
         var movementSlider=(System.Windows.Controls.Slider)window.FindName("MovementSlider");
         var gravityToggle=(System.Windows.Controls.CheckBox)window.FindName("GravityEnabled");
@@ -791,6 +795,23 @@ internal static partial class Program
         Check(itemPicker.Items.Count==0,"dropdown search handles no matching items without selecting another ID");
         search.Text="";search.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)!.UpdateSource();
         Check(itemPicker.Items.Count>1&&((System.Windows.Controls.TextBox)window.FindName("ItemSearch")).Visibility==Visibility.Collapsed,"clearing dropdown search restores choices with no separate search field");
+
+        typeof(MainWindow).GetField("gemCatalog",localeBinding)!.SetValue(window,new GemCatalog([new(4,0)],[new(13101,1,1,13101),new(17310,10,2,17310)]));
+        typeof(MainWindow).GetField("gemTexts",localeBinding)!.SetValue(window,new Dictionary<int,string>{{13101,"Add blood ATK +0.5"},{17310,"Add physical ATK +21"}});
+        var gemSearch=(System.Windows.Controls.TextBox)window.FindName("GemEffectSearch");gemSearch.Text="blood ATK";
+        var gemPicker=(System.Windows.Controls.ComboBox)window.FindName("GemEffectPicker");
+        Check(gemPicker.Items.Count==1,"blood-gem search filters imported effect descriptions independently of ordinary items");
+        gemPicker.SelectedIndex=0;((System.Windows.Controls.ComboBox)window.FindName("GemEffectSlot")).SelectedIndex=2;
+        typeof(MainWindow).GetMethod("SetGemEffect",localeBinding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(((System.Windows.Controls.TextBox)window.FindName("GemEffect3")).Text=="13101"&&((System.Windows.Controls.TextBox)window.FindName("GemEffect1")).Text=="-1","effect-picker action fills only the chosen gem slot");
+        var carriedGem=new InventoryGem(0xC0800001,new GemSpec(4,63,[17310,-1,-1,-1,-1,-1]));
+        var inventoryPicker=(System.Windows.Controls.ComboBox)window.FindName("GemInventory");inventoryPicker.ItemsSource=new[]{carriedGem};inventoryPicker.SelectedIndex=0;
+        typeof(MainWindow).GetMethod("LoadGem",localeBinding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(((System.Windows.Controls.ComboBox)window.FindName("GemShape")).SelectedIndex==4&&((System.Windows.Controls.TextBox)window.FindName("GemEffect1")).Text=="17310"&&((System.Windows.Controls.TextBox)window.FindName("GemEffect3")).Text=="-1","loading a carried gem replaces all six editor slots and selects its actual shape");
+        var horizontal=(System.Windows.Controls.Slider)window.FindName("CameraHorizontal");horizontal.Value=-.75;
+        Check(((System.Windows.Controls.TextBlock)window.FindName("CameraTuningSummary")).Text.Contains("-0.75"),"camera summary tracks signed shoulder offset before attachment");
+        typeof(MainWindow).GetMethod("CenterShoulderCamera",localeBinding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(horizontal.Value==0,"centre camera action resets the shoulder slider");
 
         ((System.Windows.Controls.Button)window.FindName("NavPhoto")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         Check(((FrameworkElement)window.FindName("PhotoPage")).Visibility==Visibility.Collapsed&&((FrameworkElement)window.FindName("NavPhoto")).Visibility==Visibility.Collapsed,"disabled photo mode is hidden and cannot be reached by navigation");
@@ -868,6 +889,7 @@ internal static partial class Program
         var app = new Application();
         var window = new MainWindow { Width = width, Height = height };
         if(page.Contains('@')){var selection=page.Split('@');page=selection[0];var localeBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;typeof(MainWindow).GetField("settings",localeBinding)!.SetValue(window,new AppSettings(Language:selection[1]));foreach(var method in new[]{"ApplyLanguageResources","LoadLanguageControls","RefreshLocalizedLabels"})typeof(MainWindow).GetMethod(method,localeBinding)!.Invoke(window,null);}
+        if(page=="Gems"){((System.Windows.Controls.TabItem)window.FindName("GemsTab")).IsSelected=true;page="Items";}
         if(page=="Drops"){((System.Windows.Controls.TabItem)window.FindName("DropsTab")).IsSelected=true;page="Items";}
         if(page=="Presets"){((System.Windows.Controls.TabItem)window.FindName("PresetsTab")).IsSelected=true;page="Practice";}
         if(page=="PhotoCapture"){((System.Windows.Controls.Expander)window.FindName("PhotoCaptureExpander")).IsExpanded=true;page="Photo";}
@@ -907,7 +929,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}))
+        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)}))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

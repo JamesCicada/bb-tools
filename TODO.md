@@ -1,14 +1,31 @@
 # Release checklist
 
+## About-tab preference — next update
+
+- ⌛ Add a clear, optional [Ko-fi support link](https://ko-fi.com/jcicada) in About only.
+- No popups, reminders, startup prompts, footer placement or changelog mention.
+- Public changelogs should cover major features and meaningful fixes only.
+
 `Implemented` means code and automated checks are complete. `Tested and confirmed` is
 marked tested and confirmed only after explicit live confirmation of that specific feature in Bloodborne PC 1.09.
 New features remain pending live validation even when automated checks pass.
 
-On 2026-10-26, all currently active Windows features were confirmed tested and working.
+On 2026-10-26, the Windows features active in 0.6.6 were confirmed tested and working.
 This supersedes earlier pending notes for active Windows features below; old scenario
 lists remain useful for regression testing. It does not mark future/unimplemented
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
+
+## Selected community features — v0.6.7, not tested in-game
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Horizontal shoulder camera | ✔️ | ⌛ | Camera → Position & distance; −2 to +2 metres, centre reset, saved/startup presets. Synthetic native execution passes. Test camera rotation, lock-on, walls, loading, death, disconnect and compatibility on both runtimes. |
+| Blood-gem editor/spawner | ✔️ | ⌛ | Items → Blood gems; five shapes, six validated native effect slots, search by effect name/ID, imported local descriptions. Load a carried gem and create an edited copy; original stays intact. Native creation/award/release and inventory readback. Test actual properties, workshop equip, save/reload, full inventory and chalice gems on both runtimes. |
+| New feature translations | ✔️ | ⌛ | English, Arabic, French and Simplified Chinese catalogs updated. Native-speaker review remains welcome. |
+
+See [the test guide](docs/shoulder-camera-and-blood-gems.md). Both new controls carry
+a persistent “Not tested in-game” label; live confirmation is still pending.
 
 ## v0.6.6 active Windows features — tested and confirmed
 

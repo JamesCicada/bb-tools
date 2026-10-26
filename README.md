@@ -1,5 +1,5 @@
-> **Version 0.6.6:** active Windows features are tested and confirmed, including Insight editing, free level-ups, free weapon upgrades, durability, discovery, target tools and presets.
-> **Linux 0.6.6-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
+> **Version 0.6.7:** shoulder-camera offset and blood-gem editing/spawning are new and **NOT TESTED IN-GAME**. Previously confirmed Windows features retain their existing test status.
+> **Linux 0.6.7-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Photo mode/free camera and flight/noclip remain disabled and hidden.
 
 # BB Tools
@@ -12,13 +12,20 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
+## v0.6.7: shoulder camera and blood gems
+
+- Camera → Position & distance: horizontal shoulder offset, centre reset and preset support.
+- Items → Blood gems: five shapes, six effects, name/ID search and edited copies of carried gems. Import effect descriptions from your own game files.
+- Both additions show **Not tested in-game** beside their controls. Please test and report your runtime and session log. See the [test guide](docs/shoulder-camera-and-blood-gems.md).
+- Separate Linux beta remains **not tested in-game** and does not include these Windows features.
+
 ## v0.6.6: free progression, Insight and Linux beta
 
 - Player: view and set Insight from 0–99.
 - Workshop: separate free level-up and free weapon-upgrade toggles remove Echo and material costs; save them in presets, including startup presets.
 - Validate only the native instructions needed by an action; log exact compatibility mismatches and item parameters.
 - Active Windows features are tested and confirmed. Hidden photo/flight/noclip features stay outside that confirmation.
-- Separate [Linux beta](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.6-linux-beta.1): native x64/glibc desktop and a read-only probe. **Not tested with a live Linux game; fewer features than Windows.**
+- Separate [Linux beta](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.7-linux-beta.1): native x64/glibc desktop and a read-only probe. **Not tested with a live Linux game; fewer features than Windows.**
 
 ## v0.6.4: translations and discovery
 

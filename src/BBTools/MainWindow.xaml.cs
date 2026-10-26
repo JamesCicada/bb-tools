@@ -38,6 +38,7 @@ public partial class MainWindow : Window
     private DateTime durabilityRetryAt;
     private bool statusPaused;
     private CameraTuning? cameraTuning;
+    private ShoulderCamera? shoulderCamera;
     private bool tuningPaused;
     private PracticeDestination? retryDestination;
     private DateTime retryDeadline;
@@ -241,7 +242,7 @@ public partial class MainWindow : Window
             }
             if(!tuningPaused)
             {
-                try {cameraTuning??=new CameraTuning(memory,session);if(TuneCamera.IsChecked==true)cameraTuning.Apply((float)CameraDistance.Value,(float)CameraHeight.Value);else cameraTuning.Restore();}
+                try {cameraTuning??=new CameraTuning(memory,session);shoulderCamera??=new ShoulderCamera(memory,session);if(TuneCamera.IsChecked==true){cameraTuning.Apply((float)CameraDistance.Value,(float)CameraHeight.Value);shoulderCamera.Apply((float)CameraHorizontal.Value);}else{cameraTuning.Restore();shoulderCamera.Restore();}}
                 catch(Exception ex)when(IsExpected(ex)){tuningPaused=true;App.LogError(ex);Status.Text=Translations.Format("message.Cameratuningpaused0.e2403c7", ex.Message);}
             }
             if(retryDestination is {} retry && !actionBusy)
@@ -292,6 +293,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (IsExpected(ex))
         { App.LogError(ex);
+            try { shoulderCamera?.Pause(); } catch (Exception pause) when (IsExpected(pause)) { App.LogError(pause); }
             try { lootOverrides?.Pause(); } catch (Exception pause) when (IsExpected(pause)) { App.LogError(pause); }
             try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);}
             if(retryTravelling || retryDestination!=null)retryLoadObserved=true;
@@ -327,6 +329,7 @@ public partial class MainWindow : Window
         try { progressionCosts?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { lootOverrides?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { worldGravity?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { shoulderCamera?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { cameraTuning?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         try { cameraFov?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
         beforeParryPractice=null;
@@ -345,7 +348,7 @@ public partial class MainWindow : Window
         try { actions?.Dispose(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); cleanupIssue = $"Request dispatcher cleanup: {ex.Message}"; }
         actions = null;
         freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;photoHudRestorePending=false;lootOverrides=null;lootPaused=false;progressionCosts=null;progressionPaused=false;
-        cameraFov = null; fovPaused = false;cameraTuning=null;tuningPaused=false;
+        cameraFov = null; fovPaused = false;cameraTuning=null;shoulderCamera=null;tuningPaused=false;
         memory?.Dispose(); memory = null; session = null; statDraft = null; connectedPid = 0;
         UpdateDiscordPresence();
         lastActor = lastComponent = 0;
@@ -647,12 +650,12 @@ public partial class MainWindow : Window
     private void CameraTuningChanged(object sender,RoutedPropertyChangedEventArgs<double> e)
     {
         tuningPaused=false;
-        if(CameraTuningSummary!=null && CameraDistance!=null && CameraHeight!=null)CameraTuningSummary.Text=Translations.Format("message.Distance000Height100.5e95835", CameraDistance.Value, CameraHeight.Value);
+        if(CameraTuningSummary!=null && CameraDistance!=null && CameraHeight!=null && CameraHorizontal!=null)CameraTuningSummary.Text=Translations.Format("camera.tuningSummary", CameraDistance.Value, CameraHeight.Value, CameraHorizontal.Value);
     }
     private void CameraTuningToggled(object sender,RoutedEventArgs e)
     {
         tuningPaused=false;if(TuneCamera.IsChecked==true)return;
-        try{cameraTuning?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
+        try{shoulderCamera?.Restore();cameraTuning?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private void FovChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -699,7 +702,7 @@ public partial class MainWindow : Window
         {
             var preset = new PracticePreset(PresetName.Text.Trim(), KeepHealth.IsChecked == true, InfiniteStamina.IsChecked == true,
                 FlagControls.Where(x => x.IsChecked == true).Select(x => (string)x.Tag).ToArray(), desiredDamage, desiredEchoes,
-                (float)FovSlider.Value, FovEnabled.IsChecked == true, settings with { StartupPresetName = null },KeepDurability.IsChecked==true,AutoRepair.IsChecked==true,Number(RepairThreshold,"Repair threshold"),TuneCamera.IsChecked==true,(float)CameraDistance.Value,(float)CameraHeight.Value,PresetGroup.Text.Trim(),KeepStatusEmpty.IsChecked==true,CaptureAdvanced());
+                (float)FovSlider.Value, FovEnabled.IsChecked == true, settings with { StartupPresetName = null },KeepDurability.IsChecked==true,AutoRepair.IsChecked==true,Number(RepairThreshold,"Repair threshold"),TuneCamera.IsChecked==true,(float)CameraDistance.Value,(float)CameraHeight.Value,PresetGroup.Text.Trim(),KeepStatusEmpty.IsChecked==true,CaptureAdvanced(),(float)CameraHorizontal.Value);
             Library.Save(preset); RefreshLibrary(); PresetPicker.SelectedItem = PresetPicker.Items.Cast<PracticePreset>().FirstOrDefault(x=>x.Name.Equals(preset.Name,StringComparison.OrdinalIgnoreCase));
             Status.Text = Translations.T("message.CurrentactivesettingssavedAmatchingnamereplacestheex.628a437");
         }
@@ -726,7 +729,7 @@ public partial class MainWindow : Window
                 LoadDiscordControls();UpdateDiscordPresence();
                 LoadHotkeyControls();LoadCameraControls();LoadPhotoControls();hotkeys?.Apply(settings.Hotkeys??new());
             }
-            CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;
+            CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;CameraHorizontal.Value=preset.CameraHorizontal;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;
             var advanced=preset.Advanced??new();MovementSlider.Value=advanced.Movement;GravitySlider.Value=advanced.Gravity;MovementEnabled.IsChecked=advanced.MovementEnabled;GravityEnabled.IsChecked=advanced.GravityEnabled;HideHud.IsChecked=advanced.HideHud;advancedPaused=false;
             DiscoveryEnabled.IsChecked=advanced.DiscoveryEnabled;DiscoveryBonus.Value=advanced.DiscoveryBonus;GuaranteedDrops.IsChecked=advanced.GuaranteedDrops;lootPaused=false;
             FreeLevels.IsChecked=advanced.FreeLevels;FreeUpgrades.IsChecked=advanced.FreeUpgrades;progressionPaused=false;

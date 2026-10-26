@@ -621,6 +621,60 @@
        </StackPanel>
       </Border>
        </TabItem>
+       <TabItem x:Name="GemsTab" Header="{DynamicResource L.gems.tab}">
+        <Border Style="{StaticResource Card}">
+         <StackPanel IsEnabled="{Binding IsEnabled, ElementName=ItemControls}">
+          <WrapPanel>
+           <TextBlock Text="{DynamicResource L.gems.heading}" Style="{StaticResource Caption}" />
+           <TextBlock x:Name="GemsTestStatus" Text="{DynamicResource L.feature.notTestedInGame}" Foreground="#D0B179" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center" />
+          </WrapPanel>
+          <TextBlock Text="{DynamicResource L.gems.help}" Style="{StaticResource Caption}" Margin="0,8,0,12" />
+          <WrapPanel>
+           <Button Content="{DynamicResource L.gems.refresh}" Click="RefreshGems" Margin="0,0,10,10" />
+           <Button Content="{DynamicResource L.gems.import}" Click="ImportGemTexts" Margin="0,0,0,10" />
+          </WrapPanel>
+          <TextBlock Text="{DynamicResource L.gems.inventory}" Style="{StaticResource Caption}" />
+          <ComboBox x:Name="GemInventory" DisplayMemberPath="Label" MinHeight="40" AutomationProperties.Name="{DynamicResource L.gems.inventory}" />
+          <Button Content="{DynamicResource L.gems.load}" Click="LoadGem" HorizontalAlignment="Left" Margin="0,10,0,14" />
+          <UniformGrid Columns="2">
+           <StackPanel Margin="0,0,12,0">
+            <TextBlock Text="{DynamicResource L.gems.template}" Style="{StaticResource Caption}" />
+            <TextBox x:Name="GemSource" AutomationProperties.Name="{DynamicResource L.gems.template}" />
+           </StackPanel>
+           <StackPanel>
+            <TextBlock Text="{DynamicResource L.gems.shape}" Style="{StaticResource Caption}" />
+            <ComboBox x:Name="GemShape" SelectedIndex="0" MinHeight="42" AutomationProperties.Name="{DynamicResource L.gems.shape}">
+             <ComboBoxItem Content="{DynamicResource L.gems.radial}" Tag="1" />
+             <ComboBoxItem Content="{DynamicResource L.gems.triangle}" Tag="2" />
+             <ComboBoxItem Content="{DynamicResource L.gems.waning}" Tag="4" />
+             <ComboBoxItem Content="{DynamicResource L.gems.circle}" Tag="8" />
+             <ComboBoxItem Content="{DynamicResource L.gems.droplet}" Tag="63" />
+            </ComboBox>
+           </StackPanel>
+          </UniformGrid>
+          <TextBlock Text="{DynamicResource L.gems.effects}" Style="{StaticResource Caption}" Margin="0,14,0,8" />
+          <TextBox x:Name="GemEffectSearch" Visibility="Collapsed" TextChanged="SearchGemEffects" AutomationProperties.Name="{DynamicResource L.gems.search}" />
+          <ComboBox x:Name="GemEffectPicker" DisplayMemberPath="Label" MinHeight="40" local:PickerSearch.Target="GemEffectSearch" AutomationProperties.Name="{DynamicResource L.gems.search}" />
+          <StackPanel Orientation="Horizontal" Margin="0,10,0,10">
+           <ComboBox x:Name="GemEffectSlot" SelectedIndex="0" Width="70" MinHeight="40" AutomationProperties.Name="{DynamicResource L.gems.slot}">
+            <ComboBoxItem Content="1" /><ComboBoxItem Content="2" /><ComboBoxItem Content="3" /><ComboBoxItem Content="4" /><ComboBoxItem Content="5" /><ComboBoxItem Content="6" />
+           </ComboBox>
+           <Button Content="{DynamicResource L.gems.setEffect}" Click="SetGemEffect" Margin="10,0,0,0" />
+          </StackPanel>
+          <UniformGrid Columns="3" FlowDirection="LeftToRight">
+           <TextBox x:Name="GemEffect1" Text="-1" Margin="0,0,8,8" AutomationProperties.Name="{DynamicResource L.gems.effect1}" />
+           <TextBox x:Name="GemEffect2" Text="-1" Margin="0,0,8,8" AutomationProperties.Name="{DynamicResource L.gems.effect2}" />
+           <TextBox x:Name="GemEffect3" Text="-1" Margin="0,0,0,8" AutomationProperties.Name="{DynamicResource L.gems.effect3}" />
+           <TextBox x:Name="GemEffect4" Text="-1" Margin="0,0,8,0" AutomationProperties.Name="{DynamicResource L.gems.effect4}" />
+           <TextBox x:Name="GemEffect5" Text="-1" Margin="0,0,8,0" AutomationProperties.Name="{DynamicResource L.gems.effect5}" />
+           <TextBox x:Name="GemEffect6" Text="-1" AutomationProperties.Name="{DynamicResource L.gems.effect6}" />
+          </UniformGrid>
+          <TextBlock Text="{DynamicResource L.gems.emptyHint}" Style="{StaticResource Caption}" Margin="0,8,0,12" />
+          <Button Content="{DynamicResource L.gems.create}" Click="SpawnBloodGem" Style="{StaticResource Primary}" HorizontalAlignment="Left" />
+          <TextBlock x:Name="GemSummary" Text="{DynamicResource L.gems.pending}" TextWrapping="Wrap" Foreground="#D0B179" Margin="0,14,0,0" />
+         </StackPanel>
+        </Border>
+       </TabItem>
        <TabItem x:Name="DropsTab" Header="{DynamicResource L.loot.tab}">
         <Border Style="{StaticResource Card}">
          <StackPanel IsEnabled="{Binding IsEnabled, ElementName=ItemControls}">
@@ -739,15 +793,22 @@
          </StackPanel>
         </Border>
        </TabItem>
-       <TabItem Header="{DynamicResource L.ui.Distanceheight.12eaa0e}" x:Name="CameraTuningTab">
+       <TabItem Header="{DynamicResource L.camera.tuningTab}" x:Name="CameraTuningTab">
         <Border Style="{StaticResource Card}" Margin="0">
          <StackPanel Margin="0">
-          <TextBlock x:Name="CameraTuningSummary" Text="{DynamicResource L.ui.Distance10Height10.6ad94d1}" Margin="0,0,0,12" />
+          <TextBlock x:Name="CameraTuningSummary" Text="{DynamicResource L.camera.initialSummary}" Margin="0,0,0,12" />
+          <CheckBox x:Name="TuneCamera" Content="{DynamicResource L.camera.enableTuning}" Checked="CameraTuningToggled" Unchecked="CameraTuningToggled" />
           <TextBlock Text="{DynamicResource L.ui.Distancemultiplier0520.f8c585b}" Style="{StaticResource Caption}" />
           <Slider x:Name="CameraDistance" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged" />
           <TextBlock Text="{DynamicResource L.ui.Heightmultiplier0520.8475338}" Style="{StaticResource Caption}" Margin="0,12,0,8" />
           <Slider x:Name="CameraHeight" Minimum="0.5" Maximum="2" Value="1" TickFrequency="0.1" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged" />
-          <CheckBox x:Name="TuneCamera" Content="{DynamicResource L.ui.Overridecameradistanceandheight.b7811c6}" Checked="CameraTuningToggled" Unchecked="CameraTuningToggled" />
+          <WrapPanel Margin="0,12,0,0">
+           <TextBlock Text="{DynamicResource L.camera.horizontal}" Style="{StaticResource Caption}" />
+           <TextBlock x:Name="ShoulderTestStatus" Text="{DynamicResource L.feature.notTestedInGame}" Foreground="#D0B179" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center" />
+          </WrapPanel>
+          <Slider x:Name="CameraHorizontal" Minimum="-2" Maximum="2" Value="0" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="CameraTuningChanged" FlowDirection="LeftToRight" AutomationProperties.Name="{DynamicResource L.camera.horizontal}" />
+          <TextBlock Text="{DynamicResource L.camera.horizontalHint}" Style="{StaticResource Caption}" Margin="0,4,0,12" />
+          <Button Content="{DynamicResource L.camera.center}" Click="CenterShoulderCamera" HorizontalAlignment="Left" Margin="0,0,0,12" />
           <TextBlock Text="{DynamicResource L.ui.ScaleseachcamerarowsoriginaldistanceandlookatheightD.a0c5534}" Style="{StaticResource Caption}" Margin="0,12,0,0" />
          </StackPanel>
         </Border>

@@ -1667,5 +1667,144 @@
   "message.Linksandjunctionsareunsupportedinsavefolders.e5b16c3": [
     "MainWindow.xaml.cs:954",
     "MainWindow.xaml.cs:957"
+  ],
+  "gems.connect": [
+    "MainWindow.Gems.cs:21"
+  ],
+  "gems.loaded": [
+    "MainWindow.Gems.cs:29"
+  ],
+  "gems.unnamed": [
+    "MainWindow.Gems.cs:38"
+  ],
+  "gems.rank": [
+    "MainWindow.Gems.cs:38"
+  ],
+  "gems.copyLoaded": [
+    "MainWindow.Gems.cs:54"
+  ],
+  "gems.imported": [
+    "MainWindow.Gems.cs:65"
+  ],
+  "gems.chooseShape": [
+    "MainWindow.Gems.cs:71"
+  ],
+  "gems.integer": [
+    "MainWindow.Gems.cs:75"
+  ],
+  "gems.created": [
+    "MainWindow.Gems.cs:81",
+    "MainWindow.Gems.cs:86"
+  ],
+  "gems.tab": [
+    "MainWindow.xaml:624"
+  ],
+  "gems.heading": [
+    "MainWindow.xaml:628"
+  ],
+  "gems.help": [
+    "MainWindow.xaml:631"
+  ],
+  "gems.refresh": [
+    "MainWindow.xaml:633"
+  ],
+  "gems.import": [
+    "MainWindow.xaml:634"
+  ],
+  "gems.inventory": [
+    "MainWindow.xaml:636",
+    "MainWindow.xaml:637"
+  ],
+  "gems.load": [
+    "MainWindow.xaml:638"
+  ],
+  "gems.template": [
+    "MainWindow.xaml:641",
+    "MainWindow.xaml:642"
+  ],
+  "gems.shape": [
+    "MainWindow.xaml:645",
+    "MainWindow.xaml:646"
+  ],
+  "gems.radial": [
+    "MainWindow.xaml:647"
+  ],
+  "gems.triangle": [
+    "MainWindow.xaml:648"
+  ],
+  "gems.waning": [
+    "MainWindow.xaml:649"
+  ],
+  "gems.circle": [
+    "MainWindow.xaml:650"
+  ],
+  "gems.droplet": [
+    "MainWindow.xaml:651"
+  ],
+  "gems.effects": [
+    "MainWindow.xaml:655"
+  ],
+  "gems.search": [
+    "MainWindow.xaml:656",
+    "MainWindow.xaml:657"
+  ],
+  "gems.slot": [
+    "MainWindow.xaml:659"
+  ],
+  "gems.setEffect": [
+    "MainWindow.xaml:662"
+  ],
+  "gems.effect1": [
+    "MainWindow.xaml:665"
+  ],
+  "gems.effect2": [
+    "MainWindow.xaml:666"
+  ],
+  "gems.effect3": [
+    "MainWindow.xaml:667"
+  ],
+  "gems.effect4": [
+    "MainWindow.xaml:668"
+  ],
+  "gems.effect5": [
+    "MainWindow.xaml:669"
+  ],
+  "gems.effect6": [
+    "MainWindow.xaml:670"
+  ],
+  "gems.emptyHint": [
+    "MainWindow.xaml:672"
+  ],
+  "gems.create": [
+    "MainWindow.xaml:673"
+  ],
+  "gems.pending": [
+    "MainWindow.xaml:674"
+  ],
+  "camera.tuningTab": [
+    "MainWindow.xaml:796"
+  ],
+  "camera.initialSummary": [
+    "MainWindow.xaml:799"
+  ],
+  "camera.enableTuning": [
+    "MainWindow.xaml:800"
+  ],
+  "camera.horizontal": [
+    "MainWindow.xaml:806",
+    "MainWindow.xaml:809"
+  ],
+  "camera.horizontalHint": [
+    "MainWindow.xaml:810"
+  ],
+  "camera.center": [
+    "MainWindow.xaml:811"
+  ],
+  "camera.tuningSummary": [
+    "MainWindow.xaml.cs:653"
+  ],
+  "feature.notTestedInGame": [
+    "MainWindow.xaml:629",
+    "MainWindow.xaml:807"
   ]
 }

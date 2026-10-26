@@ -76,3 +76,11 @@ this does not certify every launcher build or future runtime update.
 **Linux 0.6.6-linux-beta.1 is BETA — NOT TESTED IN-GAME.** Ubuntu synthetic memory,
 UI and startup checks do not establish game compatibility. It is a separate,
 limited desktop build; no Linux game feature is marked tested and confirmed.
+
+
+## Version 0.6.7 additions
+
+The shoulder-camera offset and blood-gem editor/spawner are **not tested in-game**
+on either Windows runtime. Their automated checks do not extend the 0.6.6 live
+confirmation to these additions. Each control is labeled in the app. Linux remains
+a separate untested beta and does not include these Windows features.

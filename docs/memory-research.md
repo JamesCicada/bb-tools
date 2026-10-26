@@ -673,3 +673,12 @@ claimed to restore these hooks; full game process exit discards them.
 - 522 synthetic checks and 112 image fingerprints pass. Live inspection was
   read-only: zero-resource leveling, all reinforcement tiers, spending/reloading
   Insight, menu refresh and shadPS4 gameplay still need confirmation.
+
+
+## Unreleased shoulder camera and blood gems
+
+See [the implementation evidence and test guide](shoulder-camera-and-blood-gems.md)
+for native call/instance details and the live test matrix. Both features remain
+pending live confirmation. Gem descriptors are resolved immediately before
+publication under the existing suspended, actor-validated game-thread queue;
+no serialized save offset is used as a runtime pointer.

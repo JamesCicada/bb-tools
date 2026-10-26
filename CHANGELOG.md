@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.7 — 2026-10-26
+
+- **Shoulder camera:** left/right camera offset with centre reset and saved/startup preset support.
+- **Blood-gem editor/spawner:** choose a shape and up to six native gem effects, search imported effect names, or create an edited copy of a carried gem.
+
+Both additions are **not tested in-game** and have persistent labels beside their controls. Feedback is needed before marking either feature tested and confirmed. Automated checks pass; Linux remains a separate untested beta.
+
 ## 0.6.6 — 2026-10-26
 
 ### New

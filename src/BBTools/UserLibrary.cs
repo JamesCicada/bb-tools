@@ -5,13 +5,14 @@ using Microsoft.Data.Sqlite;
 
 namespace BBTools;
 
-public sealed record PracticePreset(string Name, bool KeepHealth, bool Stamina, string[] Flags, float Damage, float Echoes, float Fov = 43, bool OverrideFov = false, AppSettings? Preferences = null, bool KeepDurability = false, bool AutoRepair = false, int RepairThreshold = 30, bool TuneCamera = false, float CameraDistance = 1, float CameraHeight = 1, string Group = "General", bool KeepStatusEmpty = false, AdvancedSettings? Advanced = null)
+public sealed record PracticePreset(string Name, bool KeepHealth, bool Stamina, string[] Flags, float Damage, float Echoes, float Fov = 43, bool OverrideFov = false, AppSettings? Preferences = null, bool KeepDurability = false, bool AutoRepair = false, int RepairThreshold = 30, bool TuneCamera = false, float CameraDistance = 1, float CameraHeight = 1, string Group = "General", bool KeepStatusEmpty = false, AdvancedSettings? Advanced = null, float CameraHorizontal = 0)
 {
     public override string ToString() => $"{Group} · {Name}";
     public void Validate()
     {
         UserLibrary.ValidateName(Name);UserLibrary.ValidateName(Group);
         Preferences?.Validate();Advanced?.Validate();
+        if (!float.IsFinite(CameraHorizontal) || CameraHorizontal is < -2 or > 2) throw new ArgumentException("Invalid preset horizontal camera offset.");
         if (!float.IsFinite(CameraDistance) || !float.IsFinite(CameraHeight) || CameraDistance is < .5f or >2 || CameraHeight is < .5f or >2) throw new ArgumentException("Invalid preset camera tuning.");
         if (RepairThreshold is < 1 or > 100) throw new ArgumentException("Repair threshold must be 1–100.");
         if (!float.IsFinite(Fov) || Fov is < 38 or > 120) throw new ArgumentException("Preset FOV must be between 38 and 120.");
