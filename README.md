@@ -188,6 +188,8 @@ disconnecting does not undo those changes.
 - Selected practice toggles stay selected through loading screens and warps and
   resume once the player validates. New connections start with toggles off.
 - Set Blood Echoes or add 10,000; supported balance range is 0–999,999,999.
+- Set current Insight from 0–99 in Player. The game may save the new balance.
+- Workshop: separate free level-up and free weapon-upgrade toggles remove Blood Echo and upgrade-material costs. Enable before opening the relevant menu; reopen it after changing the setting. Normal stat/upgrade limits remain. Both toggles support saved/startup presets and restore runtime costs when disabled or disconnected. New options await live testing.
 - Edit Vitality, Endurance, Strength, Skill, Bloodtinge and Arcane from 1–99.
   Blood Level follows the attribute-point change, within 4–544. Apply while idle,
   then quit to title and reload to refresh derived stats.

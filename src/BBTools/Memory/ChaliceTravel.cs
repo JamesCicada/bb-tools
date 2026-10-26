@@ -60,7 +60,7 @@ public sealed partial class GameActions
         if (!ChaliceLamps.Contains(lamp)) throw new ArgumentException("Choose a supported chalice lamp.");
         if ((unchecked((uint)memory.Int32(session.ReadPlayer().Actor + 0x3F8)) >> 24) != 21)
             throw new IOException("Chalice travel starts from Hunter's Dream. Travel there with the lamp controls, then choose your altar and layer.");
-        var dispatcher = Ready();
+        var dispatcher = Ready(GameActionKind.Warp);
         foreach (var f in ChaliceFingerprints)
             if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))
                 throw new IOException("Chalice instructions differ from the supported 1.09 build.");

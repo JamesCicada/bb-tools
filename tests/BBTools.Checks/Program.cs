@@ -46,7 +46,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -223,7 +223,7 @@ internal static partial class Program
     }
     private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
     {
-        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints)) memory.Write(root+f.Offset,f.Bytes);
+        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint})) memory.Write(root+f.Offset,f.Bytes);
         memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
         var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
         var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
@@ -457,6 +457,7 @@ internal static partial class Program
 
             var session = new PlayerSession(memory, root);
             PlayerDetectionChecks(memory, session, root);
+            ProgressionChecks(memory, session, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
             LootLifecycleChecks(memory,session,root);
@@ -760,6 +761,8 @@ internal static partial class Program
     {
         _ = new Application();
         var window = new MainWindow();
+        Check(!((FrameworkElement)window.FindName("InsightControls")).IsEnabled && !((System.Windows.Controls.CheckBox)window.FindName("FreeLevels")).IsEnabled &&
+            !((System.Windows.Controls.CheckBox)window.FindName("FreeUpgrades")).IsEnabled, "Insight and progression controls start disabled before attachment");
         var localeBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
         void PreviewLanguage(string code){typeof(MainWindow).GetField("settings",localeBinding)!.SetValue(window,new AppSettings(Language:code));foreach(var method in new[]{"ApplyLanguageResources","LoadLanguageControls","RefreshLocalizedLabels"})typeof(MainWindow).GetMethod(method,localeBinding)!.Invoke(window,null);}
         PreviewLanguage("zh-Hans");Check(((System.Windows.Controls.Button)window.FindName("NavPlayer")).Content.ToString()=="猎人"&&((System.Windows.Controls.Button)window.FindName("NavItems")).Tag.ToString()=="Items","live Chinese switching translates labels while preserving navigation identity");
@@ -805,6 +808,8 @@ internal static partial class Program
         Field("updating", false); Field("session", session); Field("memory", memory);
         Poll();
         Check(movementToggle.IsEnabled&&movementSlider.IsEnabled&&gravityToggle.IsEnabled&&gravitySlider.IsEnabled,"loaded-player polling enables movement toggles and sliders independently of disabled photo mode");
+        Check(((FrameworkElement)window.FindName("InsightControls")).IsEnabled && ((System.Windows.Controls.CheckBox)window.FindName("FreeLevels")).IsEnabled &&
+            ((System.Windows.Controls.CheckBox)window.FindName("FreeUpgrades")).IsEnabled, "validated player enables Insight editing and both progression toggles");
         movementSlider.Value=2;movementToggle.IsChecked=true;Poll();
         var activeMovement=(MovementSpeed)typeof(MainWindow).GetField("movementSpeed",binding)!.GetValue(window)!;
         var movementFactor=(ulong)typeof(MovementSpeed).GetField("factor",binding)!.GetValue(activeMovement)!;
@@ -902,7 +907,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints))
+        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

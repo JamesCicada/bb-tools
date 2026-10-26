@@ -172,6 +172,27 @@ public sealed class ProcessMemory : IMemory, IDisposable
             if (!flushed || !restored) throw new IOException("Loot code protection/cache restoration failed.");
         }
     }
+    internal void ReplaceProgressionCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
+    {
+        var site = ProgressionCosts.UpgradeSites.SingleOrDefault(x => x.Offset == offset);
+        if (site.Original == null || !(expected.SequenceEqual(site.Original) && replacement.SequenceEqual(site.Free) ||
+            expected.SequenceEqual(site.Free) && replacement.SequenceEqual(site.Original)))
+            throw new ArgumentException("Unsupported progression patch.");
+        var at = imageBase + offset;
+        if (!Read(at, expected.Length).SequenceEqual(expected)) throw new IOException("Upgrade instructions changed externally.");
+        if (!VirtualProtectEx(handle, (nuint)at, (nuint)expected.Length, 0x40, out var protection)) throw new IOException("Upgrade code is unavailable.");
+        try
+        {
+            if (!WriteProcessMemory(handle, (nuint)at, replacement, (nuint)replacement.Length, out var count) || count != (nuint)replacement.Length)
+                throw new IOException("Upgrade patch write failed.");
+        }
+        finally
+        {
+            var flushed = FlushInstructionCache(handle, (nuint)at, (nuint)replacement.Length);
+            var restored = VirtualProtectEx(handle, (nuint)at, (nuint)replacement.Length, protection, out _);
+            if (!flushed || !restored) throw new IOException("Upgrade protection/cache restoration failed.");
+        }
+    }
     public void Suspended(Action operation)
     {
         if (!IsAlive || NtSuspendProcess(handle) != 0) throw new IOException("Could not pause game threads for the request update.");

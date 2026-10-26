@@ -155,7 +155,7 @@
   "ui.Goods199Equipment1CustomIDsmustexistinyourgameThegam.c42ee31": "消耗品：1–99；装备：1。自定义 ID 必须存在于游戏中。游戏自行处理携带及仓库上限；请求完成后请检查背包。",
   "ui.WORKSHOPMENUS.67910f5": "工坊菜单",
   "ui.Openselectedmenu.0a5b46c": "打开所选菜单",
-  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "升级、强化、修理、仓库、血宝石及卡雷尔符文。请先关闭其他菜单并在空闲时使用。仍需正常消耗回响和材料。请在游戏中正常关闭菜单。",
+  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "升级、强化、修理、仓库、血宝石及卡雷尔符文。请先关闭其他菜单并在空闲时使用。除非启用上方对应的免费选项，否则仍需正常消耗。请在游戏中正常关闭菜单。",
   "ui.Lamps.4960826": "提灯",
   "ui.WARPTOLAMP.a4b783a": "传送至提灯",
   "ui.FilterlampsbynameorDLC.dcfb2c7": "按名称或 DLC 筛选提灯",
@@ -542,5 +542,15 @@
   "message.Backupdestinationmustbeoutsidethesavefolder.f824ef4": "备份位置必须在存档文件夹之外。",
   "message.Linksandjunctionsareunsupportedinsavefolders.e5b16c3": "存档文件夹不支持链接或联接点。",
   "language.community": "社区翻译 · 欢迎补充缺失译文并校对术语。",
-  "connection.accessDenied": "Windows 拒绝访问游戏进程。请关闭 BB Tools，右键单击 BBTools.exe 并选择“以管理员身份运行”，然后重新连接。游戏或启动器以管理员权限运行时可能需要此操作。"
+  "connection.accessDenied": "Windows 拒绝访问游戏进程。请关闭 BB Tools，右键单击 BBTools.exe 并选择“以管理员身份运行”，然后重新连接。游戏或启动器以管理员权限运行时可能需要此操作。",
+  "insight.heading": "灵视",
+  "insight.amount": "灵视数量",
+  "insight.set": "设置灵视",
+  "insight.hint": "0–99。修改当前灵视，游戏可能会保存此更改。",
+  "insight.updated": "灵视已更新。",
+  "progression.heading": "升级消耗",
+  "progression.levels": "免费升级",
+  "progression.upgrades": "免费强化武器",
+  "progression.hint": "请在打开升级或武器强化菜单前启用。无需血之回响或强化材料。更改设置后请重新打开菜单。仍受正常等级和强化上限限制。禁用或断开连接时恢复原有消耗。",
+  "progression.paused": "升级消耗修改已暂停：{0} 请重新启用选项以重试。"
 }

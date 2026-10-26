@@ -13,6 +13,8 @@ public sealed record LampChoice(string Name, int Entity)
     public override string ToString() => Label;
 }
 
+public enum GameActionKind { Dispatcher, Item, Warp, RestoreLocation }
+
 public sealed partial class GameActions(ProcessMemory memory, PlayerSession session) : IDisposable
 {
     private GameThreadQueue? queue;
@@ -41,12 +43,34 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
         new("Holy Moonlight Sword",26000000,0), new("Hunter Pistol",14000000,0)
     ];
     public static LampChoice[] Lamps => DestinationCatalog.Lamps;
-    private GameThreadQueue Ready()
+    public static void ValidateActionInstructions(IMemory source, ulong imageBase, GameActionKind kind)
+    {
+        // Only require code used by this request. A patched warp routine must not
+        // disable items, menus, repair or multipliers that never call it.
+        int[] indices = kind switch
+        {
+            GameActionKind.Dispatcher => [0, 1],
+            GameActionKind.Item => [0, 1, 2, 3, 4, 5, 6],
+            GameActionKind.Warp => [0, 1, 8, 9, 10],
+            GameActionKind.RestoreLocation => [0, 1, 7],
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+        var differences = new List<string>();
+        foreach (var index in indices)
+        {
+            var f = Fingerprints[index];
+            var actual = source.Read(imageBase + f.Offset, f.Bytes.Length);
+            if (!actual.SequenceEqual(f.Bytes))
+                differences.Add($"image+0x{f.Offset:X} (0x{imageBase + f.Offset:X}): expected {Convert.ToHexString(f.Bytes)}, actual {Convert.ToHexString(actual)}");
+        }
+        if (differences.Count != 0)
+            throw new IOException($"Native {kind} instructions differ from the supported 1.09 build. " +
+                string.Join("; ", differences) + ". The runtime or a mod may have changed these instructions. No request was submitted. Include this session log when reporting compatibility issues.");
+    }
+    private GameThreadQueue Ready(GameActionKind kind = GameActionKind.Dispatcher)
     {
         session.ValidateImage();
-        foreach (var f in Fingerprints)
-            if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))
-                throw new IOException("Native item/warp instructions differ from the supported 1.09 build.");
+        ValidateActionInstructions(memory, session.ImageBase, kind);
         var player = session.ReadPlayer();
         if (player.Health == 0) throw new IOException("Load a living character before submitting a game action.");
         if (queue != null && !queue.MatchesCurrentPlayer()) { queue.Dispose(); queue = null; }
@@ -70,7 +94,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
     public Task SpawnAsync(int id, uint category, int quantity)
     {
         var payload = ItemBatch(id, category, quantity);
-        var dispatcher = Ready();
+        var dispatcher = Ready(GameActionKind.Item);
         var manager = memory.Pointer(session.ImageBase + 0x553D6E0);
         var handles = memory.Pointer(session.ImageBase + 0x553E990);
         return dispatcher.ExecuteAsync(ItemCalls(session.ImageBase, manager, handles, dispatcher.Payload), payload);
@@ -87,7 +111,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
     public Task WarpAsync(LampChoice lamp)
     {
         if (!Lamps.Any(x => x.Entity == lamp.Entity)) throw new ArgumentException("Choose a supported lamp destination.");
-        var dispatcher = Ready();
+        var dispatcher = Ready(GameActionKind.Warp);
         return dispatcher.ExecuteAsync([
             new(session.ImageBase + 0x156D110, (ulong)lamp.Entity),
             new(session.ImageBase + 0x156D0E0, 1),
@@ -99,7 +123,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
         var payload = location.Payload();
         var current = session.ReadLocation("Current");
         session.ValidateLocationContext(location,current);
-        var dispatcher = Ready();
+        var dispatcher = Ready(GameActionKind.RestoreLocation);
         var world = memory.Pointer(session.ImageBase + 0x553B148);
         return dispatcher.ExecuteAsync([new(session.ImageBase + 0x154B110, world, dispatcher.Payload, dispatcher.Payload + 16, dispatcher.Payload + 32)], payload);
     }

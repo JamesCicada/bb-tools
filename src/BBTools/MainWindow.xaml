@@ -316,6 +316,20 @@
        </StackPanel>
       </Border>
       <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel x:Name="InsightControls" IsEnabled="False">
+        <Grid>
+         <TextBlock Text="{DynamicResource L.insight.heading}" Style="{StaticResource Caption}" />
+         <TextBlock x:Name="InsightValue" Text="—" HorizontalAlignment="Right" Foreground="#D0B179" FontWeight="SemiBold" />
+        </Grid>
+        <Grid Margin="0,10,0,0">
+         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBox x:Name="InsightInput" Text="99" FlowDirection="LeftToRight" Margin="0,0,10,0" AutomationProperties.Name="{DynamicResource L.insight.amount}"/>
+         <Button Grid.Column="1" Content="{DynamicResource L.insight.set}" Click="SetInsight" Style="{StaticResource Primary}"/>
+        </Grid>
+        <TextBlock Text="{DynamicResource L.insight.hint}" Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+       </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
        <StackPanel x:Name="StatControls" IsEnabled="False">
         <Grid>
          <StackPanel>
@@ -626,6 +640,10 @@
      <StackPanel x:Name="WorkshopPage" Visibility="Collapsed">
       <Border Style="{StaticResource Card}" Margin="0,0,0,18">
        <StackPanel x:Name="MenuControls" IsEnabled="False">
+        <TextBlock Text="{DynamicResource L.progression.heading}" Style="{StaticResource Caption}"/>
+        <CheckBox x:Name="FreeLevels" Content="{DynamicResource L.progression.levels}" Checked="ProgressionChanged" Unchecked="ProgressionChanged"/>
+        <CheckBox x:Name="FreeUpgrades" Content="{DynamicResource L.progression.upgrades}" Checked="ProgressionChanged" Unchecked="ProgressionChanged"/>
+        <TextBlock Text="{DynamicResource L.progression.hint}" Style="{StaticResource Caption}" Margin="0,8,0,18"/>
         <TextBlock Text="{DynamicResource L.ui.WORKSHOPMENUS.67910f5}" Style="{StaticResource Caption}" />
         <ComboBox x:Name="MenuPicker" DisplayMemberPath="Label" MinHeight="40" />
         <Button Content="{DynamicResource L.ui.Openselectedmenu.0a5b46c}" Click="OpenRemoteMenu" HorizontalAlignment="Left" Margin="0,12,0,0" />

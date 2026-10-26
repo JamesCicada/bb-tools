@@ -263,6 +263,8 @@ public partial class MainWindow : Window
             UpdateEnemyPractice();
             PlayerControls.IsEnabled = true;
             PollLoot();
+            PollProgression();
+            PollInsight();
             ExplorationControls.IsEnabled = PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
             if (!actionBusy && retryDestination==null && !retryTravelling && DateTime.UtcNow>=durabilityRetryAt && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
@@ -294,9 +296,9 @@ public partial class MainWindow : Window
             try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);}
             if(retryTravelling || retryDestination!=null)retryLoadObserved=true;
             encounterTimer.Context(false,false);EncounterSummary.Text=encounterTimer.Summary;
-            PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
+            PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = StatControls.IsEnabled = false;
             ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
-            HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—";
+            HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = "—";
             HealthBar.Value = StaminaBar.Value = 0;
             statDraft = null;
             Status.Text = Translations.Format("message.0Selectedpracticetoggleswillresumewhentheplayervalid.18721e2", ex.Message);
@@ -316,11 +318,13 @@ public partial class MainWindow : Window
         FreeCameraEnabled.IsChecked=false;FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;HideHud.IsChecked=false;
         MovementEnabled.IsChecked=GravityEnabled.IsChecked=false;advancedPaused=false;
         DiscoveryEnabled.IsChecked=GuaranteedDrops.IsChecked=false;lootPaused=false;
+        FreeLevels.IsChecked=FreeUpgrades.IsChecked=false;progressionPaused=false;
         var errors = new List<string>();
         try { freeCamera?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { hudVisibility?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { flight?.Restore(); }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { movementSpeed?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
+        try { progressionCosts?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { lootOverrides?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { worldGravity?.Restore(); } catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);errors.Add(ex.Message);}
         try { cameraTuning?.Restore(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); errors.Add(ex.Message); }
@@ -340,18 +344,18 @@ public partial class MainWindow : Window
         timer.Stop(); var cleanupIssue = StopFeatures();
         try { actions?.Dispose(); } catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); cleanupIssue = $"Request dispatcher cleanup: {ex.Message}"; }
         actions = null;
-        freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;photoHudRestorePending=false;lootOverrides=null;lootPaused=false;
+        freeCamera=null;hudVisibility=null;flight=null;movementSpeed=null;worldGravity=null;advancedPaused=false;photoHudRestorePending=false;lootOverrides=null;lootPaused=false;progressionCosts=null;progressionPaused=false;
         cameraFov = null; fovPaused = false;cameraTuning=null;tuningPaused=false;
         memory?.Dispose(); memory = null; session = null; statDraft = null; connectedPid = 0;
         UpdateDiscordPresence();
         lastActor = lastComponent = 0;
         ReleaseOwner();
-        PlayerControls.IsEnabled = EchoControls.IsEnabled = StatControls.IsEnabled = false;
+        PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = StatControls.IsEnabled = false;
         ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = true;
         ConnectButton.Content = Translations.T("ui.Connect.1a2303e"); ConnectionBadge.Text = Translations.T("ui.DISCONNECTED.5541de9");
         ConnectionHint.Text = Translations.T("ui.StartBloodbornePCandloadacharacterthenconnect.ccf1095");
-        HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = "—"; LevelValue.Text = Translations.T("ui.BloodLevel.492e51a");
+        HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = "—"; LevelValue.Text = Translations.T("ui.BloodLevel.492e51a");
         HealthBar.Value = StaminaBar.Value = 0;
         Status.Text = cleanupIssue ?? Translations.T("message.DisconnectedHealthechoesandattributechangesalreadyma.4240b3c");
     }
@@ -524,7 +528,9 @@ public partial class MainWindow : Window
     {
         if (ItemCategory.SelectedItem is not ComboBoxItem category) throw new ArgumentException(Translations.T("message.Chooseanitemcategory.47eb33d"));
         var item = ItemInput.Parse(ItemId.Text, uint.Parse((string)category.Tag), WikiHexId.IsChecked == true);
-        return engine.SpawnAsync(item.Id, item.Category, Number(ItemQuantity, "Quantity"));
+        var quantity = Number(ItemQuantity, "Quantity");
+        App.Log?.Write("ACTION", $"Spawn item: ID {item.Id}, category 0x{item.Category:X8}, quantity {quantity}");
+        return engine.SpawnAsync(item.Id, item.Category, quantity);
     }, Translations.T("message.ItemgrantcompletedonthegamethreadCheckinventoryandst.be4825f"));
     private async void Warp(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
@@ -561,7 +567,7 @@ public partial class MainWindow : Window
         if(flight?.Anchor is not SavedLocation anchor){Status.Text=Translations.T("message.Noflightreturnpointisavailable.dc0adc5");return;}
         await RunGameAction(async engine=>{await engine.RestoreLocationAsync(anchor);FlightEnabled.IsChecked=false;},Translations.T("message.Returnedtotheflightstartanddisabledflight.cb81c9e"));
     }
-    private AdvancedSettings CaptureAdvanced()=>new(MovementEnabled.IsChecked==true,(float)MovementSlider.Value,GravityEnabled.IsChecked==true,(float)GravitySlider.Value,HideHud.IsChecked==true,DiscoveryEnabled.IsChecked==true,(float)DiscoveryBonus.Value,GuaranteedDrops.IsChecked==true);
+    private AdvancedSettings CaptureAdvanced()=>new(MovementEnabled.IsChecked==true,(float)MovementSlider.Value,GravityEnabled.IsChecked==true,(float)GravitySlider.Value,HideHud.IsChecked==true,DiscoveryEnabled.IsChecked==true,(float)DiscoveryBonus.Value,GuaranteedDrops.IsChecked==true,FreeLevels.IsChecked==true,FreeUpgrades.IsChecked==true);
     private void AdvancedChanged(object sender,RoutedEventArgs e){advancedPaused=false;}
     private void AdvancedValueChanged(object sender,RoutedPropertyChangedEventArgs<double> e){if(MovementValue==null||GravityValue==null)return;MovementValue.Text=Translations.Format("message.Movement000.7208afb", MovementSlider.Value);GravityValue.Text=Translations.Format("message.Gravity0000.2d36093", GravitySlider.Value);advancedPaused=false;}
     private void ResetAdvanced(object sender,RoutedEventArgs e){MovementEnabled.IsChecked=GravityEnabled.IsChecked=false;MovementSlider.Value=GravitySlider.Value=1;advancedPaused=false;try{movementSpeed?.Restore();worldGravity?.Restore();Status.Text=Translations.T("message.Movementandworldgravityrestored.0142882");}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}}
@@ -723,6 +729,7 @@ public partial class MainWindow : Window
             CameraDistance.Value=preset.CameraDistance;CameraHeight.Value=preset.CameraHeight;TuneCamera.IsChecked=preset.TuneCamera;tuningPaused=false;
             var advanced=preset.Advanced??new();MovementSlider.Value=advanced.Movement;GravitySlider.Value=advanced.Gravity;MovementEnabled.IsChecked=advanced.MovementEnabled;GravityEnabled.IsChecked=advanced.GravityEnabled;HideHud.IsChecked=advanced.HideHud;advancedPaused=false;
             DiscoveryEnabled.IsChecked=advanced.DiscoveryEnabled;DiscoveryBonus.Value=advanced.DiscoveryBonus;GuaranteedDrops.IsChecked=advanced.GuaranteedDrops;lootPaused=false;
+            FreeLevels.IsChecked=advanced.FreeLevels;FreeUpgrades.IsChecked=advanced.FreeUpgrades;progressionPaused=false;
             FovSlider.Value = preset.Fov; FovEnabled.IsChecked = preset.OverrideFov; fovPaused = false;
             if (!preset.OverrideFov) cameraFov?.Restore();
             UpdateStartupSummary();

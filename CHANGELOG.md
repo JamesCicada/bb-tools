@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased — Insight and free progression
+
+- Add Player → Insight: view and set the current balance from 0–99, with instruction/character validation and readback. The game can save the edited balance.
+- Add separate Workshop toggles for free level-ups and free weapon upgrades, including Blood Echo and material requirements. Keep native stat and upgrade caps; support saved/startup presets, restore normal runtime costs on disable/disconnect, and preserve conflicting external edits. Reopen the relevant game menu after changing a toggle.
+- Add English, Simplified Chinese, Arabic and French strings for the new controls; all three complete translation drafts retain full coverage.
+
+Validation: all 522 synthetic regression checks pass, including Insight limits, independent toggles, table reloads, cleanup, foreign-edit protection and preset compatibility. All 112 supported-image fingerprints match. Read-only live inspection verified Insight 72 and the relevant cost sites. No live character or cost writes were performed; actual leveling/upgrading/spending still needs testing.
+
+## Unreleased — Native action compatibility
+
+- Check only the native instructions used by each request: item spawning, lamp/chalice warping, saved-location restoration or the shared dispatcher. An unrelated modified warp routine no longer blocks spawning, menus, repair or multipliers. Keep exact validation of every required instruction.
+- Report relative/absolute mismatch addresses and expected/actual bytes in compatibility errors. Log the parsed item ID, category and quantity before submission.
+- Investigate the 0.6.5 report where both spawning and warping fail before submission. Decimal `7100000` is Saw Spear (Weapon category, quantity 1). The supplied log does not identify the changed instruction or establish whether a runtime update or mod caused it. Live confirmation on the affected installation remains pending.
+
+Validation: Release build succeeds and all 500 synthetic regression checks pass, including action-specific mismatch isolation and read-only compatibility diagnostics. This does not confirm item granting on the affected runtime.
+
 ## 0.6.5 — 2026-10-25
 
 - Complete Arabic and French extracted interface/message catalog drafts, joining Simplified Chinese at 100% coverage. All three include the new permission guidance; native-speaker review and in-game usability checks remain pending.

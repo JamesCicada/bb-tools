@@ -4,6 +4,15 @@
 marked tested and confirmed only after explicit live confirmation of that specific feature in Bloodborne PC 1.09.
 New features remain pending live validation even when automated checks pass.
 
+## Progression controls — next update
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Set Insight | ✔️ | ⌛ | Player → Insight, 0–99. Read-only inspection verified the loaded value and instructions. Test 0, 99, spending, reloading and another character. |
+| Free level-ups | ✔️ | ⌛ | Workshop; reversible level-cost curve override, normal caps. Test zero Echoes, multiple planned levels, cancel/confirm, disabling and reconnect. |
+| Free weapon upgrades | ✔️ | ⌛ | Workshop; zero native Echo/material costs. Test zero resources, all stone tiers through +10, DLC weapons, cancel/confirm and restoring normal costs. |
+| Progression presets | ✔️ | ⌛ | Separate cost toggles in saved/startup presets; older presets default off. Insight balances are deliberate edits and are not saved in presets. |
+
 ## Reported regressions — v0.6.2
 
 | Feature | Implemented | Tested and confirmed | Notes |

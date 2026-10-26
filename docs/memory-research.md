@@ -642,3 +642,34 @@ claimed to restore these hooks; full game process exit discards them.
   nonzero returned indices, with explicit collision/foreign-row protection. No
   native multiplier write was performed against the user's live game during this
   investigation. Live multiplier verification remains pending on both runtimes.
+
+
+### Insight and free progression investigation — 2026-10-26
+
+- Read-only inspection of Bloodborne PC verified Insight 72 at active character data
+  +0x84, with getter instruction `8B B3 84 00 00 00` at image+0x1901FB4.
+  Editing validates the image, current character ownership, range 0–99 and readback.
+- The native level-up price-check path at 0x1B2F5E0 uses CalcCorrectGraph row 200,
+  including four floats at +0x3C..+0x48. Its row getter resolves repository +0x970/
+  +0x978. The live supported values were approximately (0.1, 1, 0.02, 92).
+  Zeroing only these cost coefficients makes the native calculation zero while
+  retaining its stat-cap and cancellation logic. This is a reversible RAM edit:
+  record original coefficients, verify table identity on refresh/restore, and
+  never overwrite a foreign edit or an unloaded table. No parameter file is saved.
+- Native weapon reinforcement cost builder 0x1B5EEC0 reads weapon basicPrice at
+  0x1B5F02F (`8B 58 18`) and material quantities at 0x1B5F0BE
+  (`44 8B 64 8D B0`). Replacing these complete instructions with `31 DB 90` and
+  `45 31 E4 90 90` sets the cost to zero and takes the existing nonpositive-quantity
+  skip for each material. The game still builds/validates the weapon upgrade.
+  Only these two whitelisted sites permit protected code replacement; exact
+  fingerprints are required and externally changed instructions are preserved.
+- Both options are off by default, independent and supported by saved/startup
+  presets. Stable polls read only; suspension occurs for applying/restoring changes.
+  Open/reopen the relevant native menu after changing the options to refresh costs.
+- Public cross-check: [bbhost player-data analysis](https://github.com/droogie/bbhost/blob/566184a74f071166299bb656c4af479e5bbe2771/src/decomp/player/player_data.cpp)
+  describes Insight and the level-price curve (its image convention differs by
+  0x400000). The upgrade paths above were independently inspected in the local
+  1.09 image. No source or game content from that image is distributed.
+- 522 synthetic checks and 112 image fingerprints pass. Live inspection was
+  read-only: zero-resource leveling, all reinforcement tiers, spending/reloading
+  Insight, menu refresh and shadPS4 gameplay still need confirmation.
