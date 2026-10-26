@@ -155,7 +155,7 @@
   "ui.Goods199Equipment1CustomIDsmustexistinyourgameThegam.c42ee31": "Consommables : 1–99. Équipement : 1. Les identifiants personnalisés doivent exister dans votre jeu. Le jeu gère les limites d’inventaire et le stockage ; vérifiez-les après l’exécution de la requête.",
   "ui.WORKSHOPMENUS.67910f5": "MENUS DE L’ATELIER",
   "ui.Openselectedmenu.0a5b46c": "Ouvrir le menu sélectionné",
-  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "Monter de niveau, améliorer, réparer, stocker, sertir des gemmes sanglantes et équiper des runes de Caryll. Fermez d’abord les autres menus et utilisez hors action. Les coûts normaux en échos et matériaux s’appliquent. Fermez normalement dans le jeu.",
+  "ui.LevelupfortifyrepairstoragebloodgemsandCaryllrunesCl.6c97b85": "Montée de niveau, renforcement, réparation, stockage, gemmes sanglantes et runes de Caryll. Fermez les autres menus et utilisez hors action. Les coûts s’appliquent sauf si l’option gratuite correspondante est activée ci-dessus. Fermez normalement dans le jeu.",
   "ui.Lamps.4960826": "Lampes",
   "ui.WARPTOLAMP.a4b783a": "SE TÉLÉPORTER À UNE LAMPE",
   "ui.FilterlampsbynameorDLC.dcfb2c7": "Filtrer les lampes par nom ou DLC",
@@ -542,5 +542,15 @@
   "links.items": "Wiki Bloodborne · Identifiants d’objets extraits des données ↗",
   "links.weapons": "Identifiants des armes ↗",
   "language.community": "TRADUCTIONS COMMUNAUTAIRES · Aidez à compléter les textes et à revoir la terminologie.",
-  "connection.accessDenied": "Windows a refusé l’accès au processus du jeu. Fermez BB Tools, faites un clic droit sur BBTools.exe et choisissez Exécuter en tant qu’administrateur, puis reconnectez-vous. Cela peut être nécessaire si le jeu ou son lanceur est exécuté avec des droits élevés."
+  "connection.accessDenied": "Windows a refusé l’accès au processus du jeu. Fermez BB Tools, faites un clic droit sur BBTools.exe et choisissez Exécuter en tant qu’administrateur, puis reconnectez-vous. Cela peut être nécessaire si le jeu ou son lanceur est exécuté avec des droits élevés.",
+  "insight.heading": "LUCIDITÉ",
+  "insight.amount": "Quantité de lucidité",
+  "insight.set": "Définir la lucidité",
+  "insight.hint": "0–99. Modifie le solde actuel ; le jeu peut le sauvegarder.",
+  "insight.updated": "Lucidité mise à jour.",
+  "progression.heading": "COÛTS DE PROGRESSION",
+  "progression.levels": "Montées de niveau gratuites",
+  "progression.upgrades": "Améliorations d’armes gratuites",
+  "progression.hint": "Activez avant d’ouvrir la montée de niveau ou le renforcement des armes. Aucun écho de sang ni matériau requis. Rouvrez le menu après modification. Les limites habituelles restent applicables. Les coûts sont rétablis à la désactivation ou à la déconnexion.",
+  "progression.paused": "Coûts de progression en pause : {0} Réactivez l’option pour réessayer."
 }
