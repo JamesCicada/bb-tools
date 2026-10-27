@@ -250,7 +250,7 @@ public partial class MainWindow : Window
                 if(DateTime.UtcNow>retryDeadline){retryDestination=null;Status.Text=Translations.T("message.BossretrytimedoutwaitingfortheareaEncounterflagswere.b06282b");}
                 else if((retryLoadObserved || state.Actor!=retryOriginActor) && state.Health>0 && unchecked((uint)memory.Int32(state.Actor+0x3F8))==retry.Position.Block){retryDestination=null;_ = FinishBossRetry(retry);}
             }
-            if (startupPresetPending && !actionBusy && state.Health > 0)
+            if (startupPresetPending && !photoStarting && FreeCameraEnabled.IsChecked!=true && !actionBusy && state.Health > 0)
             {
                 startupPresetPending = false;
                 try
@@ -266,9 +266,10 @@ public partial class MainWindow : Window
             PollLoot();
             PollProgression();
             PollInsight();
+            PollNgCycle();
             ExplorationControls.IsEnabled = PracticeControls.IsEnabled = true;
             ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = !actionBusy;
-            if (!actionBusy && retryDestination==null && !retryTravelling && DateTime.UtcNow>=durabilityRetryAt && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
+            if (!photoStarting && FreeCameraEnabled.IsChecked!=true && !actionBusy && retryDestination==null && !retryTravelling && DateTime.UtcNow>=durabilityRetryAt && (KeepDurability.IsChecked==true || AutoRepair.IsChecked==true))
                 _=RepairWeaponsOnGameThread(false);
             if(!statusPaused && KeepStatusEmpty.IsChecked==true)
             {try{session.ClearStatusBuildup();}catch(Exception ex)when(IsExpected(ex)){statusPaused=true;App.LogError(ex);Status.Text=Translations.Format("message.Statusclearpaused0UseClearnowtoretry.27704a3", ex.Message);}}
@@ -281,7 +282,7 @@ public partial class MainWindow : Window
                 if (control.IsChecked == true) session.SetPracticeFlag(flag, true);
                 else session.RestorePracticeFlag(flag);
             }
-            if (!actionBusy && actions != null && (desiredDamage != 1 || desiredEchoes != 1) &&
+            if (!photoStarting && FreeCameraEnabled.IsChecked!=true && !actionBusy && actions != null && (desiredDamage != 1 || desiredEchoes != 1) &&
                 multiplierFailedActor != state.Actor && !actions.MaintainMultipliers())
                 _ = ResumeMultipliers(state.Actor);
             var character = session.ReadCharacter();
@@ -298,9 +299,10 @@ public partial class MainWindow : Window
             try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);}
             if(retryTravelling || retryDestination!=null)retryLoadObserved=true;
             encounterTimer.Context(false,false);EncounterSummary.Text=encounterTimer.Summary;
-            PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = StatControls.IsEnabled = false;
+            PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = NgCycleControls.IsEnabled = StatControls.IsEnabled = false;
+            ngCycleDraft = null;
             ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
-            HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = "—";
+            HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = NgCycleValue.Text = "—";
             HealthBar.Value = StaminaBar.Value = 0;
             statDraft = null;
             Status.Text = Translations.Format("message.0Selectedpracticetoggleswillresumewhentheplayervalid.18721e2", ex.Message);
@@ -353,12 +355,13 @@ public partial class MainWindow : Window
         UpdateDiscordPresence();
         lastActor = lastComponent = 0;
         ReleaseOwner();
-        PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = StatControls.IsEnabled = false;
+        PlayerControls.IsEnabled = EchoControls.IsEnabled = InsightControls.IsEnabled = NgCycleControls.IsEnabled = StatControls.IsEnabled = false;
+        ngCycleDraft = null; ngCycleReadError = null;
         ExplorationControls.IsEnabled = PracticeControls.IsEnabled = ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
         RefreshButton.IsEnabled = Candidates.IsEnabled = ProcessSearch.IsEnabled = true;
         ConnectButton.Content = Translations.T("ui.Connect.1a2303e"); ConnectionBadge.Text = Translations.T("ui.DISCONNECTED.5541de9");
         ConnectionHint.Text = Translations.T("ui.StartBloodbornePCandloadacharacterthenconnect.ccf1095");
-        HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = "—"; LevelValue.Text = Translations.T("ui.BloodLevel.492e51a");
+        HealthValue.Text = StaminaValue.Text = "— / —"; EchoValue.Text = InsightValue.Text = NgCycleValue.Text = "—"; LevelValue.Text = Translations.T("ui.BloodLevel.492e51a");
         HealthBar.Value = StaminaBar.Value = 0;
         Status.Text = cleanupIssue ?? Translations.T("message.DisconnectedHealthechoesandattributechangesalreadyma.4240b3c");
     }
@@ -457,7 +460,8 @@ public partial class MainWindow : Window
     private void Navigate(object sender, RoutedEventArgs e)
     {
         var page = (string)((Button)sender).Tag;
-        if(page=="Photo")page="Player";
+        if(page=="Photo"&&!ExplorationAvailable)page="Player";
+        if(page!="Photo"&&PhotoPage.Visibility==Visibility.Visible)FreeCameraEnabled.IsChecked=false;
         App.Log?.Write("INFO", $"Page: {page}");
         PlayerPage.Visibility = page == "Player" ? Visibility.Visible : Visibility.Collapsed;
         PracticePage.Visibility = page == "Practice" ? Visibility.Visible : Visibility.Collapsed;
@@ -471,7 +475,7 @@ public partial class MainWindow : Window
         PageSubtitle.Text=page=="Photo"?Translations.T("message.Composeashotcaptureittheneditthesavedphoto.7ddfe10"):Translations.T("ui.Shapeyournextpracticerun.33c61d1");
         PageTitle.Text = page switch { "Practice" => Translations.T("message.Combatrewards.31e6a34"),"Items" => Translations.T("message.Itemspawning.f589ae2"),"Travel" => Translations.T("message.Travellocations.b745f7d"),"Workshop" => Translations.T("message.Workshopmenus.f2a05fc"),"Target" => Translations.T("message.Enemydetails.b31585f"),"Camera" => Translations.T("message.Gameplaycamera.e7db326"),"Photo" => Translations.T("ui.Photostudio.bd45bf4"),"Settings" => Translations.T("ui.Settings.74a883a"),_ => Translations.T("ui.Thehunter.86332c5") };
         foreach (var nav in new[] {NavPlayer, NavPractice, NavTarget, NavItems, NavTravel, NavCamera, NavPhoto, NavWorkshop, NavSettings})
-            nav.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString((string)nav.Tag == page ? "#3B352A" : "#2B313B"));
+            nav.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(((string)nav.Tag == page || page=="Photo"&&nav==NavCamera) ? "#3B352A" : "#2B313B"));
         PageScroll.ScrollToTop();
     }
     private void ItemSelected(object sender, SelectionChangedEventArgs e)
@@ -485,6 +489,7 @@ public partial class MainWindow : Window
     private async Task RunGameAction(Func<GameActions, Task> action, string success, [System.Runtime.CompilerServices.CallerMemberName] string operation = "")
     {
         App.Log?.Write("ACTION", $"Start {operation}");
+        if (FreeCameraEnabled.IsChecked==true || photoStarting || FlightEnabled.IsChecked==true && operation!=nameof(ReturnFromFlight)) { Status.Text=Translations.T("experimental.exitBeforeAction"); return; }
         if (actions == null || actionBusy) { Status.Text = Translations.T("message.Connecttoaloadedcharacterandwaitfortheactiverequestt.807dca7"); return; }
         if(operation is not (nameof(RetryBoss) or nameof(FinishBossRetry))){retryDestination=null;retryGeneration++;}
         actionBusy = true; ChaliceControls.IsEnabled = MenuControls.IsEnabled = ItemControls.IsEnabled = WarpControls.IsEnabled = LocationControls.IsEnabled = BossControls.IsEnabled = false;
@@ -563,12 +568,15 @@ public partial class MainWindow : Window
     private async Task MoveFlight(SavedLocation location)
     {
         if(actions==null||actionBusy)return;actionBusy=true;
-        try{await actions.RestoreLocationAsync(location);}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);FlightEnabled.IsChecked=false;Status.Text=Translations.Format("message.Flightstopped0.a86c602", ex.Message);}finally{actionBusy=false;}
+        try{await actions.RestoreLocationAsync(location);}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;Status.Text=Translations.Format("message.Flightstopped0.a86c602", ex.Message);}finally{actionBusy=false;}
     }
     private async void ReturnFromFlight(object sender,RoutedEventArgs e)
     {
-        if(flight?.Anchor is not SavedLocation anchor){Status.Text=Translations.T("message.Noflightreturnpointisavailable.dc0adc5");return;}
-        await RunGameAction(async engine=>{await engine.RestoreLocationAsync(anchor);FlightEnabled.IsChecked=false;},Translations.T("message.Returnedtotheflightstartanddisabledflight.cb81c9e"));
+        await RunGameAction(async engine=>
+        {
+            var anchor=flight?.ReadReturnPoint()??throw new InvalidOperationException(Translations.T("message.Noflightreturnpointisavailable.dc0adc5"));
+            await engine.RestoreLocationAsync(anchor);FlightEnabled.IsChecked=false;
+        },Translations.T("message.Returnedtotheflightstartanddisabledflight.cb81c9e"));
     }
     private AdvancedSettings CaptureAdvanced()=>new(MovementEnabled.IsChecked==true,(float)MovementSlider.Value,GravityEnabled.IsChecked==true,(float)GravitySlider.Value,HideHud.IsChecked==true,DiscoveryEnabled.IsChecked==true,(float)DiscoveryBonus.Value,GuaranteedDrops.IsChecked==true,FreeLevels.IsChecked==true,FreeUpgrades.IsChecked==true);
     private void AdvancedChanged(object sender,RoutedEventArgs e){advancedPaused=false;}
@@ -723,7 +731,7 @@ public partial class MainWindow : Window
         {
             if (preset.Preferences != null)
             {
-                var next = preset.Preferences with { StartupPresetName = settings.StartupPresetName, Language = settings.Language };
+                var next = preset.Preferences with { StartupPresetName = settings.StartupPresetName, Language = settings.Language, ExperimentalExploration = settings.ExperimentalExploration };
                 next.Save(); settings = next;
                 AutoConnect.IsChecked = settings.AutoConnect; StartupFov.IsChecked = settings.StartupFovEnabled;
                 LoadDiscordControls();UpdateDiscordPresence();

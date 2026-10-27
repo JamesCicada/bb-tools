@@ -1,8 +1,8 @@
 # Release checklist
 
-## About-tab preference — next update
+## About-tab support
 
-- ⌛ Add a clear, optional [Ko-fi support link](https://ko-fi.com/jcicada) in About only.
+- ✔️ Added a clear, optional [Ko-fi support link](https://ko-fi.com/jcicada) and a short solo-developer message in About only.
 - No popups, reminders, startup prompts, footer placement or changelog mention.
 - Public changelogs should cover major features and meaningful fixes only.
 
@@ -15,6 +15,24 @@ This supersedes earlier pending notes for active Windows features below; old sce
 lists remain useful for regression testing. It does not mark future/unimplemented
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
+
+## Experimental exploration — v0.6.8
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Experimental opt-in | ✔️ | ⌛ | Settings → Experimental, off by default; saved preference reveals controls without activating modes. Opt-out stops modes and retains pending cleanup retries. |
+| Photo/free camera | ✔️ | ⌛ | Camera → Photo studio. Strengthened native logic/movement/gravity lock; prior HUD state restored; cancel pending preparation on exit; native action requests blocked during photo mode. Verify actual hunter immobility, controller input, HUD, death/loading and normal exit. |
+| Flight/noclip | ✔️ | ⌛ | Camera → Movement. Actor-handle ownership and return point checks; each activation captures a fresh anchor; improved elapsed movement timing. Collision bypass and map/loading recovery still need live tests. |
+| Camera key bindings | ✔️ | ⌛ | Fifteen configurable actions under Settings → Experimental; WASD, E/Q, arrows, Z/C and configurable capture/reset/exit. |
+
+Read the [guide and research notes](docs/experimental-exploration.md). None of these
+changes count as live confirmation of camera, movement lock or collision behavior.
+
+## NG-cycle editor — pending live testing
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Player → NG cycle | ✔️ | ⌛ | Read current, edit 0–999, apply with manager/character/counter checks and readback. 0 = NG; native scaling caps at NG+6. Does not begin a new journey or reset quests. Reload area/title to refresh existing enemies; verify actual difficulty and save/reload on both runtimes. Not included in presets. |
 
 ## Selected community features — v0.6.7, not tested in-game
 

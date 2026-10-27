@@ -48,6 +48,8 @@ public partial class MainWindow
         foreach (var (nav, page) in new[] { (NavPlayer, PlayerPage), (NavPractice, PracticePage), (NavTarget, TargetPage), (NavItems, ItemsPage),
             (NavTravel, TravelPage), (NavCamera, CameraPage), (NavWorkshop, WorkshopPage), (NavSettings, SettingsPage) })
             if (page.Visibility == Visibility.Visible) { var offset = PageScroll.VerticalOffset; Navigate(nav, new()); PageScroll.ScrollToVerticalOffset(offset); break; }
+        LoadCameraControls();
+        UpdateExperimentalAvailability();
         UpdatePhotoModeState();
     }
     private void HelpTranslate(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo("https://crowdin.com/project/bb-tools") { UseShellExecute = true });

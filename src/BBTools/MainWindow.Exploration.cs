@@ -8,9 +8,12 @@ namespace BBTools;
 
 public partial class MainWindow
 {
-    private static bool ExplorationAvailable=>false;
+    private bool ExplorationAvailable => settings.ExperimentalExploration;
+    private bool loadingExperimental;
     private readonly DispatcherTimer explorationTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private long explorationStamp;
+    private long flightMovementStamp;
+    private CancellationTokenSource? cameraPreparation;
     private bool resetHeld, exitHeld, photoStarting,photoHudRestorePending;
     private DateTime explorationRestoreRetry,photoHudRetry;
     public string[] CameraKeyChoices => CameraControls.Choices;
@@ -23,15 +26,41 @@ public partial class MainWindow
         UpdatePhotoModeState();
         explorationStamp = Stopwatch.GetTimestamp();
         explorationTimer.Tick += ExplorationTick;
-        // Photo mode and flight/noclip are temporarily unavailable in 0.6.0.
-        // Keep their native implementations for later testing, without polling/input.
-        if(ExplorationAvailable)explorationTimer.Start();
+        UpdateExperimentalAvailability();
         Closed += (_,_) => { explorationTimer.Stop(); explorationTimer.Tick -= ExplorationTick; };
+    }
+    private void UpdateExperimentalAvailability()
+    {
+        loadingExperimental = true;
+        ExperimentalExplorationToggle.IsChecked = ExplorationAvailable;
+        loadingExperimental = false;
+        NavPhoto.Visibility = FlightPanel.Visibility = ExplorationAvailable ? Visibility.Visible : Visibility.Collapsed;
+        PhotoPage.IsEnabled = ExplorationAvailable;
+        if (!ExplorationAvailable)
+        {
+            FreeCameraEnabled.IsChecked = FlightEnabled.IsChecked = NoclipEnabled.IsChecked = false;
+            if (PhotoPage.Visibility == Visibility.Visible) Navigate(NavCamera, new RoutedEventArgs());
+        }
+        // Keep retrying owned cleanup after opting out during a load transition.
+        if (ExplorationAvailable || freeCamera?.RestorationPending==true || flight?.RestorationPending==true || photoHudRestorePending)
+            explorationTimer.Start();
+        else explorationTimer.Stop();
+    }
+    private void ExperimentalExplorationChanged(object sender, RoutedEventArgs e)
+    {
+        if (loadingExperimental) return;
+        try
+        {
+            var next = settings with { ExperimentalExploration = ExperimentalExplorationToggle.IsChecked == true };
+            next.Save(); settings = next; UpdateExperimentalAvailability();
+            Status.Text = Translations.T("experimental.saved");
+        }
+        catch (Exception ex) when (IsExpected(ex)) { App.LogError(ex); UpdateExperimentalAvailability(); Status.Text = ex.Message; }
     }
     private void LoadCameraControls()
     {
         var keys=CurrentCameraControls.Keys;
-        CameraBindingList.ItemsSource=CameraControls.Actions.Select((name,index)=>new CameraBinding(name,keys[index])).ToArray();
+        CameraBindingList.ItemsSource=CameraControls.Actions.Select((name,index)=>new CameraBinding(Translations.T($"experimental.key{index}"),keys[index])).ToArray();
         PhotoControlsSummary.Text=CurrentCameraControls.Summary;
     }
     private void SaveCameraControls(object sender,RoutedEventArgs e)
@@ -84,7 +113,7 @@ public partial class MainWindow
         {
             freeCamera.LockHunter(PhotoLockHunter.IsChecked==true);
             hudVisibility??=new HudVisibility(memory,session);
-            if(PhotoHideHud.IsChecked==true||HideHud.IsChecked==true)hudVisibility.Apply();else hudVisibility.Show();
+            if(PhotoHideHud.IsChecked==true||HideHud.IsChecked==true)hudVisibility.Apply();else hudVisibility.Restore();
         }
         catch(Exception ex)when(IsExpected(ex)){FreeCameraEnabled.IsChecked=false;App.LogError(ex);Status.Text=Translations.Format("message.Photooptionscouldnotapply0.79ff2ed", ex.Message);}
     }
@@ -94,17 +123,20 @@ public partial class MainWindow
         if(FreeCameraEnabled.IsChecked==true)
         {
             if(!ExplorationAvailable){FreeCameraEnabled.IsChecked=false;Status.Text=Translations.T("message.Photomodeisdisabledinthisbuild.31f492f");return;}
-            if(memory==null||session==null||actionBusy){FreeCameraEnabled.IsChecked=false;Status.Text=Translations.T("message.Connectandloadacharacterwaitforanyactivegameactionbe.d663675");return;}
+            if(memory==null||session==null||actionBusy||retryDestination!=null||retryTravelling){FreeCameraEnabled.IsChecked=false;Status.Text=Translations.T("message.Connectandloadacharacterwaitforanyactivegameactionbe.d663675");return;}
             if(photoStarting)return;
             movementSpeed??=new MovementSpeed(memory,session);
             var observed=session;var generation=targetGeneration;var camera=freeCamera??=new FreeCamera(memory,session,movementSpeed);
             photoStarting=true;UpdatePhotoModeState();
+            using var preparation = CancellationTokenSource.CreateLinkedTokenSource(updateLifetime.Token);
+            cameraPreparation = preparation;
             try
             {
                 Status.Text=Translations.T("message.Findingtheactivenativecamera.ba1a9c1");
-                await camera.PrepareAsync(updateLifetime.Token);
-                if(closing||observed!=session||generation!=targetGeneration||FreeCameraEnabled.IsChecked!=true)return;
+                await camera.PrepareAsync(preparation.Token);
+                if(closing||observed!=session||generation!=targetGeneration||FreeCameraEnabled.IsChecked!=true||!ExplorationAvailable)return;
                 FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;
+                if(flight?.RestorationPending==true)throw new InvalidOperationException(Translations.T("experimental.cleanupPending"));
                 camera.Enable();camera.LockHunter(PhotoLockHunter.IsChecked==true);
                 PhotoFov.Value=Math.Clamp(freeCamera.InitialFov,10,120);
                 hudVisibility??=new HudVisibility(memory,session);if(PhotoHideHud.IsChecked==true||HideHud.IsChecked==true)hudVisibility.Apply();
@@ -112,9 +144,10 @@ public partial class MainWindow
                 explorationStamp=Stopwatch.GetTimestamp();Status.Text=Translations.T("message.PhotomodeenabledFocusthegametomovethecameraSettingss.177b0e4");
             }
             catch(Exception ex)when(IsExpected(ex)||ex is ObjectDisposedException){if(!closing&&observed==session&&generation==targetGeneration){FreeCameraEnabled.IsChecked=false;App.LogError(ex);Status.Text=Translations.Format("message.Photomodecouldnotstart0.558b62d", ex.Message);}}
-            finally{photoStarting=false;UpdatePhotoModeState();}
+            finally{cameraPreparation=null;photoStarting=false;UpdatePhotoModeState();}
             return;
         }
+        cameraPreparation?.Cancel();
         if(freeCamera==null){UpdatePhotoModeState();return;}
         try
         {
@@ -127,7 +160,7 @@ public partial class MainWindow
     private void RestorePhotoHud()
     {
         photoHudRestorePending=true;photoHudRetry=DateTime.UtcNow.AddSeconds(1);
-        try{if(HideHud.IsChecked==true)hudVisibility?.Apply();else hudVisibility?.Show();photoHudRestorePending=false;}
+        try{if(HideHud.IsChecked==true)hudVisibility?.Apply();else hudVisibility?.Restore();photoHudRestorePending=false;}
         catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=Translations.Format("message.HUDrestorationpending0.3edc13b", ex.Message);}
     }
     private void ShowHudNow(object sender,RoutedEventArgs e)
@@ -146,15 +179,21 @@ public partial class MainWindow
     {
         if(FlightEnabled==null||NoclipEnabled==null)return;
         if(!ExplorationAvailable&&(FlightEnabled.IsChecked==true||NoclipEnabled.IsChecked==true)){FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;Status.Text=Translations.T("message.Flightandnocliparedisabledinthisbuild.d7084e7");return;}
+        if ((actionBusy || photoStarting) && (FlightEnabled.IsChecked==true || NoclipEnabled.IsChecked==true)) { FlightEnabled.IsChecked=NoclipEnabled.IsChecked=false; Status.Text=Translations.T("experimental.waitForAction"); return; }
         if(ReferenceEquals(sender,NoclipEnabled)&&NoclipEnabled.IsChecked==true)FlightEnabled.IsChecked=true;
         if(FlightEnabled.IsChecked==true)
-        {FreeCameraEnabled.IsChecked=false;explorationStamp=Stopwatch.GetTimestamp();return;}
+        {
+            FreeCameraEnabled.IsChecked=false;
+            if(freeCamera?.RestorationPending==true){FlightEnabled.IsChecked=NoclipEnabled.IsChecked=false;Status.Text=Translations.T("experimental.cleanupPending");return;}
+            explorationStamp=flightMovementStamp=Stopwatch.GetTimestamp();return;
+        }
         NoclipEnabled.IsChecked=false;
         try{flight?.Restore();}catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=Translations.Format("message.Flightrestorationpending0.4baa155", ex.Message);}
     }
     private void ExplorationTick(object? sender,EventArgs e)
     {
         var now=Stopwatch.GetTimestamp();var elapsed=Math.Clamp((float)Stopwatch.GetElapsedTime(explorationStamp,now).TotalSeconds,0,.1f);explorationStamp=now;
+        if (!ExplorationAvailable && freeCamera?.RestorationPending!=true && flight?.RestorationPending!=true && !photoHudRestorePending) { explorationTimer.Stop(); return; }
         if(closing||memory==null||session==null||photoStarting)return;
         var focused=HotkeyManager.ForegroundProcess()==connectedPid&&!HotkeyManager.IsDown(0x5B)&&!HotkeyManager.IsDown(0x5C);
         if(FreeCameraEnabled.IsChecked==true)
@@ -181,10 +220,12 @@ public partial class MainWindow
             try
             {
                 flight??=new ExplorationFlight(memory,session);flight.Apply(NoclipEnabled.IsChecked==true);
-                if(!focused||actionBusy||!HotkeyManager.IsDown(0x11))return;
+                if(!focused||!HotkeyManager.IsDown(0x11)){flightMovementStamp=now;return;}
+                if(actionBusy)return;
                 var input=CurrentCameraControls.Read(HotkeyManager.IsDown);
+                var flightElapsed=Math.Clamp((float)Stopwatch.GetElapsedTime(flightMovementStamp,now).TotalSeconds,0,.1f);flightMovementStamp=now;
                 if(input.Forward!=0||input.Right!=0||input.Up!=0)
-                    _=MoveFlight(flight.Step(input.Forward,input.Right,input.Up,(float)FlightSpeed.Value*elapsed*input.Speed));
+                    _=MoveFlight(flight.Step(input.Forward,input.Right,input.Up,(float)FlightSpeed.Value*flightElapsed*input.Speed));
             }
             catch(Exception ex)when(IsExpected(ex)){FlightEnabled.IsChecked=false;NoclipEnabled.IsChecked=false;App.LogError(ex);Status.Text=Translations.Format("message.Flightnoclipstopped0.058e8a3", ex.Message);}
         }

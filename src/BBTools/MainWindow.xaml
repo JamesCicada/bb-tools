@@ -242,7 +242,6 @@
      <Button x:Name="NavWorkshop" ContentTemplate="{StaticResource NavigationText}" MinHeight="42" FontSize="13" Padding="10,8" Content="{DynamicResource L.ui.Workshop.c0086f2}" Tag="Workshop" Click="Navigate" Margin="0,0,6,0" />
      <Button x:Name="NavSettings" ContentTemplate="{StaticResource NavigationText}" MinHeight="42" FontSize="13" Padding="10,8" Content="{DynamicResource L.ui.Settings.74a883a}" Tag="Settings" Click="Navigate" Margin="0,0,6,0" />
     </UniformGrid>
-    <Button x:Name="NavPhoto" ContentTemplate="{StaticResource NavigationText}" MinHeight="42" FontSize="13" Padding="12,8" Content="{DynamicResource L.ui.Photostudio.bd45bf4}" Tag="Photo" Click="Navigate" Margin="0,0,0,6" Visibility="Collapsed" />
    </StackPanel>
   </Border>
   <Grid Margin="24,16,24,14" Grid.Row="1">
@@ -327,6 +326,22 @@
          <Button Grid.Column="1" Content="{DynamicResource L.insight.set}" Click="SetInsight" Style="{StaticResource Primary}"/>
         </Grid>
         <TextBlock Text="{DynamicResource L.insight.hint}" Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+       </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+       <StackPanel x:Name="NgCycleControls" IsEnabled="False">
+        <WrapPanel>
+         <TextBlock Text="{DynamicResource L.ng.heading}" Style="{StaticResource Caption}" />
+         <TextBlock Text="{DynamicResource L.feature.notTestedInGame}" Foreground="#D0B179" FontSize="11" Margin="10,0,0,0" />
+         <TextBlock x:Name="NgCycleValue" Text="—" Foreground="#D0B179" FontWeight="SemiBold" Margin="14,0,0,0" />
+        </WrapPanel>
+        <Grid Margin="0,10,0,0">
+         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBox x:Name="NgCycleInput" Text="0" FlowDirection="LeftToRight" AutomationProperties.Name="{DynamicResource L.ng.amount}" Margin="0,0,10,0" />
+         <Button Grid.Column="1" Content="{DynamicResource L.ng.reload}" Click="LoadNgCycle" Margin="0,0,10,0" />
+         <Button x:Name="ApplyNgCycleButton" Grid.Column="2" Content="{DynamicResource L.ng.apply}" Click="ApplyNgCycle" Style="{StaticResource Primary}" IsEnabled="False" />
+        </Grid>
+        <TextBlock Text="{DynamicResource L.ng.hint}" Style="{StaticResource Caption}" Margin="0,12,0,0" />
        </StackPanel>
       </Border>
       <Border Style="{StaticResource Card}" Margin="0,0,0,18">
@@ -777,6 +792,7 @@
       </TabControl>
      </StackPanel>
      <StackPanel x:Name="CameraPage" Visibility="Collapsed">
+    <Button x:Name="NavPhoto" ContentTemplate="{StaticResource NavigationText}" MinHeight="42" FontSize="13" Padding="12,8" Content="{DynamicResource L.experimental.openPhoto}" Tag="Photo" Click="Navigate" HorizontalAlignment="Left" Margin="0,0,0,12" Visibility="Collapsed" />
       <TextBlock Text="{DynamicResource L.ui.FOVandcameraoverridesareexperimentalandunstableTheyc.c852cc0}" Foreground="#D0B179" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,16" />
       <TabControl x:Name="CameraSections">
        <TabItem Header="{DynamicResource L.ui.FOV.5608c2a}">
@@ -833,8 +849,9 @@
           <Slider x:Name="GravitySlider" Minimum="0.05" Maximum="2" Value="1" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="AdvancedValueChanged" />
           <Button Content="{DynamicResource L.ui.Restoremovementandgravity.7193e12}" Click="ResetAdvanced" HorizontalAlignment="Left" Margin="0,10,0,0" />
           <TextBlock Text="{DynamicResource L.ui.Movementscalesplayertranslationwithoutspeedingupenem.625c7ab}" Style="{StaticResource Caption}" Margin="0,10,0,16" />
-          <Expander Header="{DynamicResource L.ui.Flightandnoclipexperimental.e3a6a8d}" Foreground="#E8E5DF" Margin="0,0,0,16" Visibility="Collapsed">
+          <Expander x:Name="FlightPanel" Header="{DynamicResource L.ui.Flightandnoclipexperimental.e3a6a8d}" Foreground="#E8E5DF" Margin="0,0,0,16" Visibility="Collapsed">
            <StackPanel>
+            <TextBlock Text="{DynamicResource L.experimental.warning}" Foreground="#D0B179" TextWrapping="Wrap" Margin="0,0,0,12"/>
             <CheckBox x:Name="FlightEnabled" Content="{DynamicResource L.ui.Enableflightnogravity.b8b5226}" Checked="FlightChanged" Unchecked="FlightChanged" />
             <CheckBox x:Name="NoclipEnabled" Content="{DynamicResource L.ui.Enablenoclipincludesflight.f83b9fe}" Checked="FlightChanged" Unchecked="FlightChanged" />
             <TextBlock Text="{DynamicResource L.ui.Flightspeedmetrespersecond.8995117}" Style="{StaticResource Caption}" Margin="0,10,0,0" />
@@ -849,9 +866,9 @@
       </TabControl>
      </StackPanel>
      <StackPanel x:Name="PhotoPage" Visibility="Collapsed" IsEnabled="False">
-      <ItemsControl x:Name="CameraBindingList" Visibility="Collapsed"/>
       <Border x:Name="FreeCameraPanel" Style="{StaticResource Card}" Margin="0,0,0,18">
        <StackPanel>
+        <TextBlock Text="{DynamicResource L.experimental.warning}" Foreground="#D0B179" TextWrapping="Wrap" Margin="0,0,0,12"/>
         <TextBlock x:Name="PhotoModeState" Text="{DynamicResource L.ui.Readytocompose.20e5f18}" FontSize="20" FontWeight="SemiBold" />
         <TextBlock Text="{DynamicResource L.ui.Startphotomodefocusthegametomovethecamerathencapture.a2d7ea5}" Style="{StaticResource Caption}" Margin="0,8,0,12" />
         <WrapPanel>
@@ -1024,6 +1041,25 @@
          </Border>
         </StackPanel>
        </TabItem>
+       <TabItem x:Name="ExperimentalTab" Header="{DynamicResource L.experimental.tab}">
+        <Border Style="{StaticResource Card}"><StackPanel>
+         <CheckBox x:Name="ExperimentalExplorationToggle" Content="{DynamicResource L.experimental.enable}" Checked="ExperimentalExplorationChanged" Unchecked="ExperimentalExplorationChanged" />
+         <TextBlock Text="{DynamicResource L.experimental.help}" Style="{StaticResource Caption}" Margin="0,12,0,0"/>
+         <TextBlock Text="{DynamicResource L.experimental.warning}" Foreground="#D0B179" TextWrapping="Wrap" Margin="0,12,0,0"/>
+      <Expander x:Name="CameraBindingsPanel" Header="{DynamicResource L.experimental.bindings}" Foreground="#E8E5DF" Margin="0,12,0,12">
+       <StackPanel>
+        <ItemsControl x:Name="CameraBindingList">
+         <ItemsControl.ItemTemplate><DataTemplate><Grid Margin="0,4,0,4">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions>
+          <TextBlock Text="{Binding Action}" VerticalAlignment="Center"/>
+          <ComboBox Grid.Column="1" ItemsSource="{x:Static local:CameraControls.Choices}" SelectedItem="{Binding Key, Mode=TwoWay}" MinHeight="36"/>
+         </Grid></DataTemplate></ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <WrapPanel Margin="0,12,0,0"><Button Content="{DynamicResource L.experimental.saveBindings}" Click="SaveCameraControls" Margin="0,0,10,0"/><Button Content="{DynamicResource L.experimental.defaultBindings}" Click="DefaultCameraControls"/></WrapPanel>
+       </StackPanel>
+      </Expander>
+        </StackPanel></Border>
+       </TabItem>
        <TabItem Header="{DynamicResource L.ui.Library.dc20b3d}">
         <StackPanel>
          <Border Style="{StaticResource Card}" Margin="0,0,0,18">
@@ -1073,6 +1109,11 @@
            <TextBlock Text="{DynamicResource L.ui.ABOUTUPDATES.f099d6b}" Style="{StaticResource Caption}" />
            <Button Content="{DynamicResource L.ui.Exportdiagnostics.b420518}" Click="ExportDiagnostics" HorizontalAlignment="Left" Margin="0,0,0,12" />
            <TextBlock x:Name="AboutVersion" FontSize="22" FontWeight="SemiBold" />
+           <StackPanel x:Name="KoFiSupport" Margin="0,20,0,0">
+            <TextBlock Text="{DynamicResource L.support.heading}" Style="{StaticResource Caption}" />
+            <TextBlock Text="{DynamicResource L.support.description}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,12" />
+            <Button Content="{DynamicResource L.support.kofi}" Click="OpenKoFi" HorizontalAlignment="Left" />
+           </StackPanel>
            <TextBlock x:Name="UpdateStatus" Text="{DynamicResource L.ui.UseCheckforupdatesbelowtolookforanewerstableGitHubre.24d863c}" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,12,0,0" />
            <TextBlock Text="{DynamicResource L.ui.ChecksrunonlywhenrequestedDownloadsopenonGitHubnothi.334655b}" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,8,0,0" />
            <TextBlock Text="{DynamicResource L.ui.LINUXTESTERSWANTED.3e04eda}" Style="{StaticResource Caption}" Margin="0,20,0,8" />

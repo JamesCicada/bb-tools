@@ -120,23 +120,33 @@ internal static partial class Program
             var start=flight.Anchor!;var next=flight.Step(1,0,1,2);Check(next.Y>start.Y&&next.Block==start.Block,"flight step stays in the loaded map and normalizes diagonal movement");
             flight.Apply(false);Check(memory.Read(ctrl+0x114,1)[0]==0x10,"disabling noclip restores only its collision bit");flight.Restore();Check(memory.Read(player.Component+0x200,1).SequenceEqual(oldFlags),"flight disable restores the original gravity flag");
             flight.Apply(true);Reject<ArgumentException>(()=>flight.Step(float.NaN,0,0,1),"noclip rejects invalid movement before native relocation");flight.Restore();
+            var originalHandle=memory.Read(player.Actor+8,4);flight.Apply(true);
+            memory.SetInt32(player.Actor+8,unchecked(memory.Int32(player.Actor+8)+1));
+            Reject<IOException>(()=>flight.Step(1,0,0,1),"noclip rejects a recycled actor handle at the same address");
+            Reject<IOException>(()=>flight.ReadReturnPoint(),"flight return point cannot teleport a replacement character");
+            memory.Write(player.Component+0x200,[0x20]);memory.Write(ctrl+0x114,[0x10]);flight.Restore();
+            Check(memory.Read(player.Component+0x200,1)[0]==0x20&&memory.Read(ctrl+0x114,1)[0]==0x10,"noclip cleanup never writes gravity or collision bits through a recycled actor");
+            memory.Write(player.Actor+8,originalHandle);memory.Write(player.Component+0x200,oldFlags);
             var identity=new DungeonBookmark(new string('a',32),session.ReadCharacter().Address,1,0x1D010000,new string('b',64));var spot=start with{Block=0x1D000000,Dungeon=identity};
             session.ValidateLocationContext(spot,spot);Reject<IOException>(()=>session.ValidateLocationContext(spot,spot with{Dungeon=identity with{StateHash=new string('c',64)}}),"chalice coordinate restore rejects changed instance/progress identity");Reject<IOException>(()=>session.ValidateLocationContext(spot,spot with{Dungeon=identity with{Session=new string('c',32)}}),"chalice coordinate restore rejects a different connection");
             Ptr(root+0x553E860,camRoot);Ptr(camRoot+0x2830,camOwner);Ptr(camRoot+0x13AC8,0);var step=camOwner+0x600;Ptr(step,root+0x5330480);Ptr(step+0x110,cam);Ptr(step+0x128,camOwner);
             Check(!FreeCamera.MatchesCameraStep(memory,root,step,camOwner+8),"camera task resolution rejects an output owner mismatch");
             Ptr(cam,root+0x53267D0);memory.SetInt32(camOwner+0x84,2); // Legacy mode: no extended-camera dependency.
-            foreach(var f in FreeCamera.Fingerprints)memory.Write(root+f.Offset,f.Bytes);
+            foreach(var f in FreeCamera.Fingerprints.Where(x=>x.Offset!=0x132E4F4))memory.Write(root+f.Offset,f.Bytes);
             memory.Write(root+MovementSpeed.Offset,MovementSpeed.Original);
             memory.Write(camOwner+0x10,BitConverter.GetBytes(1f));memory.Write(camOwner+0x24,BitConverter.GetBytes(1f));memory.Write(camOwner+0x38,BitConverter.GetBytes(1f));memory.Write(camOwner+0x50,BitConverter.GetBytes(.75f));memory.Write(camOwner+0x54,BitConverter.GetBytes(1.777f));
             var originalCode=memory.Read(root+0x143AC60,32);var hunterFlags=memory.Read(player.Actor+0x1E3,1);
-            var photoMovement=new MovementSpeed(memory,session);var camera=new FreeCamera(memory,session,photoMovement);camera.Enable();var frame=memory.Pointer(cam+0xD0);
-            Check(memory.Int32(cam+0xC4)==1&&memory.Int32(cam+0xC8)==1&&frame!=camOwner,"photo mode selects an owned native debug frame without an external patch or extended-follow mode");
+            memory.Write(ctrl+0x110,[0xA5]);
+            var photoMovement=new MovementSpeed(memory,session);var camera=new FreeCamera(memory,session,photoMovement);camera.Enable();var frame=camera.FrameAddress;
+            Check(memory.Int32(cam+0xC4)==0&&memory.Int32(cam+0xC8)==0&&BitConverter.ToUInt64(memory.Read(cam+0xD0,8))==0&&frame!=camOwner,"photo renderer borrows a private frame without changing native owning pointers or camera modes");
             camera.LockHunter(true);Check((memory.Read(player.Actor+0x1E3,1)[0]&0x80)!=0&&memory.Read(ctrl+0x111,1)[0]==1,"photo mode locks hunter movement through both the event flag and native controller movement gate");
+            Check(memory.Read(ctrl+0x110,1)[0]==0xA4&&(memory.Read(player.Component+0x200,1)[0]&0x40)!=0,"photo lock disables native hunter logic and gravity while preserving unrelated bits");
             Check(photoMovement.PhotoLocked&&!memory.Read(root+MovementSpeed.Offset,14).SequenceEqual(MovementSpeed.Original),"photo lock installs the shared per-frame player movement guard");
             photoMovement.Apply(2);photoMovement.Restore();Check(photoMovement.PhotoLocked,"ordinary movement controls cannot release an active photo lock");
-            memory.Write(player.Actor+0x1E3,[(byte)(memory.Read(player.Actor+0x1E3,1)[0]&0x7F)]);memory.Write(ctrl+0x111,[0]);camera.LockHunter(true);
+            memory.Write(player.Actor+0x1E3,[(byte)(memory.Read(player.Actor+0x1E3,1)[0]&0x7F)]);memory.Write(ctrl+0x111,[0]);memory.Write(ctrl+0x110,[0xA7]);camera.LockHunter(true);
             Check((memory.Read(player.Actor+0x1E3,1)[0]&0x80)!=0&&memory.Read(ctrl+0x111,1)[0]==1,"photo mode reasserts the movement lock when game updates clear its fields");
-            camera.LockHunter(false);Check(memory.Read(ctrl+0x111,1)[0]==0&&memory.Read(player.Actor+0x1E3,1).SequenceEqual(hunterFlags),"unchecking hunter lock immediately restores both original movement gates");camera.LockHunter(true);
+            Check(memory.Read(ctrl+0x110,1)[0]==0xA6,"photo lock reapplies a cleared logic gate and preserves newly set controller bits");
+            camera.LockHunter(false);Check(memory.Read(ctrl+0x110,1)[0]==0xA7&&memory.Read(player.Component+0x200,1).SequenceEqual(oldFlags)&&memory.Read(ctrl+0x111,1)[0]==0&&memory.Read(player.Actor+0x1E3,1).SequenceEqual(hunterFlags),"unchecking hunter lock immediately restores both original movement gates");camera.LockHunter(true);
             camera.Step(1,0,0,0,0,2,90);
             Check(BitConverter.ToSingle(memory.Read(frame+0x48,4))==-2&&Math.Abs(BitConverter.ToSingle(memory.Read(frame+0x50,4))-MathF.PI/2)<.001,"photo mode moves its private camera and sets FOV without changing the follow-camera frame");
             Check(BitConverter.ToSingle(memory.Read(camOwner+0x48,4))==0&&memory.Read(root+0x143AC60,32).SequenceEqual(originalCode),"photo camera leaves the follow output and former camera hook site unchanged");
@@ -147,8 +157,8 @@ internal static partial class Program
             Check(memory.Int32(cam+0xC4)==0&&memory.Int32(cam+0xC8)==0&&BitConverter.ToUInt64(memory.Read(cam+0xD0,8))==0&&memory.Read(player.Actor+0x1E3,1).SequenceEqual(hunterFlags)&&memory.Read(ctrl+0x111,1)[0]==0,"photo disable restores camera selection and hunter movement even after death");
             camera.Enable();var map=memory.Int32(player.Actor+0x3F8);memory.SetInt32(player.Actor+0x3F8,map+1);Reject<IOException>(camera.ValidateContext,"photo mode refuses movement after a map change");camera.Restore();memory.SetInt32(player.Actor+0x3F8,map);
             memory.SetInt32(cam+0xC4,1);Reject<IOException>(camera.Enable,"photo mode preserves an already active external debug camera");memory.SetInt32(cam+0xC4,0);
-            camera.Enable();camera.LockHunter(true);Ptr(cam+0xD0,camOwner);Reject<IOException>(camera.Restore,"photo restoration preserves a foreign replacement camera");
-            Check(memory.Read(player.Actor+0x1E3,1).SequenceEqual(hunterFlags),"hunter movement restores independently when a foreign camera blocks restoration");Ptr(cam+0xD0,frame);camera.Restore();
+            camera.Enable();camera.LockHunter(true);Ptr(cam+0xD0,camOwner);camera.Restore();Check(memory.Pointer(cam+0xD0)==camOwner,"photo cleanup preserves a foreign native frame instead of taking ownership");
+            Check(memory.Read(player.Actor+0x1E3,1).SequenceEqual(hunterFlags),"hunter movement restores independently when a foreign camera blocks restoration");Ptr(cam+0xD0,0);camera.Restore();
             camera.Enable();camera.LockHunter(true);var world=memory.Pointer(root+PlayerSession.WorldPointer);Ptr(world+0x60,0);Ptr(camRoot+0x2830,0);
             Reject<IOException>(camera.ValidateContext,"photo mode rejects a null-player loading transition");camera.Restore();
             Check(memory.Int32(cam+0xC4)==0,"photo output restores during loading even if the follow camera and player are unavailable");
@@ -165,6 +175,7 @@ internal static partial class Program
             Check(memory.Read(clonedOptions+9,1)[0]==1&&!hud.RestorationPending,"HUD baseline survives a replacement options object cloned while hidden");
             hud.Apply();Ptr(manager+0x48,0);Reject<IOException>(hud.Restore,"HUD cleanup retains ownership when its options are temporarily unavailable");Ptr(manager+0x48,clonedOptions);hud.Restore();
             Check(memory.Read(clonedOptions+9,1)[0]==1&&!hud.RestorationPending,"HUD restoration retries successfully after its options become available");
+            memory.Write(clonedOptions+9,[0]);hud.Apply();hud.Restore();Check(memory.Read(clonedOptions+9,1)[0]==0,"photo HUD cleanup preserves an originally hidden HUD instead of forcing it visible");
             memory.Write(clonedOptions+9,[0]);hud.Show();Check(memory.Read(clonedOptions+9,1)[0]==1,"explicit HUD recovery repairs visibility left hidden by an earlier session");
         }
         finally{memory.Write(player.Actor+0x58,oldController);memory.Write(player.Component+0x200,oldFlags);memory.Write(root+0x553E860,oldCamera);memory.Write(manager+0x48,oldOptions);}

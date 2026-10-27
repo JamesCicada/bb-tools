@@ -1806,5 +1806,125 @@
   "feature.notTestedInGame": [
     "MainWindow.xaml:629",
     "MainWindow.xaml:807"
+  ],
+  "ng.loaded": [
+    "MainWindow.PlayerUtilities.cs:33"
+  ],
+  "ng.reloadFirst": [
+    "MainWindow.PlayerUtilities.cs:36"
+  ],
+  "ng.applied": [
+    "MainWindow.PlayerUtilities.cs:39"
+  ],
+  "ng.heading": [
+    "MainWindow.xaml:335"
+  ],
+  "ng.amount": [
+    "MainWindow.xaml:341"
+  ],
+  "ng.reload": [
+    "MainWindow.xaml:342"
+  ],
+  "ng.apply": [
+    "MainWindow.xaml:343"
+  ],
+  "ng.hint": [
+    "MainWindow.xaml:345"
+  ],
+  "support.heading": [
+    "MainWindow.xaml:1093"
+  ],
+  "support.description": [
+    "MainWindow.xaml:1094"
+  ],
+  "support.kofi": [
+    "MainWindow.xaml:1095"
+  ],
+  "experimental.summary": [
+    "CameraControls.cs:28"
+  ],
+  "experimental.saved": [
+    "MainWindow.Exploration.cs:56"
+  ],
+  "experimental.cleanupPending": [
+    "MainWindow.Exploration.cs:139",
+    "MainWindow.Exploration.cs:187"
+  ],
+  "experimental.waitForAction": [
+    "MainWindow.Exploration.cs:182"
+  ],
+  "experimental.openPhoto": [
+    "MainWindow.xaml:795"
+  ],
+  "experimental.warning": [
+    "MainWindow.xaml:854",
+    "MainWindow.xaml:871",
+    "MainWindow.xaml:1048"
+  ],
+  "experimental.tab": [
+    "MainWindow.xaml:1044"
+  ],
+  "experimental.enable": [
+    "MainWindow.xaml:1046"
+  ],
+  "experimental.help": [
+    "MainWindow.xaml:1047"
+  ],
+  "experimental.bindings": [
+    "MainWindow.xaml:1049"
+  ],
+  "experimental.saveBindings": [
+    "MainWindow.xaml:1058"
+  ],
+  "experimental.defaultBindings": [
+    "MainWindow.xaml:1058"
+  ],
+  "experimental.exitBeforeAction": [
+    "MainWindow.xaml.cs:492"
+  ],
+  "experimental.key0": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key1": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key2": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key3": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key4": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key5": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key6": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key7": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key8": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key9": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key10": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key11": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key12": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key13": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "experimental.key14": [
+    "MainWindow.Exploration.cs:LoadCameraControls"
   ]
 }

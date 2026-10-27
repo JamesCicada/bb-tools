@@ -7,6 +7,8 @@ namespace BBTools.Memory;
 public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,MovementSpeed? movement=null)
 {
     private readonly MovementSpeed movementGuard=movement??new(memory,session);
+    private readonly PhotoCameraOutput output=new(memory,session);
+    internal ulong FrameAddress=>frame;
     public static readonly (ulong Offset, byte[] Bytes)[] Fingerprints =
     [
         (0x193764B, Convert.FromHexString("49899C2410010000")),
@@ -14,22 +16,24 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
         (0x19295D9, Convert.FromHexString("498985C83A0100")),
         (0x1929726, Convert.FromHexString("498B95C83A0100")),
         (0x156FEE5, Convert.FromHexString("488D05E468DB03")),
-        (0x193BEC5, Convert.FromHexString("498B851001000083B8C4000000007464488B80D0000000")),
+        (PhotoCameraOutput.Offset, PhotoCameraOutput.Original),
         (0x15729B6, Convert.FromHexString("4183BC24C4000000010F85D00000004983BC24D0000000000F84C10000004183BC24C8000000000F85B2000000")),
         (0x193BEE1, Convert.FromHexString("C5FA104050C4C17A114750C5FA104054C4C17A114754")),
         (0x132F786, Convert.FromHexString("488B4058889811010000")),
-        (0x1337878, Convert.FromHexString("410FB6CE8B90E10100000FB6B0E5010000"))
+        (0x1337878, Convert.FromHexString("410FB6CE8B90E10100000FB6B0E5010000")),
+        (0x132E4F4, Convert.FromHexString("8A881001000080E1FE4408F1888810010000")),
+        (0x18D5570, Convert.FromHexString("488B87B0030000488B40200FB78000020000"))
     ];
-    private ulong root, control, follow, frame, actor, cameraStep;
+    private ulong root, control, follow, frame, actor, cameraStep, resourceModule;
     private uint block, handle;
     private byte[]? initial;
     private ulong previousFrame;
     private int previousMode, previousHold;
     private bool active, hunterLocked;
-    private byte hunterBit, originalMoveGate;
+    private byte hunterBit, originalMoveGate, originalLogicBit, originalGravityBit;
     private ulong hunterController;
     public bool IsActive => active;
-    public bool RestorationPending => active || hunterLocked || movementGuard.PhotoLocked;
+    public bool RestorationPending => active || hunterLocked || movementGuard.PhotoLocked || output.RestorationPending;
     public float InitialFov => initial == null ? 43 : BitConverter.ToSingle(initial, 0x50) * 180 / MathF.PI;
 
     internal static bool MatchesCameraStep(IMemory source,ulong imageBase,ulong step,ulong owner)
@@ -73,7 +77,7 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
     public void Enable()
     {
         if (active) return;
-        if (hunterLocked) Restore();
+        if (hunterLocked || output.RestorationPending) Restore();
         if (hunterLocked) throw new IOException("Wait for the previous hunter movement lock to restore before re-entering photo mode.");
         ValidateInstructions();
         var player = session.ReadPlayer();
@@ -88,18 +92,17 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
         frame = frame == 0 ? memory.AllocateData(0x60) : frame;
         memory.Write(frame, source);
         root = current.Root; control = current.Control; follow = current.Follow;
-        actor = player.Actor; handle = unchecked((uint)memory.Int32(actor + 8));
+        actor = player.Actor; resourceModule = player.Component; handle = unchecked((uint)memory.Int32(actor + 8));
         block = unchecked((uint)memory.Int32(actor + 0x3F8));
         previousMode = mode; previousHold = hold; previousFrame = oldFrame; initial = source;
         memory.Suspended(() =>
         {
-            if (Resolve() != current || session.ReadPlayer().Actor != actor || memory.Int32(control + 0xC4) != mode ||
+            var checkedPlayer=session.ReadPlayer();
+            if (Resolve() != current || checkedPlayer.Actor != actor || checkedPlayer.Component != resourceModule || unchecked((uint)memory.Int32(actor+8))!=handle || unchecked((uint)memory.Int32(actor+0x3F8))!=block || memory.Int32(control + 0xC4) != mode ||
                 memory.Int32(control + 0xC8) != hold || BitConverter.ToUInt64(memory.Read(control + 0xD0,8)) != oldFrame)
                 throw new IOException("Camera changed before photo-mode activation.");
-            // Set held state before enabling the renderer's debug output selection.
-            memory.SetInt32(control + 0xC8, 1);
-            memory.Write(control + 0xD0, BitConverter.GetBytes(frame));
-            memory.SetInt32(control + 0xC4, 1);
+            // Borrow only for the renderer; native ownership/mode fields stay intact.
+            output.Apply(frame,control,actor,follow,handle);
             active = true;
         });
     }
@@ -107,10 +110,10 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
     {
         if (!active) throw new IOException("Enable photo mode first.");
         var player = session.ReadPlayer();
-        if (player.Health == 0 || player.Actor != actor || unchecked((uint)memory.Int32(actor + 8)) != handle ||
+        if (player.Health == 0 || player.Actor != actor || player.Component != resourceModule || unchecked((uint)memory.Int32(actor + 8)) != handle ||
             unchecked((uint)memory.Int32(actor + 0x3F8)) != block || Resolve() != (root,control,follow))
             throw new IOException("Photo mode stopped after a player, map or camera change.");
-        if (memory.Int32(control + 0xC4) != 1 || memory.Int32(control + 0xC8) != 1 || memory.Pointer(control + 0xD0) != frame)
+        if (!output.Matches() || memory.Int32(control + 0xC4) != previousMode || memory.Int32(control + 0xC8) != previousHold || BitConverter.ToUInt64(memory.Read(control + 0xD0,8)) != previousFrame)
             throw new IOException("Another tool or the game changed the debug camera.");
     }
     public void LockHunter(bool enabled)
@@ -121,8 +124,9 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
         var currentController=memory.Pointer(actor+0x58,"hunter movement controller");
         if(hunterLocked&&currentController!=hunterController)throw new IOException("Hunter movement controller changed; photo mode must stop.");
         var value=memory.Read(actor+0x1E3,1)[0];var gate=memory.Read(currentController+0x111,1)[0];
+        var logic=memory.Read(currentController+0x110,1)[0];
         if(gate>1)throw new IOException("Hunter movement gate differs from the supported layout.");
-        if(enabled&&hunterLocked&&(value&0x80)!=0&&gate==1)return;
+        if(enabled&&hunterLocked&&(value&0x80)!=0&&gate==1&&(logic&1)==0&&(memory.Read(resourceModule+0x200,1)[0]&0x40)!=0)return;
         memory.Suspended(() =>
         {
             ValidateContext();
@@ -131,9 +135,15 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
             if(gate>1)throw new IOException("Hunter movement gate failed validation.");
             if(enabled)
             {
-                if(!hunterLocked){hunterBit=(byte)(value&0x80);originalMoveGate=gate;hunterController=currentController;hunterLocked=true;}
+                if(!hunterLocked){hunterBit=(byte)(value&0x80);originalMoveGate=gate;originalLogicBit=(byte)(memory.Read(currentController+0x110,1)[0]&1);originalGravityBit=(byte)(memory.Read(resourceModule+0x200,1)[0]&0x40);hunterController=currentController;hunterLocked=true;}
                 if((value&0x80)==0)memory.Write(actor+0x1E3,[(byte)(value|0x80)]);
                 if(gate!=1)memory.Write(currentController+0x111,[1]);
+                // The native EnableLogic gate also stops the hunter's action/root
+                // motion update. A movement multiplier alone leaves actions active.
+                logic=memory.Read(currentController+0x110,1)[0];
+                if((logic&1)!=0)memory.Write(currentController+0x110,[(byte)(logic&~1)]);
+                var gravity=memory.Read(resourceModule+0x200,1)[0];
+                if((gravity&0x40)==0)memory.Write(resourceModule+0x200,[(byte)(gravity|0x40)]);
             }
             else RestoreHunterLock();
         });
@@ -153,8 +163,15 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
                 var gate=memory.Read(current+0x111,1)[0];
                 if(gate>1)throw new IOException("Hunter movement gate changed externally; restoration is pending.");
                 memory.Write(current+0x111,[originalMoveGate]);
+                var logic=memory.Read(current+0x110,1)[0];
+                if((logic&1)==0)memory.Write(current+0x110,[(byte)(logic|originalLogicBit)]);
             }
             var flags=memory.Read(actor+0x1E3,1)[0];memory.Write(actor+0x1E3,[(byte)((flags&0x7F)|hunterBit)]);
+            if(player.Component==resourceModule)
+            {
+                var flags2=memory.Read(resourceModule+0x200,1)[0];
+                memory.Write(resourceModule+0x200,[(byte)((flags2&~0x40)|originalGravityBit)]);
+            }
         }
         hunterLocked=false;hunterController=0;
     }
@@ -201,36 +218,17 @@ public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,Movem
     }
     public void Restore()
     {
-        if (!active && !hunterLocked && !movementGuard.PhotoLocked) return;
+        if (!RestorationPending) return;
         memory.Suspended(() =>
         {
-            // Camera restoration does not require a living player or an unchanged map.
-            try
-            {
-                var current=Resolve(restoring:true);
-                if (current.Root!=root||current.Control!=control) { active=false; }
-                else if (active)
-                {
-                    if (BitConverter.ToUInt64(memory.Read(control+0xD0,8)) != frame)
-                        throw new IOException("Debug-camera owner changed externally; its new state was preserved.");
-                    if(memory.Int32(control+0xC4)==1)memory.SetInt32(control+0xC4,previousMode);
-                    memory.Write(control+0xD0,BitConverter.GetBytes(previousFrame));
-                    if(memory.Int32(control+0xC8)==1)memory.SetInt32(control+0xC8,previousHold);
-                    active=false;
-                }
-            }
+            try { output.Restore(); active=false; }
             finally
             {
                 if(hunterLocked||movementGuard.PhotoLocked)
-                {
-                    try
-                    {
-                        RestoreHunterLock();
-                    }
-                    catch(IOException) { /* Retry hunter restoration once the player is available. */ }
-                }
+                    try { RestoreHunterLock(); } catch(IOException) { /* Retry only owned hunter cleanup after loading. */ }
             }
         });
-        // Keep the private frame allocated: a native reader can retain the previous pointer briefly.
+        // Trampoline and frame pages stay allocated until process exit for readers
+        // already in flight. The game never owns or frees the private frame.
     }
 }

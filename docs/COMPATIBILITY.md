@@ -84,3 +84,11 @@ The shoulder-camera offset and blood-gem editor/spawner are **not tested in-game
 on either Windows runtime. Their automated checks do not extend the 0.6.6 live
 confirmation to these additions. Each control is labeled in the app. Linux remains
 a separate untested beta and does not include these Windows features.
+
+
+## Version 0.6.8 additions
+
+NG-cycle editing, experimental photo/free camera and flight/noclip are **not tested
+in-game** on Bloodborne PC or shadPS4. Exploration modes require the explicit
+Settings → Experimental opt-in and start off. These controls do not extend earlier
+live confirmations to the new behavior. Linux does not include these Windows tools.

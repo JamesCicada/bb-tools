@@ -150,6 +150,15 @@ public sealed class ProcessMemory : IMemory, IDisposable
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
     }
+    internal void ReplacePhotoOutputCode(ulong imageBase, byte[] expected, byte[] replacement)
+    {
+        if(expected.Length!=PhotoCameraOutput.Original.Length||replacement.Length!=expected.Length)throw new ArgumentException("Invalid photo output patch size.");
+        var at=imageBase+PhotoCameraOutput.Offset;
+        if(!Read(at,expected.Length).SequenceEqual(expected))throw new IOException("Photo output instructions changed externally.");
+        if(!VirtualProtectEx(handle,(nuint)at,(nuint)expected.Length,0x40,out var protection))throw new IOException("Photo output code is unavailable.");
+        try{if(!WriteProcessMemory(handle,(nuint)at,replacement,(nuint)replacement.Length,out var count)||count!=(nuint)replacement.Length)throw new IOException("Photo output patch write failed.");}
+        finally{var flushed=FlushInstructionCache(handle,(nuint)at,(nuint)expected.Length);var restored=VirtualProtectEx(handle,(nuint)at,(nuint)expected.Length,protection,out _);if(!flushed||!restored)throw new IOException("Photo output protection/cache restoration failed.");}
+    }
     internal void ReplaceShoulderCode(ulong imageBase, byte[] expected, byte[] replacement)
     {
         if (expected.Length != ShoulderCamera.Original.Length || replacement.Length != expected.Length)

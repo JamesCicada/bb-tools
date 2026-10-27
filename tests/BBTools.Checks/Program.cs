@@ -47,7 +47,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); GemNativeHelperChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); PhotoOutputChecks(); GemNativeHelperChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -224,7 +224,7 @@ internal static partial class Program
     }
     private static void CameraChecks(ProcessMemory memory, PlayerSession session, ulong root)
     {
-        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)})) memory.Write(root+f.Offset,f.Bytes);
+        foreach(var f in CameraFov.Fingerprints.Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(PlayerSession.NgCycleFingerprints).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)})) memory.Write(root+f.Offset,f.Bytes);
         memory.Write(root+CameraFov.ClampOffset,CameraFov.StandardClamp);
         var repo=memory.AllocateData(0x2000); var cap=memory.AllocateData(0x100); var handle=memory.AllocateData(0x100);
         var file=memory.AllocateData(0x200); var name=memory.AllocateData(0x100);
@@ -404,6 +404,7 @@ internal static partial class Program
             Write(root + 0x156D110, [0xC3]); Write(root + 0x156D0E0, [0xC3]);
             Write(root + 0x132E050, Convert.FromHexString("48B8").Concat(BitConverter.GetBytes(root + 0x57F0100)).Concat(Convert.FromHexString("8930C3")).ToArray());
             Write(root + 0x13D0060, Convert.FromHexString("897708C3"));
+            Write(root+0x132E4F4,FreeCamera.Fingerprints.Single(x=>x.Offset==0x132E4F4).Bytes);
             foreach (var page in new ulong[] { 0x13CF000, 0x156D000, 0x132E000, 0x13D0000 }) VirtualProtect((nint)(root + page), 4096, 0x20, out _);
             // Windows ABI wrapper -> SysV getter, including Windows nonvolatile RSI/RDI.
             var wrapper = VirtualAlloc(0, 4096, 0x3000, 4);
@@ -459,6 +460,7 @@ internal static partial class Program
             var session = new PlayerSession(memory, root);
             PlayerDetectionChecks(memory, session, root);
             ProgressionChecks(memory, session, root);
+            NgCycleChecks(memory, session, root);
             GemChecks(memory, session, root);
             var player = session.ReadPlayer();
             Check(player.Health == 300 && player.MaxHealth == 600 && player.Stamina == 70, "resolve local player and resource fields");
@@ -772,6 +774,10 @@ internal static partial class Program
         PreviewLanguage("en");
         Check(((System.Windows.Controls.TextBlock)window.FindName("GemsTestStatus")).Text=="Not tested in-game"&&((System.Windows.Controls.TextBlock)window.FindName("ShoulderTestStatus")).Text=="Not tested in-game",
             "both unconfirmed features keep persistent in-game testing labels beside their controls");
+        Check(!((FrameworkElement)window.FindName("NgCycleControls")).IsEnabled&&!((System.Windows.Controls.Button)window.FindName("ApplyNgCycleButton")).IsEnabled,"NG controls start disabled until a supported character and current-cycle snapshot are available");
+        var support=(FrameworkElement)window.FindName("KoFiSupport");var parent=(DependencyObject)support;
+        while(parent!=null&&parent!=window.FindName("AboutTab"))parent=LogicalTreeHelper.GetParent(parent);
+        Check(parent==window.FindName("AboutTab"),"Ko-fi encouragement is confined to the About tab");
         var movementToggle=(System.Windows.Controls.CheckBox)window.FindName("MovementEnabled");
         var movementSlider=(System.Windows.Controls.Slider)window.FindName("MovementSlider");
         var gravityToggle=(System.Windows.Controls.CheckBox)window.FindName("GravityEnabled");
@@ -819,6 +825,8 @@ internal static partial class Program
         ((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked=true;
         Check(((System.Windows.Controls.CheckBox)window.FindName("FreeCameraEnabled")).IsChecked==false,"photo mode cannot start without a connected loaded game");
 
+        ExperimentalUiChecks(window);
+
         var binding = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         void Field(string name, object? value) => typeof(MainWindow).GetField(name, binding)!.SetValue(window, value);
         void Poll() => typeof(MainWindow).GetMethod("Poll", binding)!.Invoke(window, [null, EventArgs.Empty]);
@@ -827,6 +835,15 @@ internal static partial class Program
         Field("updating", true);
         foreach (var toggle in toggles) toggle.IsChecked = true;
         Field("updating", false); Field("session", session); Field("memory", memory);
+        Poll();
+        var originalNg=session.ReadNgCycle();
+        typeof(MainWindow).GetMethod("LoadNgCycle",binding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(((System.Windows.Controls.Button)window.FindName("ApplyNgCycleButton")).IsEnabled,"loading the current cycle enables the guarded NG apply action");
+        ((System.Windows.Controls.TextBox)window.FindName("NgCycleInput")).Text="3";
+        typeof(MainWindow).GetMethod("ApplyNgCycle",binding)!.Invoke(window,[window,new RoutedEventArgs()]);
+        Check(session.ReadNgCycle().Value==3,"Player-page NG edit applies the selected cycle through the verified setter");
+        session.SetNgCycle(originalNg.Value,session.ReadNgCycle());
+
         Poll();
         Check(movementToggle.IsEnabled&&movementSlider.IsEnabled&&gravityToggle.IsEnabled&&gravitySlider.IsEnabled,"loaded-player polling enables movement toggles and sliders independently of disabled photo mode");
         Check(((FrameworkElement)window.FindName("InsightControls")).IsEnabled && ((System.Windows.Controls.CheckBox)window.FindName("FreeLevels")).IsEnabled &&
@@ -889,6 +906,14 @@ internal static partial class Program
         var app = new Application();
         var window = new MainWindow { Width = width, Height = height };
         if(page.Contains('@')){var selection=page.Split('@');page=selection[0];var localeBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;typeof(MainWindow).GetField("settings",localeBinding)!.SetValue(window,new AppSettings(Language:selection[1]));foreach(var method in new[]{"ApplyLanguageResources","LoadLanguageControls","RefreshLocalizedLabels"})typeof(MainWindow).GetMethod(method,localeBinding)!.Invoke(window,null);}
+        if(page is "Photo" or "PhotoCapture" or "Experimental")
+        {
+            var experimentalBinding=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            var field=typeof(MainWindow).GetField("settings",experimentalBinding)!;
+            field.SetValue(window,((AppSettings)field.GetValue(window)!) with {ExperimentalExploration=true});
+            typeof(MainWindow).GetMethod("UpdateExperimentalAvailability",experimentalBinding)!.Invoke(window,null);
+        }
+        if(page=="Experimental"){((System.Windows.Controls.TabItem)window.FindName("ExperimentalTab")).IsSelected=true;page="Settings";}
         if(page=="Gems"){((System.Windows.Controls.TabItem)window.FindName("GemsTab")).IsSelected=true;page="Items";}
         if(page=="Drops"){((System.Windows.Controls.TabItem)window.FindName("DropsTab")).IsSelected=true;page="Items";}
         if(page=="Presets"){((System.Windows.Controls.TabItem)window.FindName("PresetsTab")).IsSelected=true;page="Practice";}
@@ -929,7 +954,7 @@ internal static partial class Program
         var table = (int)BitConverter.ToUInt64(bytes, 32);
         var size = BitConverter.ToUInt16(bytes, 54);
         var count = BitConverter.ToUInt16(bytes, 56);
-        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)}))
+        foreach (var fingerprint in LootOverrides.Fingerprints.Concat(new[]{(Offset:LootOverrides.DiscoveryOffset,Bytes:LootOverrides.DiscoveryOriginal),(Offset:LootOverrides.DropOffset,Bytes:LootOverrides.DropOriginal)}).Concat(PlayerSession.Fingerprints).Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Concat(GameActions.MultiplierFingerprints).Concat(GameActions.MenuFingerprints).Concat(GameActions.ChaliceFingerprints).Concat(CameraFov.Fingerprints).Concat(PlayerSession.DurabilityFingerprints).Concat(GameActions.NativeRepairFingerprints).Concat(GameActions.PoisonFingerprints).Concat(WorldGravity.Fingerprints).Concat(HudVisibility.Fingerprints).Concat(ExplorationFlight.Fingerprints).Concat(new[]{(Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)}).Concat(FreeCamera.Fingerprints).Concat(PlayerSession.TargetFingerprints).Concat(PlayerSession.ParryPracticeFingerprints).Concat(CameraTuning.Fingerprints).Concat(PlayerSession.StatusFingerprints).Concat(PlayerSession.PresenceFingerprints).Concat(ProgressionCosts.Fingerprints).Concat(ProgressionCosts.UpgradeSites.Select(x=>(Offset:x.Offset,Bytes:x.Original))).Concat(new[]{PlayerSession.InsightFingerprint}).Concat(PlayerSession.NgCycleFingerprints).Concat(GameActions.GemFingerprints).Concat(new[]{(Offset:ShoulderCamera.Offset,Bytes:ShoulderCamera.Original)}))
         {
             var matched = false;
             for (var i = 0; i < count; i++)

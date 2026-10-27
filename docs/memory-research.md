@@ -682,3 +682,19 @@ for native call/instance details and the live test matrix. Both features remain
 pending live confirmation. Gem descriptors are resolved immediately before
 publication under the existing suspended, actor-validated game-thread queue;
 no serialized save offset is used as a runtime pointer.
+
+
+## NG-cycle editor — 2026-10-27, pending in-game confirmation
+
+- Independent 1.09 image inspection verifies the complete native getter at
+  `0x131D250`: GameDataMan global `image+0x553B130`, signed 32-bit ClearCount
+  at manager+`0x68`. This is separate from the Arcane field at player-record+`0x68`.
+- The scaling reader at `0x157F130` clamps the index to 0–6. The counter itself
+  can represent later journeys; the editor bounds it to 0–999, consistent with
+  the existing presence reader. It does not promise higher difficulty beyond NG+6.
+- Writes run while game threads are paused, compare the captured manager,
+  character record and original count, and verify the resulting four-byte value.
+  Existing ending/quest flags, adjacent counters and player attributes are preserved.
+- This is an explicit persistent counter edit, excluded from presets and trainer
+  cleanup. It does not call the next-journey routine or reset the world. Gameplay
+  effects, existing-enemy refresh and persistence need live tests on both runtimes.

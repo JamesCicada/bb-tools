@@ -1,6 +1,6 @@
-> **Version 0.6.7:** shoulder-camera offset and blood-gem editing/spawning are new and **NOT TESTED IN-GAME**. Previously confirmed Windows features retain their existing test status.
-> **Linux 0.6.7-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
-> Bloodborne PC and shadPS4 remain officially supported for game 1.09. Photo mode/free camera and flight/noclip remain disabled and hidden.
+> **Version 0.6.8:** NG-cycle editing and opt-in photo/flight/noclip are **NOT TESTED IN-GAME**. Shoulder-camera and blood-gem tools also await gameplay feedback. Previous live confirmations retain their existing scope.
+> **Linux 0.6.8-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
+> Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
 # BB Tools
 
@@ -11,6 +11,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.8: NG editing and optional experimental exploration
+
+- Player → NG cycle: load the current value, edit 0–999 and apply. Difficulty scaling caps at NG+6; this edits the counter without restarting quests or beginning a new journey.
+- Settings → Experimental: opt into photo mode and Camera → Movement flight/noclip. Modes remain off until started manually. Rebind all camera keys in the same Settings tab.
+- Camera → Photo studio: free camera, hunter lock, optional HUD hiding, PNG capture and saved-photo filters. No external patches/addons required. Navigating away exits photo mode.
+- These additions are **not tested in-game**. See the [experimental guide](docs/experimental-exploration.md) and report runtime/version plus session logs.
 
 ## v0.6.7: shoulder camera and blood gems
 
@@ -25,7 +32,7 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 - Workshop: separate free level-up and free weapon-upgrade toggles remove Echo and material costs; save them in presets, including startup presets.
 - Validate only the native instructions needed by an action; log exact compatibility mismatches and item parameters.
 - Active Windows features are tested and confirmed. Hidden photo/flight/noclip features stay outside that confirmation.
-- Separate [Linux beta](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.7-linux-beta.1): native x64/glibc desktop and a read-only probe. **Not tested with a live Linux game; fewer features than Windows.**
+- Separate [Linux beta](https://github.com/JamesCicada/bb-tools/releases/tag/v0.6.8-linux-beta.1): native x64/glibc desktop and a read-only probe. **Not tested with a live Linux game; fewer features than Windows.**
 
 ## v0.6.4: translations and discovery
 

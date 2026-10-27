@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.8 — 2026-10-27
+
+- **NG-cycle editor:** view and edit the current playthrough counter from the Player page, with guarded application and write verification. Not tested in-game; gameplay and save/reload feedback needed.
+
+- **Experimental photo mode and flight/noclip:** re-enabled behind an off-by-default switch in Settings → Experimental. Camera controls can be rebound there; enabling the switch never starts a mode automatically.
+- Keep the private photo frame out of the game’s owning camera pointer to avoid native-destructor ownership errors during loading.
+- Strengthen the photo hunter lock, restore the previous HUD visibility, cancel camera preparation on exit, and protect native game actions from running while photo mode is active. Tighten noclip ownership, return-point validation and movement timing.
+
+NG editing and the experimental exploration modes are **not tested in-game**. Automated checks cover their native state handling and UI; gameplay feedback is still needed on both Windows runtimes.
+
 ## 0.6.7 — 2026-10-26
 
 - **Shoulder camera:** left/right camera offset with centre reset and saved/startup preset support.

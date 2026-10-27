@@ -25,7 +25,7 @@ public sealed record CameraControls(string Forward="W",string Backward="S",strin
         float Axis(int plus,int minus)=>(Held(plus)?1:0)-(Held(minus)?1:0);
         return new(Axis(0,1),Axis(3,2),Axis(4,5),Axis(6,7),Axis(8,9),Axis(10,11),Held(12),Held(13),down(0x10)?4:down(0x12)?.2f:1,Held(14));
     }
-    public string Summary=>$"{Forward}/{Backward}/{Left}/{Right} move · {Up}/{Down} rise/descend · {YawLeft}/{YawRight} turn · {PitchUp}/{PitchDown} tilt · {RollLeft}/{RollRight} roll · {Reset} reset · {Exit} exit · {CaptureKey} capture PNG · Shift fast / Alt precise";
+    public string Summary=>Translations.Format("experimental.summary",Keys.Cast<object?>().ToArray());
 }
 internal readonly record struct CameraInput(float Forward,float Right,float Up,float Yaw,float Pitch,float Roll,bool Reset,bool Exit,float Speed,bool Capture=false);
 public sealed class CameraBinding(string action, string key)

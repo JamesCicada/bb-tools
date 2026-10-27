@@ -4,7 +4,7 @@ BB Tools now has a native Linux desktop beta and a separate read-only connection
 probe. Both target **Linux x86-64 with glibc and Bloodborne 1.09**. Live attachment to
 Bloodborne has not been tested on Linux. No runtime or distribution is marked
 **tested and confirmed** for the game on the strength of source review or CI alone.
-Version: **0.6.7-linux-beta.1**. This beta has its own GitHub prerelease and separate Nexus optional-file package; it does not replace the stable Windows download.
+Version: **0.6.8-linux-beta.1**. This beta has its own GitHub prerelease and separate Nexus optional-file package; it does not replace the stable Windows download.
 
 ## What's implemented
 
@@ -29,7 +29,7 @@ available so cleanup can be retried after the character loads.
 
 ## Run the desktop
 
-Extract `BBTools-v0.6.7-linux-beta.1-linux-x64.tar.gz` and run:
+Extract `BBTools-v0.6.8-linux-beta.1-linux-x64.tar.gz` and run:
 
 ```sh
 chmod +x BBTools.LinuxDesktop
