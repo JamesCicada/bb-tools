@@ -1,5 +1,5 @@
-> **Version 0.6.8:** NG-cycle editing and opt-in photo/flight/noclip are **NOT TESTED IN-GAME**. Shoulder-camera and blood-gem tools also await gameplay feedback. Previous live confirmations retain their existing scope.
-> **Linux 0.6.8-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately. Windows confirmations do not apply to Linux.
+> **Version 0.6.9: the gem-editor overhaul is NOT TESTED IN-GAME.** Its catalog, Normal/Advanced modes and saved recipes need gameplay feedback. NG-cycle editing, shoulder-camera and opt-in photo/flight/noclip retain their pending live-test status. Previous live confirmations retain their existing scope.
+> **Linux 0.6.9-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately; the gem editor is unavailable on Linux. Windows confirmations do not apply to Linux.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
 # BB Tools
@@ -11,6 +11,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.9: easier blood-gem editing — not tested in-game
+
+- Built-in catalog with 12,487 named effects; no game-file import required.
+- Normal mode offers four documented obtainable gem families, including Cursed Heavy Abyssal. Optional Advanced mode exposes custom/OP combinations and raw IDs.
+- Preview properties, save builds and share recipe files. More natural recipes will be added.
+- **Not tested in-game.** Automated checks do not confirm granted names, ratings, actual properties, workshop behavior or save/reload. See the [gem guide and test checklist](docs/gem-catalog.md).
 
 ## v0.6.8: NG editing and optional experimental exploration
 

@@ -149,8 +149,9 @@ public sealed partial class GameActions
         (0x1A87ECC, Convert.FromHexString("498B560831C94885D274180FB68A8C000000"))
     ];
     private ulong gemHelper;
-    public async Task<uint> SpawnGemAsync(GemSpec spec)
+    public async Task<uint> SpawnGemAsync(GemSpec spec, bool naturalOnly = false)
     {
+        if (naturalOnly) GemGuide.RequireNatural(spec);
         foreach (var f in GemFingerprints)
             if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes)) throw new IOException("Native blood-gem instructions differ from the supported build. No gem was created.");
         spec.Validate();
@@ -165,6 +166,7 @@ public sealed partial class GameActions
         {
             if (session.ReadCharacter().Address != character || memory.Pointer(session.ImageBase + 0x553E990) != handles || memory.Pointer(session.ImageBase + 0x553D6E0) != manager)
                 throw new IOException("Character or item manager changed before gem creation. Refresh gems and retry after loading.");
+            if (naturalOnly) GemGuide.ValidateNaturalLive(spec, gems, memory);
             return gems.Prepare(spec);
         });
         var handle = unchecked((uint)memory.Int32(dispatcher.Payload + 160));

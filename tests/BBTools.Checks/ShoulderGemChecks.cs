@@ -109,6 +109,7 @@ internal static partial class Program
             Int(inventory + 0x88, 100000); Reject<IOException>(() => reader.ReadInventory(), "unbounded inventory traversal is rejected");
             var records = new byte[48]; BitConverter.GetBytes(1).CopyTo(records, 0); BitConverter.GetBytes(0x100UL).CopyTo(records, 8); BitConverter.GetBytes(2).CopyTo(records, 24); BitConverter.GetBytes(0x104UL).CopyTo(records, 32);
             Reject<IOException>(() => BloodGems.ParseRows(records, 2, 64, 24, root, 0x24), "overlapping gem parameter records are rejected");
+            NaturalGemProfileChecks(memory, reader, generators, effects);
             var folder = Path.Combine(Path.GetTempPath(), "BBTools-gems-" + Guid.NewGuid().ToString("N"));
             try
             {

@@ -49,6 +49,7 @@ public partial class MainWindow
             (NavTravel, TravelPage), (NavCamera, CameraPage), (NavWorkshop, WorkshopPage), (NavSettings, SettingsPage) })
             if (page.Visibility == Visibility.Visible) { var offset = PageScroll.VerticalOffset; Navigate(nav, new()); PageScroll.ScrollToVerticalOffset(offset); break; }
         LoadCameraControls();
+        RefreshGemLanguage();
         UpdateExperimentalAvailability();
         UpdatePhotoModeState();
     }

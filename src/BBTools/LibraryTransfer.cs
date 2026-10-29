@@ -9,7 +9,7 @@ public sealed record FavoriteItem(string Name,int Id,uint Category,int Quantity,
     public override string ToString()=>$"{Group} · {Name}";
     public void Validate(){UserLibrary.ValidateName(Name);UserLibrary.ValidateName(Group);GameActions.ItemBatch(Id,Category,Quantity);}
 }
-public sealed record LibraryDocument(int Version,PracticePreset[] Presets,SavedLocation[] Locations,FavoriteItem[] Favorites);
+public sealed record LibraryDocument(int Version,PracticePreset[] Presets,SavedLocation[] Locations,FavoriteItem[] Favorites,SavedGemBuild[]? GemBuilds=null);
 public sealed partial class UserLibrary
 {
     public ItemChoice[] Catalog()=>Read<ItemChoice[]>("catalog").SelectMany(x=>x).ToArray();
@@ -24,7 +24,7 @@ public sealed partial class UserLibrary
     public void Export(string destination)
     {
         if(Path.GetFullPath(destination).Equals(Path.GetFullPath(path),StringComparison.OrdinalIgnoreCase))throw new ArgumentException("Do not overwrite the active database with an export.");
-        var text=JsonSerializer.Serialize(new LibraryDocument(1,Presets(),Locations(),Favorites()),new JsonSerializerOptions{WriteIndented=true});
+        var text=JsonSerializer.Serialize(new LibraryDocument(1,Presets(),Locations(),Favorites(),GemBuilds()),new JsonSerializerOptions{WriteIndented=true});
         var temporary=destination+"."+Guid.NewGuid().ToString("N")+".tmp";
         try{File.WriteAllText(temporary,text);File.Move(temporary,destination,true);}finally{if(File.Exists(temporary))File.Delete(temporary);}
     }
@@ -34,9 +34,10 @@ public sealed partial class UserLibrary
         var bytes=reader.ReadBytes(4*1024*1024+1);if(bytes.Length>4*1024*1024)throw new ArgumentException("Library imports must be at most 4 MB.");
         var document=JsonSerializer.Deserialize<LibraryDocument>(bytes)??throw new ArgumentException("Invalid library export.");
         if(document.Version!=1 || document.Presets==null || document.Locations==null || document.Favorites==null ||
-            document.Presets.Length>1000 || document.Locations.Length>1000 || document.Favorites.Length>1000 ||
+            document.Presets.Length>1000 || document.Locations.Length>1000 || document.Favorites.Length>1000 || document.GemBuilds?.Length>1000 ||
             document.Presets.Any(x=>x==null) || document.Locations.Any(x=>x==null) || document.Favorites.Any(x=>x==null))throw new ArgumentException("Unsupported library export version or size.");
         foreach(var x in document.Presets)x.Validate();foreach(var x in document.Locations){x.Validate();ValidateName(x.Name);if(x.Block>>24==29)throw new ArgumentException("Generated chalice coordinate imports require instance identity and are not supported.");}foreach(var x in document.Favorites)x.Validate();
+        foreach(var build in document.GemBuilds ?? []) { if(build==null)throw new ArgumentException("Missing gem build.");build.Validate(); }
         using var db=Open();using var tx=db.BeginTransaction();
         void Insert<T>(string kind,IEnumerable<T> items,Func<T,string> name)
         {
@@ -49,7 +50,7 @@ public sealed partial class UserLibrary
                 cmd.Parameters.AddWithValue("$kind",kind);cmd.Parameters.AddWithValue("$name",name(item));cmd.Parameters.AddWithValue("$data",JsonSerializer.Serialize(item));cmd.ExecuteNonQuery();
             }
         }
-        Insert("preset",document.Presets,x=>x.Name);Insert("location",document.Locations,x=>x.Name);Insert("favorite",document.Favorites,x=>x.Name);tx.Commit();
+        Insert("preset",document.Presets,x=>x.Name);Insert("location",document.Locations,x=>x.Name);Insert("favorite",document.Favorites,x=>x.Name);Insert("gemBuild",document.GemBuilds ?? [],x=>x.Name);tx.Commit();
     }
     public void Backup(string destination)
     {

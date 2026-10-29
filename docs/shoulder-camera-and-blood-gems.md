@@ -26,6 +26,10 @@ they replace the same instructions.
 
 ## Blood-gem editor and spawner
 
+The unreleased overhaul replaces the setup below with a built-in catalog,
+Normal/Advanced modes and saved recipes. See [the current development guide](gem-catalog.md).
+The following instructions describe the released 0.6.7/0.6.8 interface.
+
 1. Load a living character, connect, then open **Items → Blood gems**.
 2. Click **Refresh gems & effects**. A blood-gem template ID is selected
    automatically from the loaded game. Leave it as selected unless loading an

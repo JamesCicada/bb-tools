@@ -47,7 +47,7 @@ internal static partial class Program
             Console.WriteLine($"Current={AppInfo.DisplayVersion}; Latest={result.LatestVersion}; UpdateAvailable={result.IsNewerThan(AppInfo.Version)}; Release={result.ReleaseUrl}");
             return 0;
         }
-        try { ActionCompatibilityChecks(); LocalizationChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); PhotoOutputChecks(); GemNativeHelperChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
+        try { ActionCompatibilityChecks(); LocalizationChecks(); GemGuideChecks(); LootChecks(); CatalogChecks(); DiscordChecks(); PhotoChecks(); NativeFeatureChecks(); PhotoOutputChecks(); GemNativeHelperChecks(); NativeRepairChecks(); SaveRestoreChecks(); TimerAndHotkeyChecks(); LoggingChecks(); LibraryChecks(); UpdateChecks(); Integration(); Console.WriteLine($"PASS: {checks} checks (update service and real synthetic Windows process)."); return 0; }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void Check(bool condition, string message)
@@ -814,6 +814,7 @@ internal static partial class Program
         var inventoryPicker=(System.Windows.Controls.ComboBox)window.FindName("GemInventory");inventoryPicker.ItemsSource=new[]{carriedGem};inventoryPicker.SelectedIndex=0;
         typeof(MainWindow).GetMethod("LoadGem",localeBinding)!.Invoke(window,[window,new RoutedEventArgs()]);
         Check(((System.Windows.Controls.ComboBox)window.FindName("GemShape")).SelectedIndex==4&&((System.Windows.Controls.TextBox)window.FindName("GemEffect1")).Text=="17310"&&((System.Windows.Controls.TextBox)window.FindName("GemEffect3")).Text=="-1","loading a carried gem replaces all six editor slots and selects its actual shape");
+        GemEditorUiChecks(window);
         var horizontal=(System.Windows.Controls.Slider)window.FindName("CameraHorizontal");horizontal.Value=-.75;
         Check(((System.Windows.Controls.TextBlock)window.FindName("CameraTuningSummary")).Text.Contains("-0.75"),"camera summary tracks signed shoulder offset before attachment");
         typeof(MainWindow).GetMethod("CenterShoulderCamera",localeBinding)!.Invoke(window,[window,new RoutedEventArgs()]);

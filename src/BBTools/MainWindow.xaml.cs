@@ -86,6 +86,7 @@ public partial class MainWindow : Window
         try { library = new UserLibrary(); RefreshLibrary(); }
         catch (Exception ex) when (IsExpected(ex) || ex is JsonException)
         { App.LogError(ex); library = null; libraryIssue = $"Saved library unavailable: {ex.Message} Original files were retained."; Status.Text = libraryIssue; }
+        InitializeGemEditor();
         BossPicker.ItemsSource = BossDestinations.All; BossPicker.SelectedIndex = 0;
         timer.Tick += Poll;
         Closing += OnClosing;
@@ -688,6 +689,7 @@ public partial class MainWindow : Window
     private UserLibrary Library => library ?? throw new IOException(Translations.T("message.SavedlibraryisunavailableCheckthestatusmessageandres.e2043b3"));
     private void RefreshLibrary()
     {
+        if (gemEditorReady) RefreshSavedGems();
         itemSearchIndex = null;
         var selected = LocationPicker.SelectedItem as SavedLocation;
         LocationPicker.ItemsSource = Library.Locations().Where(x => x.Label.Contains(LocationSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();

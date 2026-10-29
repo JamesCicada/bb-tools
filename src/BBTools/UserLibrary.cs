@@ -87,7 +87,7 @@ public sealed partial class UserLibrary
     }
     public void Delete(string kind,string name)
     {
-        if (kind is not ("location" or "preset" or "favorite")) throw new ArgumentException("Unknown library category.");
+        if (kind is not ("location" or "preset" or "favorite" or "gemBuild")) throw new ArgumentException("Unknown library category.");
         using var db = Open(); using var cmd = db.CreateCommand(); cmd.CommandText="DELETE FROM entries WHERE kind=$kind AND name=$name";
         cmd.Parameters.AddWithValue("$kind",kind); cmd.Parameters.AddWithValue("$name",name); cmd.ExecuteNonQuery();
     }

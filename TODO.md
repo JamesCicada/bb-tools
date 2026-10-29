@@ -16,6 +16,23 @@ lists remain useful for regression testing. It does not mark future/unimplemente
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
 
+## Community suggestions — future features
+
+Next-update priorities were reviewed against the live Nexus comments on
+2026-10-29. See [the review and gem-editor design](docs/community-requests.md).
+Gem-editor changes below are implemented for v0.6.9 and **NOT TESTED IN-GAME**. Gameplay
+confirmation remains pending; the other feature entries are still planned.
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| P1 — Built-in gem catalog and named recipes | ✔️ | ⌛ | 12,487 named effects using authored localized labels and numeric metadata; offline browsing. Four documented families: Heavy Abyssal (+65 Strength/+15 physical), Tempering (+27.2%), Adept blunt/thrust (+32.6%). Stock 1.09 source/effect metadata checked before Normal creation. More natural recipes remain future work. |
+| P1 — Normal and Advanced gem modes | ✔️ | ⌛ | Normal defaults to a bounded set of complete obtainable recipes, eligible shapes and six curses. Advanced is an explicit, session-only opt-in for custom/OP combinations; native validation retained. Loading/importing unknown builds does not enable Advanced or grant items. |
+| P1 — Gem preview and reusable builds | ✔️ | ⌛ | Readable property preview, SQLite saved builds, per-recipe JSON sharing and full-library export/import compatibility. Raw IDs/six slots are under Advanced. Optional descriptions now import the actual message archive in any game language. See [guide/test checklist](docs/gem-catalog.md). |
+| P1 — Incoming damage multiplier | ⌛ | ➖ | Requested 29 October: adjust damage taken independently of outgoing damage. Research a player-only native path; verify healing, damage-over-time, fall damage, rounding, God mode/Ignore hits and cleanup before defining coverage. |
+| P2 — Global slow motion | ⌛ | ➖ | Repeated request, renewed 29 October. True simulation speed distinct from player movement speed; quick reset to 1× and owned-state cleanup. Verify animation, physics, audio, menus and loading before exposing it. |
+| P2 — Freecam polish | ⌛ | ➖ | Existing 0.6.8 experimental controls need live testing. Research optional smoothing/acceleration and camera-local FOV; retain immediate stop, configurable controls and reliable player/HUD restoration. Cinematic paths remain later work. |
+| Infinite temporary weapon buffs | ⌛ | ➖ | User suggestion: keep Fire Paper / Bolt Paper effects active without expiring while the buffed weapon stays equipped; clear the effect when switching weapons. Research compatible weapons and other temporary coatings. Preserve normal buff compatibility and avoid stacking or altering permanent blood-gem effects. Not implemented or tested. |
+
 ## Experimental exploration — v0.6.8
 
 | Feature | Implemented | Tested and confirmed | Notes |

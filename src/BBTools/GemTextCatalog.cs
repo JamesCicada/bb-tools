@@ -10,6 +10,10 @@ public static class GemTextCatalog
         if (language.Length is < 2 or > 12 || language.Any(c => !char.IsAsciiLetter(c))) throw new ArgumentException("Invalid message language.");
         var root = Directory.Exists(Path.Combine(gameFolder, "dvdroot_ps4")) ? Path.Combine(gameFolder, "dvdroot_ps4") : gameFolder;
         var file = Path.Combine(root, "msg", language, "menu.msgbnd.dcx");
+        return LoadFile(file);
+    }
+    public static ItemChoice[] LoadFile(string file)
+    {
         using var input = File.OpenRead(file);
         if (input.Length > 64 * 1024 * 1024) throw new IOException("Gem message archive is too large.");
         using var data = new MemoryStream(); input.CopyTo(data);
