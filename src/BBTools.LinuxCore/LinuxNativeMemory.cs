@@ -90,6 +90,22 @@ public sealed partial class LinuxProcessMemory
                 throw new IOException("A game thread exited during the native request.");
             }
             if(result<0 && Marshal.GetLastPInvokeError()!=4)throw TraceError("wait for game thread");
+            // System.Diagnostics.Process also waits on a launched child. Its
+            // SIGCHLD reaper can consume a ptrace-stop notification. Confirm the
+            // kernel stop directly instead of waiting forever for that event.
+            if(result==0 && watch.ElapsedMilliseconds>30)
+            {
+                var info=Marshal.AllocHGlobal(128);
+                try
+                {
+                    if(Trace(0x4202,tid,0,info)==0)
+                    {
+                        var signal=Marshal.ReadInt32(info);
+                        if(signal is >0 and <65){WaitPid(tid,out _,0x40000000|1);return signal;}
+                    }
+                }
+                finally{Marshal.FreeHGlobal(info);}
+            }
             Thread.Sleep(1);
         }
         throw new IOException("Timed out waiting for a game thread stop.");
