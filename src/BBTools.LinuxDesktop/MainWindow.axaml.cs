@@ -60,7 +60,7 @@ public partial class MainWindow : Window
         };
     }
     private T C<T>(string name)where T:Control=>this.FindControl<T>(name)!;
-    private static bool Expected(Exception ex)=>ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or NotSupportedException or System.ComponentModel.Win32Exception or JsonException or OperationCanceledException;
+    private static bool Expected(Exception ex)=>ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or NotSupportedException or System.ComponentModel.Win32Exception or JsonException or OperationCanceledException or HttpRequestException or Microsoft.Data.Sqlite.SqliteException;
     private void Report(Exception ex){log?.Error(ex,"Linux desktop");Status.Text=ex.Message;}
     private void Action(Action action,string success)
     {try{action();Status.Text=success;log?.Write("ACTION",success);}catch(Exception ex)when(Expected(ex)){Report(ex);}}
@@ -117,7 +117,8 @@ public partial class MainWindow : Window
         try
         {
             snapshot=connection.ReadAndUpdate();
-            await connection.Features.TickAsync();enemyText.Text=connection.Features.EnemyDetails;
+            try{await connection.Features.TickAsync();}catch(Exception ex)when(Expected(ex)){Report(ex);}
+            enemyText.Text=connection.Features.EnemyDetails;
             if(connection.Editing&&!startupApplied)
             {
                 startupApplied=true;
@@ -125,10 +126,13 @@ public partial class MainWindow : Window
                 if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);SyncCombat();}
                 else if(preferences.StartupFovEnabled){values["fov"].Value=(decimal)preferences.StartupFov;switches["fov"].IsChecked=true;await connection.Features.ApplyPresetAsync(Capture("Startup FOV"));}
             }
-            presence?.Update("Native bbport",preferences.DiscordDetails?.Enabled==true?connection.Session.ReadPresenceDetails(preferences.DiscordDetails):null);var p=snapshot.Player;var ch=snapshot.Character;
+            DiscordGameDetails? details=null;
+            if(presence!=null&&preferences.DiscordDetails?.Enabled==true)
+                try{details=connection.Session.ReadPresenceDetails(preferences.DiscordDetails);}catch(Exception ex)when(Expected(ex)){log?.Error(ex,"Discord details");}
+            presence?.Update("Native bbport",details);var p=snapshot.Player;var ch=snapshot.Character;
             ResourceSummary.Text=$"HP {p.Health:N0} / {p.MaxHealth:N0} · Stamina {p.Stamina:N0} / {p.MaxStamina:N0}\nBlood Level {ch.Level} · Blood Echoes {ch.Values.Echoes:N0}";
             UpdateAvailability(true);
-            if(connection.FeatureError!=null)Status.Text="Features paused: "+connection.FeatureError;
+            if(connection.FeatureError!=null||connection.Features.Error!=null)Status.Text="Features paused: "+(connection.FeatureError??connection.Features.Error);
         }
         catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;connection?.Features.PlayerUnavailable(ex.Message);enemyText.Text=connection?.Features.EnemyDetails;UpdateAvailability(false);Report(ex);}
         finally{polling=false;}

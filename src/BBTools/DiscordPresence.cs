@@ -42,7 +42,7 @@ public sealed class DiscordPresence : IDisposable
         if(OperatingSystem.IsLinux())
         {
             var runtime=Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
-            var roots=new[]{runtime,Path.GetTempPath(),runtime==null?null:Path.Combine(runtime,"app/com.discordapp.Discord")}
+            var roots=new[]{runtime,Path.GetTempPath(),runtime==null?null:Path.Combine(runtime,"app/com.discordapp.Discord"),runtime==null?null:Path.Combine(runtime,"snap.discord"),Environment.GetEnvironmentVariable("TMP"),Environment.GetEnvironmentVariable("TEMP")}
                 .Where(x=>x!=null&&Path.IsPathFullyQualified(x)).Distinct();
             foreach(var root in roots)for(var i=0;i<10;i++)
             {

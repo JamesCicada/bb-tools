@@ -30,6 +30,9 @@ public sealed class LinuxGameFeatures
     public EncounterTimer Timer { get; }=new();
     public PracticePreset? Desired { get; private set; }
     public string EnemyDetails { get; private set; }="Lock onto an enemy to inspect it.";
+    public bool Paused {get;private set;}
+    public string? Error {get;private set;}
+    public void Resume(){Paused=false;Error=null;}
     public bool Busy=>gate.CurrentCount==0;
     public LinuxGameFeatures(LinuxGameConnection connection,IGameMemory memory)
     {
@@ -57,7 +60,7 @@ public sealed class LinuxGameFeatures
     {
         preset.Validate();if(!connection.Editing)throw new InvalidOperationException("Enable game editing first.");
         await SetMultipliersAsync(preset.Damage,preset.Echoes);
-        Desired=preset;
+        Desired=preset;Resume();
         connection.KeepHealth=preset.KeepHealth;connection.InfiniteStamina=preset.Stamina;connection.Flags.Clear();
         foreach(var flag in preset.Flags)connection.Flags.Add(Enum.Parse<PracticeFlag>(flag));
         await TickAsync();
@@ -70,7 +73,7 @@ public sealed class LinuxGameFeatures
             EnemyDetails=$"{target.State}\n{enemy.Title}\nHP {enemy.Health:N0} / {enemy.Maximum:N0} · Stamina {enemy.Stamina:N0} / {enemy.MaxStamina:N0}\n"+
                 (enemy.Armor?.Summary??"Super armor unavailable")+"\n"+string.Join("\n",enemy.Effects.Select(x=>x.Summary))+"\n"+
                 string.Join(" · ",enemy.Gauges.Select(x=>$"{x.Name}: {x.Current}/{x.Limit}"));
-        if(!connection.Editing||Photo.IsActive||!await gate.WaitAsync(0))return;
+        if(!connection.Editing||Paused||Photo.IsActive||!await gate.WaitAsync(0))return;
         try
         {
             if(multipliersRequested&&(damage!=1||echoes!=1)&&!Actions.MaintainMultipliers())await Actions.SetMultipliersAsync(damage,echoes);
@@ -91,6 +94,8 @@ public sealed class LinuxGameFeatures
             }
             if(TargetProtection.IsActive&&TargetProtection.NeedsUpdate())memory.Suspended(TargetProtection.Update);
         }
+        catch(Exception ex)when(ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {Paused=true;Error=ex.Message;throw;}
         finally{gate.Release();}
     }
     public void Stop()
@@ -105,7 +110,7 @@ public sealed class LinuxGameFeatures
             foreach(var restore in new Action[]{Photo.Restore,Flight.Restore,()=>{if(TargetProtection.IsActive)memory.Suspended(TargetProtection.Restore);},Actions.ResetMultipliers,Fov.Restore,Camera.Restore,Shoulder.Restore,Movement.Restore,Gravity.Restore,Hud.Restore,Loot.Restore,Progression.Restore,Actions.Dispose})
                 try{restore();}catch(Exception ex)when(ex is IOException or UnauthorizedAccessException){errors.Add(ex.Message);}
             if(errors.Count>0)throw new IOException("Restoration pending: "+string.Join(" ",errors.Distinct()));
-            nativeTouched=false;
+            nativeTouched=false;Resume();
         }
         finally{gate.Release();}
     }

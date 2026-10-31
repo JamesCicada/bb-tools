@@ -124,18 +124,16 @@ Both real X11 startup tests pass, and the Ubuntu 22.04 self-contained packages p
 their startup checks. The separate Windows regression run also passes. This is
 platform/fixture evidence, not a tested-and-confirmed Linux game configuration.
 
-Public information cannot validate the game's behavior end to end. Remaining work
-is live game confirmation, additional runtime/distro profiles, native game actions
-and the rest of the Windows feature set. Source research is recorded separately in
-`docs/linux-compatibility-research.md` with primary sources.
+The v0.7.0 memory layer adds owned thread suspension, remote mmap/mprotect,
+protected instruction replacement and the shared game-thread dispatcher. These
+are checked against synthetic child processes on Ubuntu; actual Bloodborne game
+behavior, runtime mods, display/capture and additional distros still need feedback.
+Source research is recorded in `docs/linux-compatibility-research.md`.
 
-## Beta downloads and reports
+## Downloads and feedback
 
-The desktop is available as `.tar.gz` and as a Nexus-friendly `.zip`; both contain
-only `BBTools.LinuxDesktop` and `README.md`. The probe is a separate diagnostic
-archive. **Beta — not tested in-game** applies to every Linux download, including
-when native CI succeeds. Report distro, desktop/display server, runtime version,
-connection result and relevant logs on GitHub. Native testers are needed.
-
-Insight editing and free level-up/weapon-upgrade controls are Windows-only in this
-release, alongside the other native-call/hook features listed as unavailable above.
+Use the v0.7.0 Linux desktop `.tar.gz` or Nexus-friendly `.zip`; each contains only
+`BBTools.LinuxDesktop` and `README.md`. The read-only probe has a separate archive.
+Windows and Linux have one version and release draft. **New Linux native actions
+are not tested in-game**, even when CI succeeds. Report distro, display server,
+bbport/runtime version, feature, result and session logs through GitHub.

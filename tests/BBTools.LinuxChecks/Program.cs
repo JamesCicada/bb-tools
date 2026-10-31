@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
+using System.Net.Sockets;
+using System.Text.Json;
+using BBTools;
 using System.Runtime.InteropServices;
 using BBTools.LinuxProbe;
 using BBTools.LinuxCore;
@@ -65,7 +68,7 @@ internal static class Program
             Reject<IOException>(()=>LinuxImageLocator.Find(fixture,maps.Append(second),TimeSpan.FromSeconds(5)),"ambiguous supported images are rejected");
             Reject<IOException>(()=>LinuxImageLocator.Find(fixture,maps,TimeSpan.FromTicks(-1)),"image scan respects its deadline");
             using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();Reject<OperationCanceledException>(()=>LinuxImageLocator.Find(fixture,maps,TimeSpan.FromSeconds(5),cancelled.Token),"guest-image discovery is cancellable before a window closes");}
-            if(OperatingSystem.IsLinux()&&RuntimeInformation.ProcessArchitecture==Architecture.X64)await NativeChecks();
+            if(OperatingSystem.IsLinux()&&RuntimeInformation.ProcessArchitecture==Architecture.X64){await NativeChecks();await DiscordChecks();}
             else Console.WriteLine("SKIP Linux syscall checks: this host is not Linux x64.");
             Console.WriteLine($"PASS: {count} Linux-port foundation checks.");return 0;
         }
@@ -136,6 +139,36 @@ internal static class Program
             Reject<IOException>(()=>memory.Read(address,64),"exited child process cannot be read through a stale PID");
         }
         finally{if(!child.HasExited){child.Kill();await child.WaitForExitAsync();}}
+    }
+    private static async Task DiscordChecks()
+    {
+        if(!OperatingSystem.IsLinux())throw new PlatformNotSupportedException();
+        var previous=Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+        var folder=Path.Combine(Path.GetTempPath(),"bbt-rpc-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder,UnixFileMode.UserRead|UnixFileMode.UserWrite|UnixFileMode.UserExecute);
+        var path=Path.Combine(folder,"discord-ipc-0");
+        try
+        {
+            Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR",folder);
+            using var listener=new Socket(AddressFamily.Unix,SocketType.Stream,ProtocolType.Unspecified);listener.Bind(new UnixDomainSocketEndPoint(path));listener.Listen(1);
+            using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var received=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var server=Task.Run(async()=>
+            {
+                using var socket=await listener.AcceptAsync(deadline.Token);using var stream=new NetworkStream(socket,false);
+                var handshake=await DiscordPresence.ReadFrame(stream,deadline.Token);using(var json=JsonDocument.Parse(handshake.Payload))Check(handshake.Opcode==0&&json.RootElement.GetProperty("client_id").GetString()==DiscordPresence.ApplicationId,"Linux Discord connects to a Unix IPC socket with the configured public application ID");
+                await DiscordPresence.WriteFrame(stream,1,JsonSerializer.SerializeToUtf8Bytes(new{evt="READY"}),deadline.Token);
+                for(var i=0;i<2;i++)
+                {
+                    var frame=await DiscordPresence.ReadFrame(stream,deadline.Token);using var json=JsonDocument.Parse(frame.Payload);var root=json.RootElement;var activity=root.GetProperty("args").GetProperty("activity");
+                    if(i==0)Check(activity.GetProperty("details").GetString()!.Contains("Fixture hunter"),"Linux Discord activity uses actual opted-in character details");
+                    else Check(activity.ValueKind==JsonValueKind.Null,"Linux Discord opt-out clears activity over Unix IPC");
+                    await DiscordPresence.WriteFrame(stream,1,JsonSerializer.SerializeToUtf8Bytes(new{nonce=root.GetProperty("nonce").GetString()}),deadline.Token);if(i==0)received.TrySetResult();
+                }
+            });
+            using var presence=new DiscordPresence();presence.Update("Native bbport",new(CharacterName:"Fixture hunter",Level:25));
+            await received.Task.WaitAsync(deadline.Token);await presence.StopAsync();await server.WaitAsync(deadline.Token);
+        }
+        finally{Environment.SetEnvironmentVariable("XDG_RUNTIME_DIR",previous);if(File.Exists(path))File.Delete(path);Directory.Delete(folder);}
     }
     private static nint CreateGameFixture()
     {

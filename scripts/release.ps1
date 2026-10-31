@@ -25,7 +25,7 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $packag
 # Standalone README links must still work without bundling the source documents.
 $readmePath = Join-Path $package 'README.md'
 $readme = [System.IO.File]::ReadAllText($readmePath)
-foreach ($document in @('CONTRIBUTING.md', 'TODO.md', 'LICENSE', 'docs/memory-research.md', 'docs/COMPATIBILITY.md', 'docs/1.0-test-plan.md', 'docs/gem-catalog.md')) {
+foreach ($document in @('CONTRIBUTING.md', 'TODO.md', 'LICENSE', 'docs/memory-research.md', 'docs/COMPATIBILITY.md', 'docs/1.0-test-plan.md', 'docs/gem-catalog.md', 'docs/linux-support.md', 'docs/releases/v0.7.0.md')) {
     $readme = $readme.Replace("]($document)", "](https://github.com/JamesCicada/bb-tools/blob/$documentRef/$document)")
 }
 [System.IO.File]::WriteAllText($readmePath, $readme, [System.Text.UTF8Encoding]::new($false))

@@ -51,6 +51,17 @@ internal sealed class X11GameWindow : IDisposable
     public PhotoImage Capture(int pid)
     {
         var window=Focused(pid);if(window==0)throw new IOException("Focus the connected game window before capturing.");
+        return CaptureWindow(window);
+    }
+    internal PhotoImage CaptureOwnWindow(ulong window)
+    {
+        error=0;
+        if(Property(window,"_NET_WM_PID",6)!=(ulong)Environment.ProcessId)throw new IOException("The smoke-test window is not owned by this app.");
+        XQueryKeymap(display,keys);_ = Down(KeyCodes.VirtualKey("W"));
+        return CaptureWindow(window);
+    }
+    private PhotoImage CaptureWindow(ulong window)
+    {
         if(XGetGeometry(display,window,out _,out _,out _,out var width,out var height,out _,out _)==0)throw new IOException("Game window size is unavailable.");
         var bytes=new byte[PhotoImage.ByteCount((int)width,(int)height)];
         var image=XGetImage(display,window,0,0,width,height,ulong.MaxValue,2);

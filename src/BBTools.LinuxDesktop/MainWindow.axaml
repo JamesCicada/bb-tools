@@ -2,6 +2,7 @@
  x:Class="BBTools.LinuxDesktop.MainWindow" Width="1040" Height="780" MinWidth="860" MinHeight="680"
  Title="BB Tools · Linux" Background="#101318">
  <Window.Styles>
+  <Style Selector="TabItem"><Setter Property="FontSize" Value="14"/><Setter Property="Padding" Value="12,8"/></Style>
   <Style Selector="Button"><Setter Property="Margin" Value="0,4,8,4"/><Setter Property="MinHeight" Value="36"/></Style>
   <Style Selector="TextBox"><Setter Property="MinHeight" Value="36"/><Setter Property="FlowDirection" Value="LeftToRight"/></Style>
   <Style Selector="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>

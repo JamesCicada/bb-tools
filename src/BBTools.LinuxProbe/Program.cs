@@ -14,7 +14,7 @@ internal static class Program
         {
             if (args.Length == 0 || args.SequenceEqual(new[] { "--help" }))
             {
-                Console.WriteLine("BB Tools Linux connection probe (development, read-only)\nTarget: native bbport, Linux x64, game 1.09\n--list       List processes; likely bbport runtimes appear first\n--diagnose   Print platform/access-policy metadata without reading a game\n--pid <PID>  Validate the game image and read loaded player data as JSON");
+                Console.WriteLine("BB Tools Linux connection probe (read-only)\nTarget: native bbport, Linux x64, game 1.09\n--list       List processes; likely bbport runtimes appear first\n--diagnose   Print platform/access-policy metadata without reading a game\n--pid <PID>  Validate the game image and read loaded player data as JSON");
                 return 0;
             }
             if (!OperatingSystem.IsLinux() || RuntimeInformation.ProcessArchitecture != Architecture.X64)
@@ -63,6 +63,5 @@ internal static class Program
             return 1;
         }
     }
-    internal static int Rank(string name) => name.Equals("bb-probe", StringComparison.OrdinalIgnoreCase) ? 100 :
-        name.Contains("bloodborne", StringComparison.OrdinalIgnoreCase) || name.Contains("bbport", StringComparison.OrdinalIgnoreCase) ? 80 : 0;
+    internal static int Rank(string name) => LinuxProcessCatalog.Rank(name);
 }

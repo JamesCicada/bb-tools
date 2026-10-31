@@ -24,7 +24,13 @@ public partial class MainWindow
     private bool retryFirstEncounter;
     private long lastAutoConnect;
     private DiscordPresence? presence;
-    private static TextBlock Label(string text)=>new(){Text=Translations.Source(text),Margin=new(0,6,0,2)};
+    private static T Localize<T>(T control,AvaloniaProperty property,string source)where T:Control
+    {
+        var key=Translations.English.FirstOrDefault(x=>x.Value==source).Key;
+        if(key!=null)control.Bind(property,control.GetResourceObservable("L."+key));
+        return control;
+    }
+    private static TextBlock Label(string text)=>Localize(new TextBlock{Text=Translations.Source(text),Margin=new(0,6,0,2)},TextBlock.TextProperty,text);
     private static StackPanel Column()=>new(){Spacing=8,Margin=new(0,12,0,12)};
     private static ScrollViewer Page(Control content)=>new(){Content=content};
     private static T Selected<T>(ComboBox box)=>box.SelectedItem is T item?item:throw new ArgumentException("Choose an entry first.");
@@ -33,13 +39,13 @@ public partial class MainWindow
     private static void Add(Panel p,params Control[] controls){foreach(var c in controls)p.Children.Add(c);}
     private Button Button(string text,Func<Task> action,bool edits=true)
     {
-        var button=new Button{Content=Translations.Source(text)};
+        var button=Localize(new Button{Content=Translations.Source(text)},ContentControl.ContentProperty,text);
         if(edits){editingControls.Add(button);button.IsEnabled=false;}
-        button.Click+=async(_,_)=>{if(busy)return;busy=true;try{await action();if(!preserveStatus)Status.Text=Translations.Source("Completed.");preserveStatus=false;}catch(Exception ex)when(Expected(ex)){Report(ex);}finally{busy=false;}};
+        button.Click+=async(_,_)=>{if(busy)return;busy=true;try{log?.Write("ACTION",text);await action();if(!preserveStatus)Status.Text=Translations.Source("Completed.");preserveStatus=false;}catch(Exception ex)when(Expected(ex)){Report(ex);}finally{busy=false;}};
         return button;
     }
     private CheckBox Switch(Panel panel,string key,string text,bool enabled=false)
-    {var box=new CheckBox{Content=Translations.Source(text),IsChecked=enabled};switches[key]=box;panel.Children.Add(box);return box;}
+    {var box=Localize(new CheckBox{Content=Translations.Source(text),IsChecked=enabled},ContentControl.ContentProperty,text);switches[key]=box;panel.Children.Add(box);return box;}
     private NumericUpDown Value(Panel panel,string key,string text,decimal initial,decimal min,decimal max,decimal step=1)
     {panel.Children.Add(Label(text));var input=new NumericUpDown{Value=initial,Minimum=min,Maximum=max,Increment=step,FormatString="0.###",HorizontalAlignment=HorizontalAlignment.Stretch};values[key]=input;panel.Children.Add(input);return input;}
     private bool On(string key)=>switches[key].IsChecked==true;
@@ -70,7 +76,7 @@ public partial class MainWindow
         var tuning=Column();BuildTuning(tuning);
         var parry=Column();BuildParry(parry);
         foreach(var flag in new[]{PracticeFlag.OneShot,PracticeFlag.Stealth,PracticeFlag.Silence,PracticeFlag.NoAi})
-        {var toggle=new CheckBox{Tag=flag.ToString(),Content=flag.ToString()};toggle.IsCheckedChanged+=CombatChanged;NativeFlags.Children.Add(toggle);}
+        {var toggle=new CheckBox{Tag=flag.ToString(),Content=Translations.Source(flag switch{PracticeFlag.OneShot=>"One-shot kills",PracticeFlag.Stealth=>"Invisible to enemies",PracticeFlag.Silence=>"Silent footsteps",_=>"Disable enemy AI"})};toggle.IsCheckedChanged+=CombatChanged;NativeFlags.Children.Add(toggle);}
         combatTabs.ItemsSource=new[]{new TabItem{Header="Tuning",Content=Page(tuning)},new TabItem{Header="Parry practice",Content=Page(parry)}};
         var camera=Column();BuildCamera(camera);
         var items=BuildItems();var travel=BuildTravel();var enemy=Column();BuildEnemies(enemy);
@@ -126,7 +132,7 @@ public partial class MainWindow
         var id=Value(panel,"itemId","Item ID",7100000,0,int.MaxValue);var category=Picker(new[]{"Goods","Weapon","Armor","Rune / accessory"});var count=Value(panel,"itemCount","Quantity",1,1,600);
         uint Category()=>category.SelectedIndex switch{1=>0,2=>0x10000000,3=>0x20000000,_=>0x40000000};
         picker.SelectionChanged+=(_,_)=>{if(picker.SelectedItem is ItemChoice item){id.Value=item.Id;category.SelectedIndex=item.Category switch{0=>1,0x10000000=>2,0x20000000=>3,_=>0};}};
-        Add(panel,search,picker,category,Button("Spawn item",()=>Native(f=>f.RunAsync(a=>a.SpawnAsync((int)id.Value!,Category(),(int)count.Value!)))));
+        Add(panel,search,picker,category,Button("Spawn item",()=>{log?.Write("ITEM",$"ID {(int)id.Value!}, category {Category():X8}, quantity {(int)count.Value!}");return Native(f=>f.RunAsync(a=>a.SpawnAsync((int)id.Value!,Category(),(int)count.Value!)));}));
         Add(panel,Button("Import item names from game files",async()=>{var folder=await Folder();if(folder==null)return;var loaded=await Task.Run(()=>GameItemCatalog.Load(folder));Library().SaveCatalog(loaded);all=loaded.Concat(GameActions.CommonItems).DistinctBy(x=>(x.Id,x.Category)).ToArray();Filter();},false));
         var favoriteName=new TextBox{PlaceholderText="Favorite name"};var favorites=Picker(library?.Favorites()??[]);
         void Favorites()=>favorites.ItemsSource=library?.Favorites()??[];refreshLists.Add(Favorites);

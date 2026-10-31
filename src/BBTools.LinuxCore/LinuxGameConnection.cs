@@ -53,7 +53,7 @@ public sealed class LinuxGameConnection : IDisposable
         if(!enabled){Stop();memory.WritesEnabled=false;editLease?.Dispose();editLease=null;return;}
         Session.ValidateImage();Session.ReadCharacter();editLease??=LinuxEditLease.Acquire(Pid,identity);memory.WritesEnabled=true;Resume();
     }
-    public void Resume(){FeaturesPaused=false;FeatureError=null;}
+    public void Resume(){FeaturesPaused=false;FeatureError=null;Features.Resume();}
     public void Stop()
     {
         KeepHealth=InfiniteStamina=false;Flags.Clear();
