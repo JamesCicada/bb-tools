@@ -24,7 +24,7 @@ internal static class Program
             var allocation = mmap(0,8192,3,0x22,-1,0);
             if(allocation==-1)throw new IOException("Fixture mmap failed");
             var game=CreateGameFixture();
-            try { Marshal.Copy(FixtureBytes,0,allocation,64);if(mprotect(allocation+4096,4096,5)!=0)throw new IOException("Fixture mprotect failed");Console.WriteLine(allocation.ToString("X")+" "+game.ToString("X"));Console.ReadLine();var final=new byte[64];Marshal.Copy(allocation,final,0,64);if(!final.SequenceEqual(FixtureBytes))return 2; }
+            try { Marshal.Copy(FixtureBytes,0,allocation,64);if(mprotect(allocation+4096,4096,5)!=0)throw new IOException("Fixture mprotect failed");Console.WriteLine(allocation.ToString("X")+" "+game.ToString("X"));Console.ReadLine();var final=new byte[64];Marshal.Copy(allocation,final,0,64);if(!final.SequenceEqual(FixtureBytes))return 2;Console.WriteLine("FIXTURE RESTORED"); }
             finally { munmap(allocation,8192);munmap(game,0x5800000); }
             return 0;
         }
@@ -120,7 +120,8 @@ internal static class Program
                 Reject<InvalidOperationException>(()=>game.SetHealth(100),"controller returns to a closed write gate after cleanup");
             }
             await child.StandardInput.WriteLineAsync("exit");await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
-            Check(child.ExitCode==0,"native child verifies its original bytes were restored before exit");
+            var completion=await child.StandardOutput.ReadToEndAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            Check(child.ExitCode==0&&completion.Contains("FIXTURE RESTORED"),$"native child verifies its original bytes were restored before exit (exit {child.ExitCode}, output {completion.Trim()})");
             Check(memory.HasExited(),"an exited game can release cleanup ownership without writing through its stale PID");
             Reject<IOException>(()=>memory.Read(address,64),"exited child process cannot be read through a stale PID");
         }
