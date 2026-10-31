@@ -3,7 +3,7 @@ namespace BBTools.Memory;
 
 // Borrow a private frame only for the renderer read. Never put VirtualAlloc
 // memory in the controller's owning +D0 slot: its destructor frees that slot.
-public sealed class PhotoCameraOutput(ProcessMemory memory, PlayerSession session)
+public sealed class PhotoCameraOutput(IGameMemory memory, PlayerSession session)
 {
     public const ulong Offset=0x193BEC5;
     public static readonly byte[] Original=Convert.FromHexString("498B851001000083B8C4000000007464488B80D00000004885C07458");

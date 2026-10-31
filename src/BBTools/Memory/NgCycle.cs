@@ -38,6 +38,6 @@ public sealed partial class PlayerSession
         }
         // Only the four-byte clear counter changes. Never call the native
         // next-journey routine, modify ending flags or alter player attributes.
-        if (memory is ProcessMemory process) process.Suspended(Apply); else Apply();
+        if (memory is IGameMemory process) process.Suspended(Apply); else Apply();
     }
 }

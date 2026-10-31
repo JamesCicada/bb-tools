@@ -4,7 +4,7 @@ namespace BBTools.Memory;
 // Replace a complete 14-byte, non-RIP-relative read/multiply pair. The trampoline
 // checks the current native module owner, preserves RAX/flags, and only scales
 // the transient movement result for WorldChrMan's current local player.
-public sealed class MovementSpeed(ProcessMemory memory,PlayerSession session)
+public sealed class MovementSpeed(IGameMemory memory,PlayerSession session)
 {
     public const ulong Offset=0x1A196BB;
     public static readonly byte[] Original=Convert.FromHexString("C4C17A108574030000C5F2594B08");

@@ -1,6 +1,6 @@
 using System.IO;
 namespace BBTools.Memory;
-public sealed class HudVisibility(ProcessMemory memory,PlayerSession session)
+public sealed class HudVisibility(IGameMemory memory,PlayerSession session)
 {
     public static readonly (ulong Offset,byte[] Bytes)[] Fingerprints=[(0x1BFBF6B,Convert.FromHexString("488D05BEF19303488B00488B40484885C0740A80780900"))];
     private bool owned;private byte original;

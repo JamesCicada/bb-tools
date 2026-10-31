@@ -130,7 +130,7 @@ public sealed partial class GameActions
         {
             var row = MultiplierRow(ReadNeutralEffectRow(originalEffectRow), damage, echoes);
             memory.Suspended(() => { if (!MultipliersAttached()) throw new IOException("Player effects changed."); memory.Write(effectRow, row); memory.Write(effectNode, BitConverter.GetBytes(MultiplierLeaseSeconds)); });
-            App.Log?.Write("MULTIPLIERS", $"Updated existing trainer effect: damage {damage}x, Echoes {echoes}x; actor 0x{effectActor:X}.");
+            GameDiagnostics.Log?.Invoke("MULTIPLIERS", $"Updated existing trainer effect: damage {damage}x, Echoes {echoes}x; actor 0x{effectActor:X}.");
             return;
         }
         var actor = session.ReadPlayer().Actor;
@@ -144,7 +144,7 @@ public sealed partial class GameActions
             if (session.ReadPlayer().Actor != actor) throw new IOException("Player changed before multiplier recovery.");
             recovered = RecoverMultiplierEffects(actor, original, neutral);
         });
-        App.Log?.Write("MULTIPLIERS", $"Requested damage {damage}x, Echoes {echoes}x; removed {recovered} previous trainer effect(s); actor 0x{actor:X}.");
+        GameDiagnostics.Log?.Invoke("MULTIPLIERS", $"Requested damage {damage}x, Echoes {echoes}x; removed {recovered} previous trainer effect(s); actor 0x{actor:X}.");
         effectNode = 0;
         if (damage == 1 && echoes == 1) return;
         var clone = memory.AllocateData(0x210);
@@ -157,7 +157,7 @@ public sealed partial class GameActions
         var status = memory.Int32(dispatcher.Payload + 48);
         if (status != 1)
         {
-            App.Log?.Write("MULTIPLIERS", $"Native insertion failed at stage {status}; actor 0x{actor:X}, container 0x{container:X}.");
+            GameDiagnostics.Log?.Invoke("MULTIPLIERS", $"Native insertion failed at stage {status}; actor 0x{actor:X}, container 0x{container:X}.");
             throw new IOException(status switch
             {
                 -1 or -2 => "The player or effect owner changed during loading. Wait for the character to settle and apply again.",

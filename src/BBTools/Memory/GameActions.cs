@@ -15,7 +15,7 @@ public sealed record LampChoice(string Name, int Entity)
 
 public enum GameActionKind { Dispatcher, Item, Warp, RestoreLocation, Gem }
 
-public sealed partial class GameActions(ProcessMemory memory, PlayerSession session) : IDisposable
+public sealed partial class GameActions(IGameMemory memory, PlayerSession session) : IDisposable
 {
     private GameThreadQueue? queue;
     public static readonly (ulong Offset, byte[] Bytes)[] Fingerprints =

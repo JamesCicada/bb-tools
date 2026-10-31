@@ -7,6 +7,7 @@ namespace BBTools.Memory;
 // shape, not the identity or correctness of the native callback's publisher.
 public static class NativeCodeCompatibility
 {
+    public static Action<string>? Diagnostic { get; set; }
     private static readonly byte[] prefix = Convert.FromHexString(
         "488DA42480FFFFFF5051525657415041514152415341544989E44883E4F04881EC80000000")
         .Concat(Enumerable.Range(0,8).SelectMany(i => new byte[]{0xF3,0x0F,0x7F,(byte)(0x44|(i<<3)),0x24,(byte)(i*16)}))
@@ -41,7 +42,7 @@ public static class NativeCodeCompatibility
             // Reject torn/changed code; publication callers repeat this check
             // with game threads suspended immediately before queuing the call.
             if (!memory.Read(entry,expected.Length).SequenceEqual(actual) || !memory.Read(target,size).SequenceEqual(stub)) return false;
-            App.Log?.Write("COMPAT",$"Accepted Nightwatch-compatible observer at image+0x{offset:X}; wrapper 0x{target:X}, callback 0x{callback:X}. Native entry and observer preserved.");
+            Diagnostic?.Invoke($"Accepted Nightwatch-compatible observer at image+0x{offset:X}; wrapper 0x{target:X}, callback 0x{callback:X}. Native entry and observer preserved.");
             return true;
         }
         catch (Exception ex) when (ex is IOException or OverflowException) { return false; }

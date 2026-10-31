@@ -5,7 +5,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace BBTools.Memory;
 
-public sealed class ProcessMemory : IExecutableMemory, IDisposable
+public sealed class ProcessMemory : IGameMemory
 {
     private readonly SafeProcessHandle handle;
     public ProcessMemory(int pid, bool writable = true)
@@ -69,7 +69,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
         }
     }
     public void Dispose() => handle.Dispose();
-    internal ulong FindActiveCameraStep(ulong owner,ulong imageBase,CancellationToken cancellationToken=default)
+    public ulong FindActiveCameraStep(ulong owner,ulong imageBase,CancellationToken cancellationToken=default)
     {
         if(VirtualQueryEx(handle,(nuint)owner,out var ownerRegion,(nuint)Marshal.SizeOf<MemoryInfo>())==0)
             throw new IOException("Active camera allocation is unavailable.");
@@ -120,7 +120,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
     }
     // Narrow exception to data-only writes: one verified FOV clamp instruction.
     // Called only while the target threads are suspended by CameraFov.
-    internal void WriteCameraFovClamp(ulong imageBase, bool enable)
+    public void WriteCameraFovClamp(ulong imageBase, bool enable)
     {
         foreach (var fingerprint in CameraFov.Fingerprints)
             if (!Read(imageBase + fingerprint.Offset, fingerprint.Bytes.Length).SequenceEqual(fingerprint.Bytes))
@@ -148,7 +148,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
         if (!Read(address,4).SequenceEqual(replacement)) throw new IOException("Camera clamp update could not be verified.");
     }
     // Only the independently verified movement read site may use this hook path.
-    internal void ReplaceMovementCode(ulong imageBase,byte[] expected,byte[] replacement)
+    public void ReplaceMovementCode(ulong imageBase,byte[] expected,byte[] replacement)
     {
         if(expected.Length!=14||replacement.Length!=14)throw new ArgumentException("Invalid movement patch size.");
         var at=imageBase+MovementSpeed.Offset;
@@ -157,7 +157,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
     }
-    internal void ReplacePhotoOutputCode(ulong imageBase, byte[] expected, byte[] replacement)
+    public void ReplacePhotoOutputCode(ulong imageBase, byte[] expected, byte[] replacement)
     {
         if(expected.Length!=PhotoCameraOutput.Original.Length||replacement.Length!=expected.Length)throw new ArgumentException("Invalid photo output patch size.");
         var at=imageBase+PhotoCameraOutput.Offset;
@@ -166,7 +166,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,(nuint)replacement.Length,out var count)||count!=(nuint)replacement.Length)throw new IOException("Photo output patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,(nuint)expected.Length);var restored=VirtualProtectEx(handle,(nuint)at,(nuint)expected.Length,protection,out _);if(!flushed||!restored)throw new IOException("Photo output protection/cache restoration failed.");}
     }
-    internal void ReplaceShoulderCode(ulong imageBase, byte[] expected, byte[] replacement)
+    public void ReplaceShoulderCode(ulong imageBase, byte[] expected, byte[] replacement)
     {
         if (expected.Length != ShoulderCamera.Original.Length || replacement.Length != expected.Length)
             throw new ArgumentException("Invalid shoulder camera patch size.");
@@ -186,7 +186,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
         }
     }
     // Only the two independently verified loot sites may use this write path.
-    internal void ReplaceLootCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
+    public void ReplaceLootCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
     {
         var original = offset == LootOverrides.DiscoveryOffset ? LootOverrides.DiscoveryOriginal :
             offset == LootOverrides.DropOffset ? LootOverrides.DropOriginal : throw new ArgumentException("Unsupported loot hook site.");
@@ -207,7 +207,7 @@ public sealed class ProcessMemory : IExecutableMemory, IDisposable
             if (!flushed || !restored) throw new IOException("Loot code protection/cache restoration failed.");
         }
     }
-    internal void ReplaceProgressionCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
+    public void ReplaceProgressionCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement)
     {
         var site = ProgressionCosts.UpgradeSites.SingleOrDefault(x => x.Offset == offset);
         if (site.Original == null || !(expected.SequenceEqual(site.Original) && replacement.SequenceEqual(site.Free) ||

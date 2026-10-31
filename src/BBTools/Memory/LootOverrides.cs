@@ -3,7 +3,7 @@ using System.IO;
 namespace BBTools.Memory;
 
 // Two narrow runtime hooks. Never edits attributes, saves or shared loot rows.
-public sealed class LootOverrides(ProcessMemory memory, PlayerSession session)
+public sealed class LootOverrides(IGameMemory memory, PlayerSession session)
 {
     public const ulong DiscoveryOffset = 0x158191B, DropOffset = 0x17CF52C;
     public static readonly byte[] DiscoveryOriginal = Convert.FromHexString("C5F258C0C5F057C9C5FA5FC1C30F1F840000000000");

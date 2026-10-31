@@ -1,7 +1,7 @@
 using System.IO;
 namespace BBTools.Memory;
 
-public sealed class CameraTuning(ProcessMemory memory,PlayerSession session)
+public sealed class CameraTuning(IGameMemory memory,PlayerSession session)
 {
     public static readonly (ulong Offset,byte[] Bytes)[] Fingerprints =
     [

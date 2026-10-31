@@ -23,6 +23,6 @@ public sealed partial class PlayerSession
             EnsureSamePlayer(player);if(memory.Pointer(modules+0x28)!=resist)throw new IOException("Status module changed before clear.");
             if(any)memory.Write(resist+0x10,new byte[20]);
         }
-        if(memory is ProcessMemory process)process.Suspended(Clear);else Clear();
+        if(memory is IGameMemory process)process.Suspended(Clear);else Clear();
     }
 }

@@ -4,7 +4,7 @@ namespace BBTools.Memory;
 
 // Shift the freshly composed normal camera along its own right vector. Replaying
 // the native stores each frame prevents accumulation; no parameter X field exists.
-public sealed class ShoulderCamera(ProcessMemory memory, PlayerSession session)
+public sealed class ShoulderCamera(IGameMemory memory, PlayerSession session)
 {
     public const ulong Offset = 0x193BEAD;
     public static readonly byte[] Original = Convert.FromHexString("C4C178295730C4C178295F40498BBD10010000");

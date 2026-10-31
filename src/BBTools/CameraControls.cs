@@ -1,4 +1,3 @@
-using System.Windows.Input;
 
 namespace BBTools;
 
@@ -7,9 +6,7 @@ public sealed record CameraControls(string Forward="W",string Backward="S",strin
     string RollLeft="Z",string RollRight="C",string Reset="Home",string Exit="Escape",string? Capture=null)
 {
     public static string[] Actions => ["Forward","Backward","Left","Right","Up","Down","Yaw left","Yaw right","Pitch up","Pitch down","Roll left","Roll right","Reset camera","Exit photo mode","Capture PNG"];
-    public static readonly string[] Choices = Enum.GetValues<Key>().Where(k=>k is >=Key.A and <=Key.Z or >=Key.D0 and <=Key.D9 or >=Key.F1 and <=Key.F12 or
-        Key.Left or Key.Right or Key.Up or Key.Down or Key.PageUp or Key.PageDown or Key.Home or Key.End or Key.Insert or Key.Delete or Key.Escape or Key.Space or Key.Tab or Key.Return)
-        .Distinct().Select(k=>k.ToString()).ToArray();
+    public static readonly string[] Choices = KeyCodes.Choices;
     private string[] MovementKeys => [Forward,Backward,Left,Right,Up,Down,YawLeft,YawRight,PitchUp,PitchDown,RollLeft,RollRight,Reset,Exit];
     public string CaptureKey=>Capture??new[]{"F12","F11","F10","F9","F8"}.Concat(Choices).First(k=>!MovementKeys.Contains(k));
     public string[] Keys=>MovementKeys.Append(CaptureKey).ToArray();
@@ -21,7 +18,7 @@ public sealed record CameraControls(string Forward="W",string Backward="S",strin
     internal CameraInput Read(Func<int,bool> down)
     {
         var keys=Keys;
-        bool Held(int i)=>down(KeyInterop.VirtualKeyFromKey(Enum.Parse<Key>(keys[i])));
+        bool Held(int i)=>down(KeyCodes.VirtualKey(keys[i]));
         float Axis(int plus,int minus)=>(Held(plus)?1:0)-(Held(minus)?1:0);
         return new(Axis(0,1),Axis(3,2),Axis(4,5),Axis(6,7),Axis(8,9),Axis(10,11),Held(12),Held(13),down(0x10)?4:down(0x12)?.2f:1,Held(14));
     }

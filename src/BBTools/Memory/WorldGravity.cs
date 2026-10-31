@@ -1,6 +1,6 @@
 using System.IO;
 namespace BBTools.Memory;
-public sealed class WorldGravity(ProcessMemory memory,PlayerSession session)
+public sealed class WorldGravity(IGameMemory memory,PlayerSession session)
 {
     public static readonly (ulong Offset,byte[] Bytes)[] Fingerprints=[(0x1E3FA45,Convert.FromHexString("C5F82881B0050000"))];
     private ulong owner;private float original,written;

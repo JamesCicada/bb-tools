@@ -3,18 +3,6 @@ using System.Windows.Input;
 using System.Windows.Threading;
 namespace BBTools;
 
-public sealed record HotkeyPreferences(bool Enabled=false,string Heal="F6",string God="F7",string Save="F8",string Restore="F9",string Retry="F10",string Modifiers="Ctrl+Alt")
-{
-    public static string[] ModifierChoices => ["None","Ctrl","Alt","Ctrl+Alt"];
-    public string[] Keys => [Heal,God,Save,Restore,Retry];
-    public string Shortcut(string key) => Modifiers=="None"?key:$"{Modifiers}+{key}";
-    public void Validate()
-    {
-        if(!ModifierChoices.Contains(Modifiers))throw new ArgumentException("Choose None, Ctrl, Alt or Ctrl+Alt for hotkey modifiers.");
-        if(Keys.Any(x=>!Enum.TryParse<Key>(x,true,out var key)||key<Key.F1||key>Key.F12)||Keys.Distinct(StringComparer.OrdinalIgnoreCase).Count()!=5)
-            throw new ArgumentException("Assign a different F1–F12 key to each hotkey action.");
-    }
-}
 // Poll the physical key state: SDL/fullscreen input need not deliver WM_HOTKEY.
 // Never swallow the game's keyboard input. MainWindow checks focus before acting.
 internal sealed class HotkeyManager : IDisposable

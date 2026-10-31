@@ -68,7 +68,7 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
         if ((degrees <= 48 || memory.Read(session.ImageBase+ClampOffset,4).SequenceEqual(UncappedClamp)) &&
             table == current.File && owned.Count == current.Fields.Length && current.Fields.All(at =>
             owned.TryGetValue(at,out var entry) && entry.Written == degrees && BitConverter.ToSingle(memory.Read(at,4)) == degrees)) return;
-        if (memory is ProcessMemory process) process.Suspended(() => ApplyCore(degrees));
+        if (memory is IGameMemory process) process.Suspended(() => ApplyCore(degrees));
         else ApplyCore(degrees);
     }
     private void ApplyCore(float degrees)
@@ -87,7 +87,7 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
         if (Resolve().File != table) throw new IOException("Camera table changed before applying FOV.");
         if (degrees > 48 && memory.Read(session.ImageBase+ClampOffset,4).SequenceEqual(StandardClamp))
         {
-            if (memory is not ProcessMemory process) throw new IOException("Wide FOV requires native process memory access.");
+            if (memory is not IGameMemory process) throw new IOException("Wide FOV requires native process memory access.");
             // Record ownership first so cleanup can recover even after a write/verification failure.
             ownsUncap = true;
             process.WriteCameraFovClamp(session.ImageBase,true);
@@ -102,7 +102,7 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
     public void Restore()
     {
         if (owned.Count==0 && !ownsUncap) return;
-        if (memory is ProcessMemory process) process.Suspended(RestoreCore);
+        if (memory is IGameMemory process) process.Suspended(RestoreCore);
         else RestoreCore();
     }
     private void RestoreCore()
@@ -125,7 +125,7 @@ public sealed class CameraFov(IMemory memory, PlayerSession session)
                 var bytes=memory.Read(session.ImageBase+ClampOffset,4);
                 if (bytes.SequenceEqual(UncappedClamp))
                 {
-                    if (memory is not ProcessMemory process) throw new IOException("Cannot restore native camera clamp.");
+                    if (memory is not IGameMemory process) throw new IOException("Cannot restore native camera clamp.");
                     process.WriteCameraFovClamp(session.ImageBase,false);
                 }
                 else if (!bytes.SequenceEqual(StandardClamp)) throw new IOException("Camera clamp changed externally; unknown instructions were retained.");

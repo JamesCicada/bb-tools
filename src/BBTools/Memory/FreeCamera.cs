@@ -4,7 +4,7 @@ using System.Numerics;
 namespace BBTools.Memory;
 
 // Native debug-camera output; movement locking shares the tool's player movement hook.
-public sealed class FreeCamera(ProcessMemory memory, PlayerSession session,MovementSpeed? movement=null)
+public sealed class FreeCamera(IGameMemory memory, PlayerSession session,MovementSpeed? movement=null)
 {
     private readonly MovementSpeed movementGuard=movement??new(memory,session);
     private readonly PhotoCameraOutput output=new(memory,session);

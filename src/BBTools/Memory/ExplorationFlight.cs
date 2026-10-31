@@ -1,6 +1,6 @@
 using System.IO;
 namespace BBTools.Memory;
-public sealed class ExplorationFlight(ProcessMemory memory,PlayerSession session)
+public sealed class ExplorationFlight(IGameMemory memory,PlayerSession session)
 {
     public static readonly (ulong Offset,byte[] Bytes)[] Fingerprints=
     [(0x18D5570,Convert.FromHexString("488B87B0030000488B40200FB78000020000")),(0xD35C63,Convert.FromHexString("F6871401000002"))];

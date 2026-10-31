@@ -81,7 +81,7 @@ public sealed partial class PlayerSession
                 if(memory.Int32(weapon.Instance+0x18)!=weapon.Maximum)throw new IOException("Weapon repair did not persist. Retry after loading finishes.");
             }
         }
-        if(memory is ProcessMemory process) process.Suspended(Repair);else Repair();
+        if(memory is IGameMemory process) process.Suspended(Repair);else Repair();
         return repaired;
     }
 }

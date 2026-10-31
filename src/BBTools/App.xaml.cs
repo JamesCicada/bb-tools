@@ -14,6 +14,8 @@ public partial class App : Application
         try { Log = new SessionLog(AppContext.BaseDirectory); }
         catch(Exception ex) when(ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         { LoggingIssue=$"Session logging unavailable: {ex.Message}"; }
+        Memory.GameDiagnostics.Log = (kind, message) => Log?.Write(kind, message);
+        Memory.NativeCodeCompatibility.Diagnostic = message => Log?.Write("COMPAT", message);
         DispatcherUnhandledException += (_, args) => LogError(args.Exception,"Unhandled UI exception");
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {

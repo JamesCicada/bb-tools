@@ -9,6 +9,17 @@ public sealed record SaveBackup(string Path,DateTime ModifiedUtc,long Size)
 public sealed record SaveRestoreResult(string RecoveryFolder,string RecoveryZip);
 public static class SaveRestore
 {
+    public static string CreateBackup(string source,string destination)
+    {
+        source=Path.GetFullPath(source);destination=Path.GetFullPath(destination);
+        var relative=Path.GetRelativePath(source,destination);
+        if(relative=="." || !Path.IsPathRooted(relative) && relative!=".." && !relative.StartsWith(".."+Path.DirectorySeparatorChar))
+            throw new ArgumentException(Translations.T("message.Backupdestinationmustbeoutsidethesavefolder.f824ef4"));
+        ValidateFolder(new DirectoryInfo(source));Directory.CreateDirectory(destination);
+        var archive=Path.Combine(destination,$"bb-tools-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.zip");var temporary=archive+".partial";
+        try{System.IO.Compression.ZipFile.CreateFromDirectory(source,temporary);File.Move(temporary,archive);return archive;}
+        finally{if(File.Exists(temporary))File.Delete(temporary);}
+    }
     private const long Limit=512L*1024*1024;
     private static readonly uint[] CrcTable=Enumerable.Range(0,256).Select(x=>
     {
@@ -67,7 +78,7 @@ public static class SaveRestore
             }
             if(!gameClosed())throw new IOException("Bloodborne started during verification; save restoration was cancelled.");
             ValidateFolder(destination);
-            var recoveryZip=MainWindow.CreateBackup(target,parent);
+            var recoveryZip=CreateBackup(target,parent);
             if(!gameClosed())throw new IOException("Bloodborne started during backup; save restoration was cancelled.");
             Directory.Move(target,recovery);
             try{Directory.Move(stage,target);}

@@ -7,7 +7,7 @@ public sealed record NativeCall(ulong Function, params ulong[] Arguments);
 // Intercept only this player's data getter through a private vtable copy. Game code stays unchanged.
 public sealed class GameThreadQueue : IDisposable
 {
-    private readonly ProcessMemory memory;
+    private readonly IGameMemory memory;
     private readonly PlayerSession session;
     private readonly ulong actor, data, originalTable, table, workspace;
     private readonly CancellationTokenSource stopped = new();
@@ -19,7 +19,7 @@ public sealed class GameThreadQueue : IDisposable
     public bool MatchesCurrentPlayer() => !disposed && session.ReadPlayer().Actor == actor &&
         session.ReadCharacter().Address == data && memory.Pointer(actor) == table;
 
-    public GameThreadQueue(ProcessMemory memory, PlayerSession session)
+    public GameThreadQueue(IGameMemory memory, PlayerSession session)
     {
         this.memory = memory; this.session = session;
         session.ValidateImage();

@@ -5,7 +5,7 @@ namespace BBTools.Memory;
 
 // Runtime-only cost changes. Equipment creation, upgrade limits and stat caps
 // remain native. Never refill currencies, create materials or edit game files.
-public sealed class ProgressionCosts(ProcessMemory memory, PlayerSession session)
+public sealed class ProgressionCosts(IGameMemory memory, PlayerSession session)
 {
     public static readonly (ulong Offset, byte[] Original, byte[] Free)[] UpgradeSites =
     [

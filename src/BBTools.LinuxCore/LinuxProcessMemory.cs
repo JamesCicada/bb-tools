@@ -25,7 +25,7 @@ public sealed record LinuxMap(ulong Start, ulong End, string Permissions, string
 
 // Read-only unless the desktop explicitly enables experimental data editing.
 // No ptrace attach, signals, remote allocations or process permission changes.
-public sealed class LinuxProcessMemory : IMemory
+public sealed partial class LinuxProcessMemory : IGameMemory
 {
     private readonly int pid;
     private readonly string identity;
@@ -68,6 +68,7 @@ public sealed class LinuxProcessMemory : IMemory
     }
     public void ValidateIdentity()
     {
+        ObjectDisposedException.ThrowIf(disposed,this);
         if (Identity() != identity) throw new IOException("The selected process exited or its PID was reused. Select it again.");
     }
     public LinuxMap[] Maps()

@@ -10,7 +10,7 @@ on:
   pull_request:
     paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md', 'docs/releases/*linux-beta*.md', 'src/BBTools/BBTools.csproj', 'scripts/*linux*.cjs']
   push:
-    branches: [main, codex/linux-desktop-preview]
+    branches: [main, codex/linux-desktop-preview, "codex/linux-parity-*"]
     paths: ['src/BBTools.Linux*/**', 'tests/BBTools.Linux*/**', 'src/BBTools/Memory/**', 'src/BBTools/Localization/**', 'src/BBTools/CharacterValues.cs', 'src/BBTools/SessionLog.cs', 'src/BBTools/AppInfo.cs', '.github/workflows/linux-probe.yml', 'scripts/package-linux.sh', 'docs/linux-*.md', 'docs/releases/*linux-beta*.md', 'src/BBTools/BBTools.csproj', 'scripts/*linux*.cjs']
 
 permissions:

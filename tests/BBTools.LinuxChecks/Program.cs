@@ -87,6 +87,16 @@ internal static class Program
             memory.WritesEnabled=true;memory.Write(address,[0x42]);
             Check(memory.Read(address,1)[0]==0x42,"explicitly enabled Linux process_vm_writev edits only the controlled child's writable data");
             memory.Write(address,FixtureBytes);
+            var resumed=false;
+            memory.Suspended(()=>memory.Suspended(()=>resumed=true));
+            Check(resumed,"native Linux suspension nests and releases every seized thread");
+            Reject<InvalidOperationException>(()=>memory.Suspended(()=>throw new InvalidOperationException("fixture")),"native suspension propagates action failures after releasing threads");
+            Check(memory.Read(address,64).SequenceEqual(FixtureBytes),"failed paused operations leave the child readable");
+            var remoteData=memory.AllocateData(4096);memory.Write(remoteData,[1,2,3,4]);
+            Check(memory.Read(remoteData,4).SequenceEqual(new byte[]{1,2,3,4}),"remote mmap allocates writable game data without touching ordinary code");
+            var remoteCode=memory.AllocateCode([0xC3]);
+            Check(memory.IsExecutable(remoteCode,1)&&memory.Read(remoteCode,1)[0]==0xC3,"remote mmap/mprotect finalizes a read/execute dispatcher page");
+            Reject<IOException>(()=>memory.Write(remoteCode,[0xCC]),"ordinary writes cannot alter finalized native code pages");
             Reject<IOException>(()=>memory.Write(address+4096,[0x42]),"Linux writer rejects executable mappings");
             Reject<IOException>(()=>memory.Write(address+4095,[1,2]),"Linux writer rejects a transfer crossing data and executable mappings");
             memory.WritesEnabled=false;Reject<NotSupportedException>(()=>memory.Write(address,[0]),"disabling experimental editing restores the read-only write gate");

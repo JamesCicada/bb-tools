@@ -7,14 +7,31 @@
     <InformationalVersion>0.6.10-linux-beta.1</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../BBTools/Memory/MemoryAccess.cs" Link="Shared/MemoryAccess.cs" />
-    <Compile Include="../BBTools/Memory/ProcessAccessErrors.cs" Link="Shared/ProcessAccessErrors.cs" />
-    <Compile Include="../BBTools/Memory/PlayerSession.cs" Link="Shared/PlayerSession.cs" />
-    <Compile Include="../BBTools/Memory/PracticeFeatures.cs" Link="Shared/PracticeFeatures.cs" />
+    <Compile Include="../BBTools/Memory/*.cs" Exclude="../BBTools/Memory/ProcessMemory.cs;../BBTools/Memory/ProcessDiscovery.cs" Link="Shared/Memory/%(Filename)%(Extension)" />
     <Compile Include="../BBTools/CharacterValues.cs" Link="Shared/CharacterValues.cs" />
     <Compile Include="../BBTools/Localization/Translations.cs" Link="Shared/Translations.cs" />
+    <Compile Include="../BBTools/AdvancedSettings.cs" Link="Shared/AdvancedSettings.cs" />
+    <Compile Include="../BBTools/AppSettings.cs" Link="Shared/AppSettings.cs" />
+    <Compile Include="../BBTools/CameraControls.cs" Link="Shared/CameraControls.cs" />
+    <Compile Include="../BBTools/InputBindings.cs" Link="Shared/InputBindings.cs" />
+    <Compile Include="../BBTools/PhotoSettings.cs" Link="Shared/PhotoSettings.cs" />
+    <Compile Include="../BBTools/DiscordGameDetails.cs" Link="Shared/DiscordGameDetails.cs" />
+    <Compile Include="../BBTools/DiscordPresence.cs" Link="Shared/DiscordPresence.cs" />
+    <Compile Include="../BBTools/EncounterTimer.cs" Link="Shared/EncounterTimer.cs" />
+    <Compile Include="../BBTools/UserLibrary.cs" Link="Shared/UserLibrary.cs" />
+    <Compile Include="../BBTools/LibraryTransfer.cs" Link="Shared/LibraryTransfer.cs" />
+    <Compile Include="../BBTools/GameItemCatalog.cs" Link="Shared/GameItemCatalog.cs" />
+    <Compile Include="../BBTools/GemTextCatalog.cs" Link="Shared/GemTextCatalog.cs" />
+    <Compile Include="../BBTools/GemGuide.cs" Link="Shared/GemGuide.cs" />
+    <Compile Include="../BBTools/ItemSearchIndex.cs" Link="Shared/ItemSearchIndex.cs" />
+    <Compile Include="../BBTools/SaveRestore.cs" Link="Shared/SaveRestore.cs" />
+    <Compile Include="../BBTools/TargetMonitor.cs" Link="Shared/TargetMonitor.cs" />
+    <Compile Include="../BBTools/Diagnostics.cs" Link="Shared/Diagnostics.cs" />
+    <Compile Include="../BBTools/UpdateChecker.cs" Link="Shared/UpdateChecker.cs" />
     <Compile Include="../BBTools/AppInfo.cs" Link="Shared/AppInfo.cs" />
     <Compile Include="../BBTools/SessionLog.cs" Link="Shared/SessionLog.cs" />
     <EmbeddedResource Include="../BBTools/Localization/Locales/*.json" WithCulture="false" LogicalName="BBTools.Locales.%(Filename).json" />
+    <EmbeddedResource Include="../BBTools/Assets/GemGuide.json" LogicalName="BBTools.GemGuide.json" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
   </ItemGroup>
 </Project>
