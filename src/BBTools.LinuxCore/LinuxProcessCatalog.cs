@@ -38,10 +38,10 @@ public static class LinuxProcessCatalog
         return items.Where(x=>terms.All(t=>x.Label.Contains(t,StringComparison.OrdinalIgnoreCase)||t.Equals($"0x{x.Pid:X}",StringComparison.OrdinalIgnoreCase)))
             .OrderByDescending(x=>Rank(x.Name)).ThenBy(x=>x.Name,StringComparer.OrdinalIgnoreCase).ThenBy(x=>x.Pid).ToArray();
     }
-    public static Process StartGame(string path,string argumentsJson)
+    public static LinuxChildProcess StartGame(string path,string argumentsJson)
     {
         if(!OperatingSystem.IsLinux())throw new PlatformNotSupportedException("Launch is available on Linux only.");
-        return Process.Start(CreateStartInfo(path,argumentsJson))??throw new IOException("The game launcher did not start.");
+        return LinuxChildProcess.Start(CreateStartInfo(path,argumentsJson));
     }
     internal static ProcessStartInfo CreateStartInfo(string path,string argumentsJson)
     {

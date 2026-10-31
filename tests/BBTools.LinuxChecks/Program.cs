@@ -75,10 +75,10 @@ internal static class Program
         var start=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false,RedirectStandardInput=true,RedirectStandardOutput=true};
         if(Path.GetFileNameWithoutExtension(Environment.ProcessPath)=="dotnet")start.ArgumentList.Add(Assembly.GetExecutingAssembly().Location);
         start.ArgumentList.Add("--fixture");
-        using var child=Process.Start(start)??throw new IOException("Could not start the isolated memory fixture.");
+        using var child=LinuxChildProcess.Start(start,redirect:true);
         try
         {
-            var locations=(await child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)))!.Split(' ');
+            var locations=(await child.StandardOutput!.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)))!.Split(' ');
             var address=ulong.Parse(locations[0],NumberStyles.HexNumber,CultureInfo.InvariantCulture);
             var memory=new LinuxProcessMemory(child.Id);
             Check(memory.Read(address,64).SequenceEqual(FixtureBytes),"read exact bytes from an isolated Linux child using process_vm_readv");
@@ -119,8 +119,8 @@ internal static class Program
                 Check(!game.Editing&&inspector.Read(p.Component+0x200,1)[0]==0x10&&inspector.Read(p.Component+0x201,1)[0]==0&&(inspector.Read(p.Actor+0x1E2,1)[0]&0x40)==0,"disabling editing restores only the original owned resource/combat bits");
                 Reject<InvalidOperationException>(()=>game.SetHealth(100),"controller returns to a closed write gate after cleanup");
             }
-            await child.StandardInput.WriteLineAsync("exit");await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
-            var completion=await child.StandardOutput.ReadToEndAsync().WaitAsync(TimeSpan.FromSeconds(3));
+            await child.StandardInput!.WriteLineAsync("exit");await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            var completion=await child.StandardOutput!.ReadToEndAsync().WaitAsync(TimeSpan.FromSeconds(3));
             Check(child.ExitCode==0&&completion.Contains("FIXTURE RESTORED"),$"native child verifies its original bytes were restored before exit (exit {child.ExitCode}, output {completion.Trim()})");
             Check(memory.HasExited(),"an exited game can release cleanup ownership without writing through its stale PID");
             Reject<IOException>(()=>memory.Read(address,64),"exited child process cannot be read through a stale PID");
