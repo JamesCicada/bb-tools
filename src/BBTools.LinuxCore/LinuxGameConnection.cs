@@ -9,6 +9,7 @@ public sealed class LinuxGameConnection : IDisposable
     private readonly string identity;
     private FileStream? editLease;
     public PlayerSession Session { get; }
+    public LinuxGameFeatures Features { get; }
     public int Pid => memory.Pid;
     public bool Editing => memory.WritesEnabled;
     public bool KeepHealth { get; set; }
@@ -25,6 +26,7 @@ public sealed class LinuxGameConnection : IDisposable
             throw new IOException("The process changed or is restricted. Refresh and select it again.");
         var image=LinuxImageLocator.Find(memory,memory.Maps(),TimeSpan.FromSeconds(20),cancellationToken);
         Session=new(memory,image);Session.ValidateImage();
+        Features=new(this,memory);
         // These options require their own unmodified instruction profile.
         try{CombatFlagsAvailable=PlayerSession.FeatureFingerprints.All(f=>memory.Read(image+f.Offset,f.Bytes.Length).SequenceEqual(f.Bytes));}
         catch(IOException){CombatFlagsAvailable=false;}
@@ -57,6 +59,7 @@ public sealed class LinuxGameConnection : IDisposable
         KeepHealth=InfiniteStamina=false;Flags.Clear();
         if(!Editing)return;
         if(memory.HasExited())return;
+        Features.Stop();
         // A failed restore keeps the connection available so cleanup can be
         // retried after loading. Never report success after dropping ownership.
         var errors=new List<string>();
@@ -69,5 +72,5 @@ public sealed class LinuxGameConnection : IDisposable
     public void SetEchoes(int value){RequireEditing();Session.SetEchoes(value);}
     public void SetAttributes(int[] attributes,CharacterState expected){RequireEditing();Session.SetAttributes(attributes,expected);}
     private void RequireEditing(){if(!Editing)throw new InvalidOperationException("Enable experimental data editing first.");}
-    public void Dispose(){Stop();memory.WritesEnabled=false;editLease?.Dispose();editLease=null;}
+    public void Dispose(){Stop();memory.WritesEnabled=false;editLease?.Dispose();editLease=null;memory.Dispose();}
 }
