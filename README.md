@@ -1,5 +1,5 @@
-> **Version 0.6.9: the gem-editor overhaul is NOT TESTED IN-GAME.** Its catalog, Normal/Advanced modes and saved recipes need gameplay feedback. NG-cycle editing, shoulder-camera and opt-in photo/flight/noclip retain their pending live-test status. Previous live confirmations retain their existing scope.
-> **Linux 0.6.9-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately; the gem editor is unavailable on Linux. Windows confirmations do not apply to Linux.
+> **Version 0.6.10: Nightwatch compatibility and the gem-editor overhaul are NOT TESTED IN-GAME.** Its catalog, Normal/Advanced modes and saved recipes need gameplay feedback. NG-cycle editing, shoulder-camera and opt-in photo/flight/noclip retain their pending live-test status. Previous live confirmations retain their existing scope.
+> **Linux 0.6.10-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately; the gem editor is unavailable on Linux. Windows confirmations do not apply to Linux.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
 # BB Tools
@@ -11,6 +11,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.6.10: Nightwatch interoperability — not tested in-game
+
+- Support the documented item/gem observer wrapper while preserving Nightwatch’s hook and validating the original continuation.
+- Validate selected workshop-menu factories instead of rejecting unrelated changes.
+- Report exact chalice instruction mismatches; Nightwatch’s flag-remapping replacement remains unsupported.
+- **NOT TESTED IN-GAME.** This does not establish full Nightwatch/co-op compatibility.
 
 ## v0.6.9: easier blood-gem editing — not tested in-game
 

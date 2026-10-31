@@ -1,6 +1,6 @@
 # Launcher and emulator compatibility
 
-Last updated: 2026-10-26. Results apply to the tested BB Tools/game/runtime combination;
+Last updated: 2026-10-31. Results apply to the tested BB Tools/game/runtime combination;
 a launcher appearing in the process picker does not establish compatibility.
 
 ## Status key
@@ -20,6 +20,7 @@ a launcher appearing in the process picker does not establish compatibility.
 | [Supermedo Bloodborne PC](https://github.com/Supermedo/bloodborne_pc) native Windows launcher | `bb-probe.exe` (runtime), `Bloodborne.exe` (launcher) | CUSA03173 1.09 | 0.6.6 | ✅ Perfectly fine | Confirmed player/combat tools, spawning, travel, supported boss revival/retry, presets/startup FOV, hotkeys, library, save tools, logging and diagnostics. Active features, including durability, are tested and confirmed for 0.6.6. Exact launcher build was not recorded. |
 | [shadPS4](https://github.com/shadps4-emu/shadPS4) | `shadPS4.exe` | CUSA03173 1.09 | 0.4.0 development | ✅ Perfectly fine | Tested and confirmed on 2026-10-18; officially supported. Manual and automatic connection require no experimental opt-in. Exact emulator build/patch list was not recorded. Noclip/free camera were disabled in the confirmed build; photo mode/noclip remain disabled and hidden in local 0.6.0. Active target tools are included in the 0.6.6 confirmation. |
 | Other Bloodborne PC forks / launchers | Varies | Varies | Upcoming test build | ⌛ Not tested | Test each fork/build separately, including loaded image checks and game-thread operations. Native launcher compatibility does not transfer automatically. |
+| [Nightwatch Co-op](https://github.com/vladtepes22/NightwatchCoop) | Reported `bb-probe.exe` | 1.09; exact runtime release unknown | 0.6.10 | ⌛ Not tested | 0.6.9 logs show an item-grant detour rejected before submission. A strict observer-ABI adapter now supports item/gem grants and a Level-up tracing hook in code; menu checks are scoped to the requested factory. NOT TESTED IN-GAME. Direct chalice travel with a replaced flag reader remains unsupported. See [research and tests](nightwatch-compatibility.md). |
 
 ## Feature-specific exceptions
 

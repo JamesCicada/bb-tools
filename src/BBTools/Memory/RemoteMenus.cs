@@ -39,9 +39,7 @@ public sealed partial class GameActions
     private async Task OpenMenuCoreAsync(MenuChoice menu)
     {
         var dispatcher = Ready();
-        foreach (var f in MenuFingerprints)
-            if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))
-                throw new IOException("Menu instructions differ from the supported 1.09 build.");
+        ValidateMenuInstructions(memory, session.ImageBase, menu);
         var manager = memory.Pointer(session.ImageBase + 0x5562870);
         if (BitConverter.ToUInt64(memory.Read(manager + 0xA88, 8)) != 0)
             throw new IOException("Close the current game menu before opening another.");
@@ -49,9 +47,23 @@ public sealed partial class GameActions
         var payload = new byte[96];
         BitConverter.GetBytes(manager).CopyTo(payload, 0);
         BitConverter.GetBytes(session.ImageBase + menu.Factory).CopyTo(payload, 8);
-        await dispatcher.ExecuteAsync([new(menuHelper, dispatcher.Payload)], payload);
+        await dispatcher.ExecuteAsync([new(menuHelper, dispatcher.Payload)], preparePayload: () =>
+        {
+            ValidateMenuInstructions(memory, session.ImageBase, menu);
+            if (memory.Pointer(session.ImageBase+0x5562870)!=manager) throw new IOException("Menu manager changed before publication.");
+            return payload;
+        });
         if (memory.Int32(dispatcher.Payload + 80) != 1)
             throw new IOException("The menu could not be opened. Close other menus and try again while idle.");
+    }
+    public static void ValidateMenuInstructions(IMemory source, ulong image, MenuChoice menu)
+    {
+        if (!Menus.Contains(menu)) throw new ArgumentException("Choose a supported workshop menu.");
+        // Factories of unrelated menus are never called by this request. Keep
+        // shared attach/cleanup checks and validate the selected factory only.
+        foreach (var f in MenuFingerprints.Where((f,index)=>index is 0 or 1 or >=8 || f.Offset==menu.Factory))
+            if (!NativeCodeCompatibility.Matches(source,image,f.Offset,f.Bytes))
+                throw new IOException($"Menu instructions differ at image+0x{f.Offset:X}. The selected menu was not opened; unknown hooks remain unsupported.");
     }
     public static byte[] BuildMenuHelper(ulong imageBase)
     {

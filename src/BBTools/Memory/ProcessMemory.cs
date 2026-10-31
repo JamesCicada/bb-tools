@@ -5,7 +5,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace BBTools.Memory;
 
-public sealed class ProcessMemory : IMemory, IDisposable
+public sealed class ProcessMemory : IExecutableMemory, IDisposable
 {
     private readonly SafeProcessHandle handle;
     public ProcessMemory(int pid, bool writable = true)
@@ -14,6 +14,13 @@ public sealed class ProcessMemory : IMemory, IDisposable
         if (handle.IsInvalid) { var error = Marshal.GetLastWin32Error(); handle.Dispose(); throw new Win32Exception(error); }
     }
     public bool IsAlive => WaitForSingleObject(handle, 0) == 0x102;
+    public bool IsExecutable(ulong address, int size)
+    {
+        if (address < 0x10000 || size <= 0 || address >= 0x0000800000000000 || (ulong)size > 0x0000800000000000 - address) return false;
+        return VirtualQueryEx(handle, (nuint)address, out var region, (nuint)Marshal.SizeOf<MemoryInfo>()) == (nuint)Marshal.SizeOf<MemoryInfo>() &&
+            region.State == 0x1000 && (region.Protect & 0x100) == 0 && (region.Protect & 0xff) is (0x10 or 0x20 or 0x40 or 0x80) &&
+            address + (ulong)size <= (ulong)region.BaseAddress + (ulong)region.RegionSize;
+    }
     public byte[] Read(ulong address, int size)
     {
         var bytes = new byte[size];

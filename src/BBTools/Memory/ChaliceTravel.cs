@@ -62,8 +62,13 @@ public sealed partial class GameActions
             throw new IOException("Chalice travel starts from Hunter's Dream. Travel there with the lamp controls, then choose your altar and layer.");
         var dispatcher = Ready(GameActionKind.Warp);
         foreach (var f in ChaliceFingerprints)
-            if (!memory.Read(session.ImageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes))
-                throw new IOException("Chalice instructions differ from the supported 1.09 build.");
+        {
+            var actual = memory.Read(session.ImageBase + f.Offset, f.Bytes.Length);
+            if (!actual.SequenceEqual(f.Bytes))
+                throw new IOException($"Chalice instructions differ at image+0x{f.Offset:X}: expected {Convert.ToHexString(f.Bytes)}, actual {Convert.ToHexString(actual)}. " +
+                    (f.Offset == 0x13CFD80 && actual[0] == 0xE9 ? "The runtime redirects the chalice flag reader; this replacement is not yet supported. " : "") +
+                    "No chalice travel request was submitted. Include this session log in compatibility reports.");
+        }
         var manager = memory.Pointer(session.ImageBase + 0x5562870);
         if (BitConverter.ToUInt64(memory.Read(manager + 0xA88, 8)) != 0)
             throw new IOException("Close the current game menu before choosing a chalice altar.");

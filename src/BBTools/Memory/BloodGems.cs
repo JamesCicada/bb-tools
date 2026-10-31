@@ -164,6 +164,7 @@ public sealed partial class GameActions
         gemHelper = gemHelper == 0 ? memory.AllocateCode(BuildGemHelper(session.ImageBase)) : gemHelper;
         await dispatcher.ExecuteAsync([new(gemHelper, dispatcher.Payload, handles, manager)], preparePayload: () =>
         {
+            ValidateActionInstructions(memory, session.ImageBase, GameActionKind.Gem);
             if (session.ReadCharacter().Address != character || memory.Pointer(session.ImageBase + 0x553E990) != handles || memory.Pointer(session.ImageBase + 0x553D6E0) != manager)
                 throw new IOException("Character or item manager changed before gem creation. Refresh gems and retry after loading.");
             if (naturalOnly) GemGuide.ValidateNaturalLive(spec, gems, memory);

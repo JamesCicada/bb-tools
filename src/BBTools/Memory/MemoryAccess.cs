@@ -8,6 +8,13 @@ public interface IMemory
     void Write(ulong address, byte[] value);
 }
 
+// Optional code-page inspection for compatibility adapters; ordinary memory
+// readers/writers do not acquire permission to accept redirected instructions.
+public interface IExecutableMemory : IMemory
+{
+    bool IsExecutable(ulong address, int size);
+}
+
 public static class MemoryValues
 {
     public static int Int32(this IMemory memory, ulong address) => BitConverter.ToInt32(memory.Read(address, 4));

@@ -61,7 +61,7 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
         {
             var f = Fingerprints[index];
             var actual = source.Read(imageBase + f.Offset, f.Bytes.Length);
-            if (!actual.SequenceEqual(f.Bytes))
+            if (!actual.SequenceEqual(f.Bytes) && !NativeCodeCompatibility.Matches(source, imageBase, f.Offset, f.Bytes))
                 differences.Add($"image+0x{f.Offset:X} (0x{imageBase + f.Offset:X}): expected {Convert.ToHexString(f.Bytes)}, actual {Convert.ToHexString(actual)}");
         }
         if (differences.Count != 0)
@@ -98,7 +98,13 @@ public sealed partial class GameActions(ProcessMemory memory, PlayerSession sess
         var dispatcher = Ready(GameActionKind.Item);
         var manager = memory.Pointer(session.ImageBase + 0x553D6E0);
         var handles = memory.Pointer(session.ImageBase + 0x553E990);
-        return dispatcher.ExecuteAsync(ItemCalls(session.ImageBase, manager, handles, dispatcher.Payload), payload);
+        return dispatcher.ExecuteAsync(ItemCalls(session.ImageBase, manager, handles, dispatcher.Payload), preparePayload: () =>
+        {
+            ValidateActionInstructions(memory, session.ImageBase, GameActionKind.Item);
+            if (memory.Pointer(session.ImageBase + 0x553D6E0) != manager || memory.Pointer(session.ImageBase + 0x553E990) != handles)
+                throw new IOException("Item manager changed before publication. No item request was submitted.");
+            return payload;
+        });
     }
     public static NativeCall[] ItemCalls(ulong imageBase, ulong manager, ulong handles, ulong payload) =>
     [

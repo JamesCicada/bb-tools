@@ -18,6 +18,16 @@ any Linux game feature as confirmed.
 
 ## Community suggestions — future features
 
+### Runtime interoperability — v0.6.10
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Nightwatch item/gem observer compatibility | ✔️ | ⌛ | NOT TESTED IN-GAME. Validate the documented ABI at audited entries, executable targets and exact continuation; preserve the runtime observer and recheck before publication. Unknown/replacement hooks remain blocked. |
+| Selected workshop-menu compatibility | ✔️ | ⌛ | Validate shared paths and selected factory only; unrelated factory changes no longer block Storage. Known Level-up observer supported. Recheck instructions/manager before publication. NOT TESTED IN-GAME. |
+| Nightwatch chalice flag replacement | ⌛ | ➖ | Source inspection shows flag-ID redirection, not an observer. Keep direct chalice travel blocked with better diagnostics until its semantics are verified. See [compatibility notes](docs/nightwatch-compatibility.md). |
+
+### Other community priorities
+
 Next-update priorities were reviewed against the live Nexus comments on
 2026-10-29. See [the review and gem-editor design](docs/community-requests.md).
 Gem-editor changes below are implemented for v0.6.9 and **NOT TESTED IN-GAME**. Gameplay
