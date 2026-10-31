@@ -49,13 +49,14 @@ public partial class MainWindow : Window
         }
         LogLocation.Text=log==null?"Session logs are disabled during UI smoke tests.":"Session log: "+log.FilePath;
         PermissionInfo.Text=OperatingSystem.IsLinux()?$"Yama ptrace_scope={LinuxPermissions.Scope()}. Scope 1 may require launching the game from this tool; containers can also restrict access.":"Linux preview UI: memory access is available on native Linux x64 only.";
+        InitFeatures();
         poll.Tick+=(_,_)=>Poll();poll.Start();
         Opened+=(_,_)=>{if(!preview)RefreshProcesses(this,new());};
         Closing+=(_,e)=>
         {
             try{connection?.Dispose();}
             catch(Exception ex)when(Expected(ex)){Report(ex);e.Cancel=true;return;}
-            closing=true;lifetime.Cancel();poll.Stop();log?.Dispose();
+            closing=true;lifetime.Cancel();poll.Stop();inputTimer.Stop();x11?.Dispose();presence?.Dispose();log?.Dispose();
         };
     }
     private T C<T>(string name)where T:Control=>this.FindControl<T>(name)!;
@@ -96,7 +97,7 @@ public partial class MainWindow : Window
     private async void Connect(object? sender,RoutedEventArgs e)
     {
         if(busy)return;
-        if(connection!=null){Action(()=>{connection.Dispose();connection=null;snapshot=null;draft=null;SyncToggles();UpdateAvailability(false);},"Disconnected; owned changes restored where the same player was valid.");return;}
+        if(connection!=null){Action(()=>{connection.Dispose();connection=null;snapshot=null;draft=null;startupApplied=false;hotkeyLocation=null;presence?.Update(null);SyncToggles();UpdateAvailability(false);},"Disconnected; owned changes restored where the same player was valid.");return;}
         if(Candidates.SelectedItem is not LinuxCandidate process){Status.Text="Select a game process first.";return;}
         busy=true;ConnectButton.IsEnabled=RefreshButton.IsEnabled=Candidates.IsEnabled=ProcessFilter.IsEnabled=false;Status.Text="Validating the native game image…";
         try
@@ -108,22 +109,34 @@ public partial class MainWindow : Window
         catch(Exception ex)when(Expected(ex)){if(!closing)Report(ex);}
         finally{busy=false;if(!closing){ConnectButton.IsEnabled=RefreshButton.IsEnabled=true;Candidates.IsEnabled=ProcessFilter.IsEnabled=connection==null;}}
     }
-    private void Poll()
+    private async void Poll()
     {
-        if(connection==null)return;
+        if(connection==null||polling)return;
+        polling=true;
         try
         {
-            snapshot=connection.ReadAndUpdate();var p=snapshot.Player;var ch=snapshot.Character;
+            snapshot=connection.ReadAndUpdate();
+            await connection.Features.TickAsync();enemyText.Text=connection.Features.EnemyDetails;
+            if(connection.Editing&&!startupApplied)
+            {
+                startupApplied=true;
+                var preset=library?.Presets().FirstOrDefault(x=>x.Name==preferences.StartupPresetName);
+                if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);}
+                else if(preferences.StartupFovEnabled)await connection.Features.RunAsync(_=>{connection.Features.Fov.Apply(preferences.StartupFov);return Task.CompletedTask;});
+            }
+            presence?.Update("Native bbport",preferences.DiscordDetails?.Enabled==true?connection.Session.ReadPresenceDetails(preferences.DiscordDetails):null);var p=snapshot.Player;var ch=snapshot.Character;
             ResourceSummary.Text=$"HP {p.Health:N0} / {p.MaxHealth:N0} · Stamina {p.Stamina:N0} / {p.MaxStamina:N0}\nBlood Level {ch.Level} · Blood Echoes {ch.Values.Echoes:N0}";
             UpdateAvailability(true);
             if(connection.FeatureError!=null)Status.Text="Features paused: "+connection.FeatureError;
         }
         catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;UpdateAvailability(false);Report(ex);}
+        finally{polling=false;}
     }
     private void UpdateAvailability(bool ready)
     {
         changing=true;EditingEnabled.IsEnabled=connection!=null&&ready;EditingEnabled.IsChecked=connection?.Editing==true;changing=false;
         EditorPanel.IsEnabled=ResourceFlags.IsEnabled=ready&&connection?.Editing==true;
+        foreach(var control in editingControls)control.IsEnabled=EditorPanel.IsEnabled&&!busy;
         NativeFlags.IsEnabled=EditorPanel.IsEnabled&&connection?.CombatFlagsAvailable==true;
         Candidates.IsEnabled=ProcessFilter.IsEnabled=connection==null&&!busy;
         ConnectButton.Content=Translations.Source(connection==null?"Connect":"Disconnect");
@@ -132,7 +145,7 @@ public partial class MainWindow : Window
     private void EditingChanged(object? sender,RoutedEventArgs e)
     {
         if(changing||connection==null)return;
-        Action(()=>{connection.SetEditing(EditingEnabled.IsChecked==true);if(!connection.Editing)SyncToggles();Poll();},"Editing mode updated for this connection.");
+        Action(()=>{connection.SetEditing(EditingEnabled.IsChecked==true);if(!connection.Editing){startupApplied=false;SyncToggles();}Poll();},"Editing mode updated for this connection.");
         UpdateAvailability(snapshot!=null);
     }
     private void CombatChanged(object? sender,RoutedEventArgs e)

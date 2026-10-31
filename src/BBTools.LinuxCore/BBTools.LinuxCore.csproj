@@ -34,4 +34,5 @@
     <EmbeddedResource Include="../BBTools/Assets/GemGuide.json" LogicalName="BBTools.GemGuide.json" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
   </ItemGroup>
+  <ItemGroup><Compile Include="../BBTools/PhotoFilters.cs" Link="PhotoFilters.cs" /></ItemGroup>
 </Project>

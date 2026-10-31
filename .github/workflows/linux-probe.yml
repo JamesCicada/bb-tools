@@ -37,7 +37,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Native child-process memory and portable profile checks
-        run: dotnet run --project tests/BBTools.LinuxChecks -c Release
+        run: timeout --kill-after=5s 120s dotnet run --project tests/BBTools.LinuxChecks -c Release
       - name: Headless UI, localization and rendering checks
         run: dotnet run --project tests/BBTools.LinuxDesktopChecks -c Release -- artifacts/ui
       - name: Native X11 desktop startup

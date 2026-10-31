@@ -10,7 +10,7 @@ public sealed record LinuxCandidate(int Pid, string Name, string Identity)
 }
 public static class LinuxProcessCatalog
 {
-    public static int Rank(string name) => name.Equals("bb-probe",StringComparison.OrdinalIgnoreCase) ? 100 :
+    public static int Rank(string name) => (name.Equals("bb-probe",StringComparison.OrdinalIgnoreCase)||name.Equals("bbprobe",StringComparison.OrdinalIgnoreCase)) ? 100 :
         name.Contains("bloodborne",StringComparison.OrdinalIgnoreCase) || name.Contains("bbport",StringComparison.OrdinalIgnoreCase) ? 80 :
         name.Contains("shadps4",StringComparison.OrdinalIgnoreCase) ? 60 : 0;
     public static LinuxCandidate[] List()

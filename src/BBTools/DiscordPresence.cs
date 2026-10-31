@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.IO;
 using System.IO.Pipes;
+using System.Net.Sockets;
 using System.Text.Json;
 
 namespace BBTools;
@@ -38,6 +39,21 @@ public sealed class DiscordPresence : IDisposable
     }
     private static async Task<Stream> ConnectAsync(CancellationToken token)
     {
+        if(OperatingSystem.IsLinux())
+        {
+            var runtime=Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+            var roots=new[]{runtime,Path.GetTempPath(),runtime==null?null:Path.Combine(runtime,"app/com.discordapp.Discord")}
+                .Where(x=>x!=null&&Path.IsPathFullyQualified(x)).Distinct();
+            foreach(var root in roots)for(var i=0;i<10;i++)
+            {
+                var socket=new Socket(AddressFamily.Unix,SocketType.Stream,ProtocolType.Unspecified);
+                using var attempt=CancellationTokenSource.CreateLinkedTokenSource(token);attempt.CancelAfter(80);
+                try{await socket.ConnectAsync(new UnixDomainSocketEndPoint(Path.Combine(root!,"discord-ipc-"+i)),attempt.Token).ConfigureAwait(false);return new NetworkStream(socket,true);}
+                catch(Exception ex)when(ex is SocketException or IOException or OperationCanceledException){socket.Dispose();token.ThrowIfCancellationRequested();}
+                catch{socket.Dispose();throw;}
+            }
+            throw new IOException("Discord desktop IPC is not available.");
+        }
         for(var i=0;i<10;i++)
         {
             var candidate=new NamedPipeClientStream(".",$"discord-ipc-{i}",PipeDirection.InOut,PipeOptions.Asynchronous);

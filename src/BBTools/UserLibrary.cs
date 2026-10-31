@@ -16,7 +16,7 @@ public sealed record PracticePreset(string Name, bool KeepHealth, bool Stamina, 
         if (!float.IsFinite(CameraDistance) || !float.IsFinite(CameraHeight) || CameraDistance is < .5f or >2 || CameraHeight is < .5f or >2) throw new ArgumentException("Invalid preset camera tuning.");
         if (RepairThreshold is < 1 or > 100) throw new ArgumentException("Repair threshold must be 1–100.");
         if (!float.IsFinite(Fov) || Fov is < 38 or > 120) throw new ArgumentException("Preset FOV must be between 38 and 120.");
-        if (Flags == null || Flags.Length > 7 || Flags.Distinct().Count() != Flags.Length ||
+        if (Flags == null || Flags.Length > Enum.GetValues<PracticeFlag>().Length || Flags.Distinct().Count() != Flags.Length ||
             Flags.Any(x => !Enum.GetNames<PracticeFlag>().Contains(x)) ||
             !float.IsFinite(Damage) || !float.IsFinite(Echoes) || Damage is < .1f or > 100 || Echoes is < .1f or > 100)
             throw new ArgumentException("Invalid practice preset.");

@@ -46,6 +46,7 @@ public sealed class LinuxGameFeatures
         try{nativeTouched=true;connection.Session.ReadPlayer();await operation(Actions);}
         finally{gate.Release();}
     }
+    public Task MutateAsync(Action operation)=>RunAsync(_=>{memory.Suspended(operation);return Task.CompletedTask;});
     public async Task SetMultipliersAsync(float outgoing,float rewards)
     {
         await RunAsync(a=>a.SetMultipliersAsync(outgoing,rewards));damage=outgoing;echoes=rewards;multipliersRequested=true;
