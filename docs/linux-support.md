@@ -1,35 +1,41 @@
-# Linux beta — NOT TESTED IN-GAME
+# BB Tools for Linux · v0.7.0
 
-BB Tools now has a native Linux desktop beta and a separate read-only connection
-probe. Both target **Linux x86-64 with glibc and Bloodborne 1.09**. Live attachment to
-Bloodborne has not been tested on Linux. No runtime or distribution is marked
-**tested and confirmed** for the game on the strength of source review or CI alone.
-Version: **0.6.8-linux-beta.1**. This beta has its own GitHub prerelease and separate Nexus optional-file package; it does not replace the stable Windows download.
+Native **Linux x86-64/glibc**, Bloodborne 1.09. Windows and Linux use the same
+version and gameplay backend. The Linux download is part of the shared v0.7.0
+release rather than a separately versioned preview.
 
-## What's implemented
+**Community feedback:** the previous experimental desktop worked when launched
+through **bbport 0.7**, connected to **bbprobe**, rather than **bloodborne-bbpo**.
+The report did not identify the tested individual features or distribution.
+New native features below are **NOT TESTED IN-GAME**; automated coverage is separate
+from live game confirmation. Please send session logs with the runtime/version,
+feature used and what happened when reporting a problem.
 
-| Feature | Desktop preview | Live Linux game confirmation |
+## Feature coverage
+
+| Feature group | Linux implementation | Live status |
 | --- | --- | --- |
-| All-process picker, filtering, likely game processes first | Implemented | Pending |
-| Instruction-profile and player/character validation | Shared Windows core + Linux process reads | Pending |
-| Health, Echoes and attribute editing | Experimental opt-in | Pending |
-| Health refill, infinite stamina, God mode, Ignore hits, no fall damage, infinite consumables/bullets, no Echoes loss | Experimental opt-in; separate flag profile validation | Pending |
-| Normal disconnect/close cleanup and per-process edit ownership | Implemented | Pending |
-| Shared 28-language catalogs and RTL/numeric-input separation | Implemented; Linux-specific preview explanations remain English | Pending native-speaker review |
-| Per-session logs, five retained | App folder, with XDG state-directory fallback when read-only | Pending real installations |
-| Spawn, menus, warp, boss revival, multipliers, discovery, FOV patches | Unavailable | Linux allocation/thread coordination/dispatcher still needed |
-| Hotkeys, Discord, presets, save restore | Unavailable | Platform work still needed |
-| Photo mode/freecam/noclip | Hidden | Same policy as Windows |
+| Process selection, validation, health, stamina, Echoes, attributes and combat flags | Shared game logic + native Linux memory I/O | Community report, unspecified individual coverage |
+| Insight/NG cycle, multipliers, discovery, guaranteed eligible drops, free progression and durability | Shared Windows game logic | ⌛ New Linux actions need live testing |
+| Item spawning, normal/custom gems, carried-gem inspection and recipes | Shared catalogs, native requests and SQLite library | ⌛ New Linux actions need live testing |
+| Lamps/DLC, boss entrances, saved/chalice locations, boss revival/first encounter and menus | Shared game requests and validation | ⌛ New Linux actions need live testing |
+| FOV 38–120, camera distance/height/shoulder, movement, gravity and HUD | Shared hooks, guarded native code writes | ⌛ New Linux actions need live testing |
+| Retained target details, status effects/super armor and parry practice | Shared target/practice logic | ⌛ New Linux actions need live testing |
+| Presets/startup FOV, favorites, library transfer and save backup/restore | Shared data formats and SQLite | Automated coverage; installation feedback needed |
+| Discord presence and optional actual game details | Linux Unix-domain desktop IPC | ⌛ Real Discord client feedback needed |
+| Configurable hotkeys, experimental photo/flight/noclip and PNG filters | X11/XWayland; explicit experimental opt-in | ⌛ Not tested in-game; native Wayland windows unsupported |
+| Five-session logs, update check and shared locale catalogs | Native desktop | New Linux-specific labels may fall back to English |
 
-The preview starts **read-only** every connection. Editing is never enabled by a
-startup preset. Changes to Echoes/attributes can be saved by the game. A killed
-trainer cannot restore its flags; normal cleanup verifies the same player before
-writing. If restoration is pending during loading, the connection/window stays
-available so cleanup can be retried after the character loads.
+The desktop starts **read-only** for every connection. Startup presets never turn
+editing on. Once editing is explicitly enabled, the chosen startup preset or FOV
+can apply. Game changes to Echoes, attributes, Insight, NG cycle, items and boss
+flags may be saved by the game. Normal close/disconnect restores owned runtime
+changes; a killed trainer cannot perform cleanup. Pending cleanup keeps the
+connection available so it can be retried after loading.
 
 ## Run the desktop
 
-Extract `BBTools-v0.6.8-linux-beta.1-linux-x64.tar.gz` and run:
+Extract `BBTools-v0.7.0-linux-x64.tar.gz` and run:
 
 ```sh
 chmod +x BBTools.LinuxDesktop
@@ -45,12 +51,12 @@ Install fonts for the languages you use; bundling Inter does not supply all CJK 
 Arabic glyphs. musl/Alpine and ARM64 packages remain out of scope for this milestone.
 
 1. Start bbport and load a character.
-2. Refresh the process list and select its **bb-probe** engine, then Connect.
+2. Refresh the process list and select its **bbprobe** or **bb-probe** engine (not `bloodborne-bbpo`), then Connect.
 3. If access is denied under Yama scope 1, use the launch card to start your installed
    AppImage, launcher or `run.sh` from the tool, then refresh/connect. AppImages
    commonly use `["--play"]`; `run.sh` commonly uses `[]`. The launcher must remain
    in the tool's descendant process tree. Arguments are a JSON array, not shell code.
-4. Only after the displayed values match your character, enable experimental data
+4. Only after the displayed values match your character, enable game
    editing for that connection. Disable it to restore owned flags.
 
 Launching as a parent is not a bypass for every policy. Yama scope 2 requires
@@ -85,7 +91,7 @@ Different builds/hooks remain subject to strict validation.
 
 | Runtime/environment | Evidence | Status |
 | --- | --- | --- |
-| deadinside28 native bbport 0.6, revision `8185b88` | Public loader/memory/hook source inspected; guest layout compatible in principle | First target; live confirmation pending |
+| Native bbport 0.7 | Community report: previous Linux preview worked via bbprobe | Reported working; individual features/distro unspecified |
 | ayozetr/bloodborne_linux | Public fork documents native bbport and 1.09 | Candidate; exact running profile must validate |
 | droogie/bbhost | Public project documents Linux and original 1.09 guest execution | Separate runtime; hooks/content profile require validation |
 | shadPS4 Linux | Shared guest profile may apply, but its mapping/hooks differ | Separate milestone; not claimed supported |
@@ -104,7 +110,7 @@ xvfb-run -a dotnet run --project src/BBTools.LinuxDesktop -c Release -- --smoke-
 bash scripts/package-linux.sh
 ```
 
-CI uses Ubuntu 22.04/24.04 and a Windows-host portable/UI job. Native checks create
+CI gates the unified draft release on Windows and Ubuntu 22.04/24.04 and a Windows-host portable/UI job. Native checks create
 an isolated synthetic game process with the real layout/fingerprints, exercise
 process_vm_readv/writev, apply and restore data/flags, reject executable/cross-map
 writes, verify the opt-in gate and reject competing editor ownership. They never

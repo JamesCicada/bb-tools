@@ -97,7 +97,7 @@ public partial class MainWindow : Window
     private async void Connect(object? sender,RoutedEventArgs e)
     {
         if(busy)return;
-        if(connection!=null){Action(()=>{connection.Dispose();connection=null;snapshot=null;draft=null;startupApplied=false;hotkeyLocation=null;presence?.Update(null);SyncToggles();UpdateAvailability(false);},"Disconnected; owned changes restored where the same player was valid.");return;}
+        if(connection!=null){Action(()=>{connection.Dispose();connection=null;snapshot=null;draft=null;startupApplied=false;beforePractice=null;hotkeyLocation=null;presence?.Update(null);SyncToggles();UpdateAvailability(false);},"Disconnected; owned changes restored where the same player was valid.");return;}
         if(Candidates.SelectedItem is not LinuxCandidate process){Status.Text="Select a game process first.";return;}
         busy=true;ConnectButton.IsEnabled=RefreshButton.IsEnabled=Candidates.IsEnabled=ProcessFilter.IsEnabled=false;Status.Text="Validating the native game image…";
         try
@@ -111,7 +111,8 @@ public partial class MainWindow : Window
     }
     private async void Poll()
     {
-        if(connection==null||polling)return;
+        if(connection==null){await AutoConnectAsync();return;}
+        if(polling)return;
         polling=true;
         try
         {
@@ -121,20 +122,20 @@ public partial class MainWindow : Window
             {
                 startupApplied=true;
                 var preset=library?.Presets().FirstOrDefault(x=>x.Name==preferences.StartupPresetName);
-                if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);}
-                else if(preferences.StartupFovEnabled)await connection.Features.RunAsync(_=>{connection.Features.Fov.Apply(preferences.StartupFov);return Task.CompletedTask;});
+                if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);SyncCombat();}
+                else if(preferences.StartupFovEnabled){values["fov"].Value=(decimal)preferences.StartupFov;switches["fov"].IsChecked=true;await connection.Features.ApplyPresetAsync(Capture("Startup FOV"));}
             }
             presence?.Update("Native bbport",preferences.DiscordDetails?.Enabled==true?connection.Session.ReadPresenceDetails(preferences.DiscordDetails):null);var p=snapshot.Player;var ch=snapshot.Character;
             ResourceSummary.Text=$"HP {p.Health:N0} / {p.MaxHealth:N0} · Stamina {p.Stamina:N0} / {p.MaxStamina:N0}\nBlood Level {ch.Level} · Blood Echoes {ch.Values.Echoes:N0}";
             UpdateAvailability(true);
             if(connection.FeatureError!=null)Status.Text="Features paused: "+connection.FeatureError;
         }
-        catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;UpdateAvailability(false);Report(ex);}
+        catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;connection?.Features.PlayerUnavailable(ex.Message);enemyText.Text=connection?.Features.EnemyDetails;UpdateAvailability(false);Report(ex);}
         finally{polling=false;}
     }
     private void UpdateAvailability(bool ready)
     {
-        changing=true;EditingEnabled.IsEnabled=connection!=null&&ready;EditingEnabled.IsChecked=connection?.Editing==true;changing=false;
+        changing=true;EditingEnabled.IsEnabled=connection!=null&&ready&&!busy;EditingEnabled.IsChecked=connection?.Editing==true;changing=false;
         EditorPanel.IsEnabled=ResourceFlags.IsEnabled=ready&&connection?.Editing==true;
         foreach(var control in editingControls)control.IsEnabled=EditorPanel.IsEnabled&&!busy;
         NativeFlags.IsEnabled=EditorPanel.IsEnabled&&connection?.CombatFlagsAvailable==true;
@@ -159,7 +160,7 @@ public partial class MainWindow : Window
     }
     private void SyncToggles(){changing=true;foreach(var toggle in this.GetVisualDescendants().OfType<CheckBox>().Where(x=>x.Tag!=null))toggle.IsChecked=false;changing=false;}
     private void StopFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Stop();SyncToggles();},"Practice selections cleared; owned flags restored.");
-    private void ResumeFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Resume();Poll();},"Feature retry requested.");
+    private void ResumeFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Resume();if(!preview)inputTimer.Start();Poll();},"Feature retry requested.");
     private static int Number(TextBox input)=>int.TryParse(input.Text,NumberStyles.None,CultureInfo.InvariantCulture,out var value)?value:throw new ArgumentException("Enter a whole non-negative number.");
     private LinuxGameConnection Active()=>connection??throw new InvalidOperationException("Connect to a loaded character first.");
     private void ApplyHealth(object? sender,RoutedEventArgs e)=>Action(()=>{Active().SetHealth(Number(HealthInput));Poll();},Translations.Source("Health updated."));

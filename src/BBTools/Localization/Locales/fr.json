@@ -703,5 +703,6 @@
   "gem.recipe.heavy": "Abyssale lourde maudite — Force +65, physique +15",
   "gem.recipe.tempering": "Maudite de trempe — Physique +27.2%",
   "gem.recipe.blunt": "Maudite experte — Contondant +32.6%",
-  "gem.recipe.thrust": "Maudite experte — Estoc +32.6%"
+  "gem.recipe.thrust": "Maudite experte — Estoc +32.6%",
+  "parry.heading": "Entraînement à la parade"
 }

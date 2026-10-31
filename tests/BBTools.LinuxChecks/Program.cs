@@ -39,6 +39,7 @@ internal static class Program
             Check(LinuxProcessMemory.ParseIdentity(stat)=="987654","process identity reads field 22 despite spaces and parentheses in comm");
             Reject<IOException>(()=>LinuxProcessMemory.ParseIdentity(stat.Replace(") S ",") Z ")),"zombie processes cannot be inspected");
             Check(BBTools.LinuxProbe.Program.Rank("bb-probe")>BBTools.LinuxProbe.Program.Rank("bbport")&&BBTools.LinuxProbe.Program.Rank("other")==0,"rank native bbport processes without requiring an exe suffix");
+            Check(LinuxProcessCatalog.Rank("bbprobe")>LinuxProcessCatalog.Rank("bloodborne-bbpo"),"community-reported bbprobe engine ranks above the bbport launcher");
             var processes=new[]{new LinuxCandidate(2,"bb-probe","10"),new LinuxCandidate(1,"launcher","20"),new LinuxCandidate(3,"shadps4","30")};
             Check(LinuxProcessCatalog.Filter(processes,"").Select(x=>x.Pid).SequenceEqual(new[]{2,3,1})&&LinuxProcessCatalog.Filter(processes,"0x2").Single().Pid==2,"desktop process filtering preserves all processes and ranks likely game engines first");
             Check(LinuxPermissions.Explain("1").Contains("child/descendant")&&LinuxPermissions.Explain("3").Contains("cannot bypass"),"permission guidance distinguishes parent launch from an unbypassable no-tracing policy");
@@ -97,6 +98,15 @@ internal static class Program
             var remoteCode=memory.AllocateCode([0xC3]);
             Check(memory.IsExecutable(remoteCode,1)&&memory.Read(remoteCode,1)[0]==0xC3,"remote mmap/mprotect finalizes a read/execute dispatcher page");
             Reject<IOException>(()=>memory.Write(remoteCode,[0xCC]),"ordinary writes cannot alter finalized native code pages");
+            var guest=ulong.Parse(locations[1],NumberStyles.HexNumber,CultureInfo.InvariantCulture);
+            var original=MovementSpeed.Original;var changed=Enumerable.Repeat((byte)0x90,original.Length).ToArray();
+            memory.ReplaceMovementCode(guest,original,changed);
+            Check(memory.IsExecutable(guest+MovementSpeed.Offset,original.Length)&&memory.Read(guest+MovementSpeed.Offset,original.Length).SequenceEqual(changed),"guarded Linux patch writes across native words without changing executable protection");
+            Reject<IOException>(()=>memory.ReplaceMovementCode(guest,original,changed),"changed native instructions reject stale protected writes");
+            memory.ReplaceMovementCode(guest,changed,original);
+            Check(memory.Read(guest+MovementSpeed.Offset,original.Length).SequenceEqual(original),"guarded Linux patch restores the exact original instructions");
+            for(var i=0;i<20;i++)memory.Suspended(()=>{});
+            Check(Directory.GetDirectories($"/proc/{child.Id}/task").Select(p=>Path.Combine(p,"status")).All(p=>File.ReadLines(p).Any(x=>x.StartsWith("TracerPid:")&&x.Split(':')[1].Trim()=="0")),"repeated native requests release all traced thread ownership");
             Reject<IOException>(()=>memory.Write(address+4096,[0x42]),"Linux writer rejects executable mappings");
             Reject<IOException>(()=>memory.Write(address+4095,[1,2]),"Linux writer rejects a transfer crossing data and executable mappings");
             memory.WritesEnabled=false;Reject<NotSupportedException>(()=>memory.Write(address,[0]),"disabling experimental editing restores the read-only write gate");
@@ -137,8 +147,9 @@ internal static class Program
         Ptr(PlayerSession.WorldPointer,world);Ptr(world+0x60,actor);Ptr(actor+0x3B0,modules);Ptr(modules+0x20,stats);Ptr(stats+8,actor);Ptr(actor+0x3C0,data);Ptr(0x553B130,manager);Ptr(manager+8,data);
         Int(actor+8,123);Int(stats+0xF8,100);Int(stats+0xFC,200);Int(stats+0x134,70);Int(stats+0x138,100);Put(stats+0x200,[0x10]);
         foreach(var offset in new ulong[]{0x40,0x48,0x58,0x60,0x68,0x70})Int(data+offset,10);Int(data+0x90,10);Int(data+0x94,1200);
-        foreach(var f in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints))Put(f.Offset,f.Bytes);
-        foreach(var page in PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Select(f=>f.Offset&~4095UL).Distinct())
+        var instructions=PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Append((Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)).ToArray();
+        foreach(var f in instructions)Put(f.Offset,f.Bytes);
+        foreach(var page in instructions.Select(f=>f.Offset&~4095UL).Distinct())
             if(mprotect(root+(nint)page,4096,5)!=0)throw new IOException("Synthetic code protection failed");
         return root;
     }

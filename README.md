@@ -1,16 +1,26 @@
-> **Version 0.6.10: Nightwatch compatibility and the gem-editor overhaul are NOT TESTED IN-GAME.** Its catalog, Normal/Advanced modes and saved recipes need gameplay feedback. NG-cycle editing, shoulder-camera and opt-in photo/flight/noclip retain their pending live-test status. Previous live confirmations retain their existing scope.
-> **Linux 0.6.10-linux-beta.1: BETA — NOT TESTED IN-GAME.** Limited native desktop build, distributed separately; the gem editor is unavailable on Linux. Windows confirmations do not apply to Linux.
+> **Version 0.7.0:** Windows and Linux share gameplay features and release numbering. New Linux native actions are **NOT TESTED IN-GAME**. A community tester confirmed the previous Linux preview connected and worked with **bbport 0.7 / bbprobe**; individual feature coverage was not specified.
+> Nightwatch, the gem-editor overhaul, NG editing, shoulder camera and experimental photo/flight/noclip keep their existing pending live-test status.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
 # BB Tools
 
-**A Bloodborne PC practice companion for Windows.** Edit your hunter, set up a
+**A Bloodborne PC practice companion for Windows and native Linux.** Edit your hunter, set up a
 boss practice run, spawn items, and travel without juggling several tools.
 Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.7.0: Linux desktop and shared gameplay
+
+- Native Linux now exposes player/Insight/NG edits, combat and parry practice, multipliers, discovery/free progression, durability, items/gems, lamps and boss revival, camera/movement tuning, retained enemy details, presets, library/save tools and Discord presence.
+- Connect to **bbprobe** or **bb-probe** after launching through **bbport**, rather than the `bloodborne-bbpo` launcher. The picker still shows all processes.
+- Configurable hotkeys, opt-in photo/flight/noclip and lossless photo filters use X11/XWayland on Linux. Native Wayland game input/capture is not supported.
+- Windows and Linux downloads use **0.7.0**, with both platforms checked before one draft release is prepared. Each archive contains its executable and README.md.
+- **New Linux native features need live testing.** See the [Linux guide](docs/linux-support.md) and [release notes](docs/releases/v0.7.0.md). Adjustable firearm-parry timing/auto-parry remain research tasks; parry practice is available.
+
+### Earlier releases
 
 ## v0.6.10: Nightwatch interoperability — not tested in-game
 

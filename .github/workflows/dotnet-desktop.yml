@@ -1,4 +1,4 @@
-name: Windows desktop CI
+name: Desktop CI
 
 on:
   push:
@@ -78,9 +78,13 @@ jobs:
           compression-level: 0
           retention-days: 14
 
+  linux:
+    name: Linux desktop validation and packages
+    uses: ./.github/workflows/linux-probe.yml
+
   draft-release:
     name: Tag and prepare draft release
-    needs: build
+    needs: [build, linux]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.draft_release == true)
     runs-on: windows-latest
     timeout-minutes: 10
@@ -121,6 +125,11 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         with:
           name: BBTools-win-x64
+          path: release-artifacts
+      - uses: actions/download-artifact@v4
+        if: steps.version.outputs.changed == 'true'
+        with:
+          name: BBTools-linux-ubuntu-22.04
           path: release-artifacts
       - name: Create tag and draft with verified assets
         if: steps.version.outputs.changed == 'true'

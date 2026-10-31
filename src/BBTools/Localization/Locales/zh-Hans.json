@@ -703,5 +703,6 @@
   "gem.recipe.heavy": "诅咒沉重深渊 — 力量+65，物理+15",
   "gem.recipe.tempering": "诅咒温润 — 物理+27.2%",
   "gem.recipe.blunt": "诅咒精通 — 钝击+32.6%",
-  "gem.recipe.thrust": "诅咒精通 — 突刺+32.6%"
+  "gem.recipe.thrust": "诅咒精通 — 突刺+32.6%",
+  "parry.heading": "枪反练习"
 }

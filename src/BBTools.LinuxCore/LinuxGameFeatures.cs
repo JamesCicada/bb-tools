@@ -46,6 +46,8 @@ public sealed class LinuxGameFeatures
         try{nativeTouched=true;connection.Session.ReadPlayer();await operation(Actions);}
         finally{gate.Release();}
     }
+    public void PlayerUnavailable(string reason){target.Unavailable("Player unavailable");Timer.Context(false,false);EnemyDetails="Last known snapshot · "+reason+"\n"+EnemyDetails.Split('\n',2).Last();}
+    public InventoryGem[] ReadInventoryGems()=>new BloodGems(memory,connection.Session).ReadInventory();
     public Task MutateAsync(Action operation)=>RunAsync(_=>{memory.Suspended(operation);return Task.CompletedTask;});
     public async Task SetMultipliersAsync(float outgoing,float rewards)
     {

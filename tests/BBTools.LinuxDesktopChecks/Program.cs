@@ -27,6 +27,29 @@ internal static class Program
             Check(Translations.CurrentLanguage=="fr"&&window.FlowDirection==Avalonia.Media.FlowDirection.LeftToRight,"Linux language changes apply without restarting or enabling edits");
             languages.SelectedItem=((IEnumerable<AppLanguage>)languages.ItemsSource!).Single(x=>x.Code=="en");Dispatcher.UIThread.RunJobs();
             if(args.Length>0){Directory.CreateDirectory(args[0]);using var frame=window.CaptureRenderedFrame()!;frame.Save(Path.Combine(args[0],"linux-connection.png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());}
+            var tabs=window.FindControl<TabControl>("Sections")!;
+            Check(tabs.ItemCount==8,"Linux exposes eight primary gameplay and settings sections");
+            var controls=new List<Avalonia.Controls.Control>();
+            for(var i=0;i<tabs.ItemCount;i++)
+            {
+                tabs.SelectedIndex=i;Dispatcher.UIThread.RunJobs();
+                var children=Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<Control>().ToArray();controls.AddRange(children);
+                if(args.Length>0){using var frame=window.CaptureRenderedFrame()!;frame.Save(Path.Combine(args[0],"linux-page-"+i+".png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());}
+                foreach(var nested in children.OfType<TabControl>().Where(x=>x!=tabs))
+                {
+                    for(var n=0;n<nested.ItemCount;n++)
+                    {
+                        nested.SelectedIndex=n;Dispatcher.UIThread.RunJobs();
+                        controls.AddRange(Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<Control>());
+                        if(args.Length>0){using var frame=window.CaptureRenderedFrame()!;frame.Save(Path.Combine(args[0],$"linux-page-{i}-{n}.png"),new Avalonia.Media.Imaging.PngBitmapEncoderOptions());}
+                    }
+                    nested.SelectedIndex=0;Dispatcher.UIThread.RunJobs();
+                }
+                if(i==2)Check(children.OfType<Button>().Where(x=>x.Content?.ToString()=="Apply tuning").All(x=>!x.IsEnabled),"native Linux tuning actions remain disabled before a connection");
+                if(i==5)Check(children.OfType<CheckBox>().Single(x=>x.Content?.ToString()=="Enable experimental photo mode / noclip").IsChecked!=true,"experimental Linux camera and noclip remain opt-in");
+            }
+            Check(controls.OfType<Button>().Any(x=>x.Content?.ToString()=="Generate natural gem"),"Linux has built-in obtainable gem generation without game-file name imports");
+            Check(controls.OfType<Button>().Any(x=>x.Content?.ToString()=="Revive boss"),"Linux exposes shared boss revival and first-encounter controls");
             window.Close();Console.WriteLine($"PASS: {count} Linux desktop UI checks.");return 0;
         }
         catch(Exception ex){Console.Error.WriteLine(ex);return 1;}

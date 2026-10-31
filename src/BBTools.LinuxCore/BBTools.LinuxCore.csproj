@@ -3,8 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.6.10-linux-beta.1</Version>
-    <InformationalVersion>0.6.10-linux-beta.1</InformationalVersion>
+    <Version>0.7.0</Version>
+    <InformationalVersion>0.7.0</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../BBTools/Memory/*.cs" Exclude="../BBTools/Memory/ProcessMemory.cs;../BBTools/Memory/ProcessDiscovery.cs" Link="Shared/Memory/%(Filename)%(Extension)" />

@@ -48,7 +48,7 @@ public sealed partial class LinuxProcessMemory
                         stoppedThreads[tid]=0;
                         if(Trace(0x4207,tid,0,0)<0)throw TraceError("interrupt game thread");
                         var signal=WaitStop(tid,watch,TimeSpan.FromSeconds(3));
-                        stoppedThreads[tid]=signal==5?0:signal;
+                        stoppedThreads[tid]=signal;
                         var tgid=File.ReadLines($"/proc/{tid}/status").First(l=>l.StartsWith("Tgid:")).Split(':')[1].Trim();
                         if(tgid!=pid.ToString())throw new IOException("Thread ownership changed during suspension.");
                     }
@@ -86,26 +86,10 @@ public sealed partial class LinuxProcessMemory
             var result=WaitPid(tid,out var status,0x40000000|1); // __WALL | WNOHANG; never reap unrelated children
             if(result==tid)
             {
-                if((status&0xff)==0x7f)return(status>>8)&0xff;
+                if((status&0xff)==0x7f)return (status>>16)==128 ? 0 : (status>>8)&0xff;
                 throw new IOException("A game thread exited during the native request.");
             }
             if(result<0 && Marshal.GetLastPInvokeError()!=4)throw TraceError("wait for game thread");
-            // System.Diagnostics.Process also waits on a launched child. Its
-            // SIGCHLD reaper can consume a ptrace-stop notification. Confirm the
-            // kernel stop directly instead of waiting forever for that event.
-            if(result==0 && watch.ElapsedMilliseconds>30)
-            {
-                var info=Marshal.AllocHGlobal(128);
-                try
-                {
-                    if(Trace(0x4202,tid,0,info)==0)
-                    {
-                        var signal=Marshal.ReadInt32(info);
-                        if(signal is >0 and <65){WaitPid(tid,out _,0x40000000|1);return signal;}
-                    }
-                }
-                finally{Marshal.FreeHGlobal(info);}
-            }
             Thread.Sleep(1);
         }
         throw new IOException("Timed out waiting for a game thread stop.");
@@ -158,7 +142,7 @@ public sealed partial class LinuxProcessMemory
             var signal=WaitStop(tid,Stopwatch.StartNew(),TimeSpan.FromSeconds(3));
             var result=GetRegisters(tid);
             if(signal!=5||result.Rip!=original.Rip+3)
-            {stoppedThreads[tid]=signal==5?0:signal;throw new IOException("Native memory syscall stopped unexpectedly; the original context was restored.");}
+            {stoppedThreads[tid]=signal;throw new IOException("Native memory syscall stopped unexpectedly; the original context was restored.");}
             if(result.Rax>=unchecked((ulong)-4095L))throw new IOException("Native memory syscall failed: "+new Win32Exception(unchecked(-(int)result.Rax)).Message);
             return result.Rax;
         }
@@ -188,12 +172,23 @@ public sealed partial class LinuxProcessMemory
             var address=checked(image+offset);
             if(!Read(address,expected.Length).SequenceEqual(expected)||!IsExecutable(address,expected.Length))throw new IOException("Native instructions changed; no code was replaced.");
             var tid=stoppedThreads.First().Key;
-            for(var i=0;i<replacement.Length;)
+            var originals=new Dictionary<ulong,ulong>();
+            try
             {
-                var at=(address+(ulong)i)&~7UL;var word=BitConverter.GetBytes(Peek(tid,at));var begin=(int)((address+(ulong)i)-at);var n=Math.Min(8-begin,replacement.Length-i);
-                replacement.AsSpan(i,n).CopyTo(word.AsSpan(begin));Poke(tid,at,BitConverter.ToUInt64(word));i+=n;
+                for(var i=0;i<replacement.Length;)
+                {
+                    var at=(address+(ulong)i)&~7UL;var original=Peek(tid,at);originals.Add(at,original);
+                    var word=BitConverter.GetBytes(original);var begin=(int)((address+(ulong)i)-at);var n=Math.Min(8-begin,replacement.Length-i);
+                    replacement.AsSpan(i,n).CopyTo(word.AsSpan(begin));Poke(tid,at,BitConverter.ToUInt64(word));i+=n;
+                }
+                if(!Read(address,replacement.Length).SequenceEqual(replacement))throw new IOException("Native patch readback failed.");
             }
-            if(!Read(address,replacement.Length).SequenceEqual(replacement))throw new IOException("Native patch readback failed.");
+            catch
+            {
+                foreach(var word in originals.Reverse())Poke(tid,word.Key,word.Value);
+                if(!Read(address,expected.Length).SequenceEqual(expected))throw new IOException("Native patch rollback failed.");
+                throw;
+            }
         });
     }
     public void WriteCameraFovClamp(ulong image,bool enable)

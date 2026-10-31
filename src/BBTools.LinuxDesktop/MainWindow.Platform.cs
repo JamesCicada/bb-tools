@@ -40,7 +40,7 @@ public partial class MainWindow
         Value(explorationPanel,"photoSpeed","Camera movement speed",1,.05m,10,.1m);
         Add(explorationPanel,Button("Enter photo mode",async()=>
         {
-            RequireX11();await Native(f=>f.RunAsync(async _=>{if(f.Flight.RestorationPending)throw new IOException("Disable flight first.");await f.Photo.PrepareAsync(lifetime.Token);f.Photo.Enable();f.Photo.LockHunter(lockHunter.IsChecked==true);if(hide.IsChecked==true)f.Hud.Apply();}));
+            RequireX11();await Native(f=>f.RunAsync(async _=>{if(f.Flight.RestorationPending)throw new IOException("Disable flight first.");await f.Photo.PrepareAsync(lifetime.Token);f.Photo.Enable();if(Sections.SelectedIndex!=5){f.Photo.Restore();return;}f.Photo.LockHunter(lockHunter.IsChecked==true);if(hide.IsChecked==true)f.Hud.Apply();}));
         }),Button("Exit photo mode and restore HUD",()=>Native(f=>f.RunAsync(_=>{f.Photo.Restore();if(!On("hud"))f.Hud.Restore();return Task.CompletedTask;},true))));
         var noClip=Switch(explorationPanel,"noclip","Disable world collision while flying");
         Add(explorationPanel,Button("Enable flight",()=>{RequireX11();return NativeAction(f=>{if(f.Photo.IsActive)throw new IOException("Exit photo mode first.");f.Flight.Apply(noClip.IsChecked==true);});}),Button("Disable flight",()=>NativeAction(f=>f.Flight.Restore())),Button("Return to flight start",()=>Native(f=>{var at=f.Flight.ReadReturnPoint();return f.RunAsync(async a=>{f.Flight.Restore();await a.RestoreLocationAsync(at);});})));
@@ -92,11 +92,11 @@ public partial class MainWindow
                     case 1:if(!connection.Flags.Remove(PracticeFlag.GodMode))connection.Flags.Add(PracticeFlag.GodMode);break;
                     case 2:hotkeyLocation=connection.Session.ReadLocation("Hotkey return point");break;
                     case 3:await features.RunAsync(a=>a.RestoreLocationAsync(hotkeyLocation??throw new IOException("Save a location first.")));break;
-                    case 4:throw new IOException("Select a boss in Travel and use Revive boss.");
+                    case 4:await features.MutateAsync(()=>features.Actions.ReviveBoss(retryBoss??throw new IOException("Select a boss in Travel first."),firstEncounter:retryFirstEncounter));break;
                 }
             }
         }
-        catch(Exception ex)when(Expected(ex)){Report(ex);}
+        catch(Exception ex)when(Expected(ex)){inputTimer.Stop();Report(ex);Status.Text+=" Input paused; use Resume paused features to retry or exit the mode.";}
         finally{inputBusy=false;}
     }
 }

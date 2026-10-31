@@ -2,9 +2,10 @@
 set -euo pipefail
 project_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 version=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$project_root/src/BBTools.LinuxDesktop/BBTools.LinuxDesktop.csproj")
-if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+-linux-beta\.[1-9][0-9]*$ ]]; then
-  echo 'Expected an explicit Linux beta version.' >&2; exit 1
+if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-linux-beta\.[1-9][0-9]*)?$ ]]; then
+  echo 'Expected a three-part release or explicit Linux beta version.' >&2; exit 1
 fi
+node -e "require('$project_root/scripts/linux-release-metadata.cjs')('$project_root')"
 mkdir -p "$project_root/artifacts"
 package_stage=$(mktemp -d "$project_root/artifacts/linux-package.XXXXXX")
 cleanup() {
@@ -34,4 +35,4 @@ PY
   fi
 done > "$project_root/artifacts/linux-publish.log"
 (cd "$project_root/artifacts" && sha256sum "BBTools-v$version-linux-x64.tar.gz" "BBTools-v$version-linux-x64.zip" "BBTools-LinuxProbe-v$version-linux-x64.tar.gz" > SHA256SUMS-linux.txt)
-echo 'Packaged Linux beta (not tested in-game), Nexus ZIP and read-only probe.'
+echo 'Packaged Linux desktop, Nexus ZIP and read-only probe.'

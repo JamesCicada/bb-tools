@@ -16,6 +16,17 @@ lists remain useful for regression testing. It does not mark future/unimplemente
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
 
+## Shared desktop release — v0.7.0
+
+| Work | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Shared Windows/Linux gameplay backend and version | ✔️ | ⌛ | Native Linux memory/thread layer; shared feature algorithms, catalogs and data formats. Automated coverage is not live confirmation. |
+| Linux advanced feature pages | ✔️ | ⌛ | Player, combat/parry practice, items/gems, travel/bosses/chalices, camera/movement, target details, libraries, save tools and Discord. New native actions NOT TESTED IN-GAME. |
+| Linux configurable input and experimental camera/capture | ✔️ | ⌛ | X11/XWayland; hidden until explicitly enabled. Native Wayland window input/capture remains pending. |
+| Unified v0.7.0 draft and checksummed platform packages | ✔️ | ⌛ | Windows and Linux checks must pass before a single draft. Each archive has its executable and README.md. |
+| bbport 0.7 / bbprobe process guidance | ✔️ | ✔️ | Community reported the previous preview working with this launch/attach path. No individual feature list or distro supplied. |
+| Adjustable firearm-parry window / automatic parrying | ⌛ | ➖ | Existing practice setup is exposed on both platforms. A reliable native timing/eligibility path is still needed; do not replace it with generic counter/stagger flags. |
+
 ## Community suggestions — future features
 
 ### Runtime interoperability — v0.6.10
@@ -120,7 +131,7 @@ a persistent “Not tested in-game” label; live confirmation is still pending.
 - ✔️ Link the app and contributor guide to [BB Tools on Crowdin](https://crowdin.com/project/bb-tools).
 - ✔️ Verify Crowdin's GitHub integration through merged translation pull requests #2 and #3. Keep untranslated strings omitted from JSON exports so the app's English fallback preserves accurate coverage.
 
-## Linux support — unreleased
+## Linux support — previous preview milestones
 
 First target: native `deadinside28/bloodborne_pc` (bbport), Linux x64, game 1.09.
 Aim for broad distro compatibility; none is marked supported until live testing.

@@ -79,3 +79,35 @@ test('empty release notes fail before any GitHub mutation', async t => {
   await assert.rejects(draft(f), /Empty release notes/);
   assert.equal(f.calls.length, 0);
 });
+
+function unifiedFixture(t) {
+  const f=fixture(t);const directory=path.join(f.root,'release-artifacts');
+  fs.writeFileSync(path.join(f.root,'src/BBTools/BBTools.csproj'),'<Version>0.7.0</Version>');
+  fs.writeFileSync(path.join(f.root,'docs/releases/v0.7.0.md'),'v0.7.0 shared release; new Linux features not tested in-game.');
+  for(const project of ['LinuxCore','LinuxDesktop','LinuxProbe']){
+    const folder=path.join(f.root,'src/BBTools.'+project);fs.mkdirSync(folder,{recursive:true});
+    fs.writeFileSync(path.join(folder,'BBTools.'+project+'.csproj'),'<Version>0.7.0</Version>');
+  }
+  const name='BBTools-v0.7.0-win-x64.zip',win=Buffer.from('Windows package');
+  fs.writeFileSync(path.join(directory,name),win);fs.writeFileSync(path.join(directory,'SHA256SUMS.txt'),crypto.createHash('sha256').update(win).digest('hex')+'  '+name+'\n');
+  const linux=require('./linux-release-metadata.cjs')(f.root);const sums=[];
+  for(const name of linux.assets){const data=Buffer.from(name);fs.writeFileSync(path.join(directory,name),data);sums.push(crypto.createHash('sha256').update(data).digest('hex')+'  '+name);}
+  fs.writeFileSync(path.join(directory,linux.checksum),sums.join('\n')+'\n');return f;
+}
+test('0.7.0 drafts one synchronized release with Windows and all verified Linux assets',async t=>{
+ const f=unifiedFixture(t);await draft(f);
+ const releases=f.calls.filter(x=>x[0]==='createRelease');assert.equal(releases.length,1);assert.equal(releases[0][1].tag_name,'v0.7.0');assert.equal(releases[0][1].draft,true);
+ assert.equal(f.calls.filter(x=>x[0]==='uploadReleaseAsset').length,6);
+});
+test('unified release rejects tampered Linux archives before any GitHub mutation',async t=>{
+ const f=unifiedFixture(t);fs.appendFileSync(path.join(f.root,'release-artifacts/BBTools-v0.7.0-linux-x64.zip'),'tampered');
+ await assert.rejects(draft(f),/Linux checksum mismatch/);assert.equal(f.calls.length,0);
+});
+test('unified release requires Linux packages and matching versions',async t=>{
+ const f=unifiedFixture(t);fs.writeFileSync(path.join(f.root,'src/BBTools.LinuxCore/BBTools.LinuxCore.csproj'),'<Version>0.6.10</Version>');
+ await assert.rejects(draft(f),/versions must match/);assert.equal(f.calls.length,0);
+});
+test('unified release cannot silently publish only Windows',async t=>{
+ const f=unifiedFixture(t);fs.unlinkSync(path.join(f.root,'release-artifacts/SHA256SUMS-linux.txt'));
+ await assert.rejects(draft(f),/ENOENT/);assert.equal(f.calls.length,0);
+});

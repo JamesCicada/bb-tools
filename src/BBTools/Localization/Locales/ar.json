@@ -703,5 +703,6 @@
   "gem.recipe.heavy": "هاوية ثقيلة ملعونة — قوة +65، جسدي +15",
   "gem.recipe.tempering": "تقوية ملعونة — جسدي +27.2%",
   "gem.recipe.blunt": "مهارة ملعونة — ضرب +32.6%",
-  "gem.recipe.thrust": "مهارة ملعونة — طعن +32.6%"
+  "gem.recipe.thrust": "مهارة ملعونة — طعن +32.6%",
+  "parry.heading": "التدرب على الصد"
 }

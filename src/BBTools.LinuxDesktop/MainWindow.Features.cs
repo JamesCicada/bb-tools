@@ -19,6 +19,10 @@ public partial class MainWindow
     private readonly List<Action> refreshLists=[];
     private TextBlock enemyText=new();
     private bool polling,startupApplied,preserveStatus;
+    private PracticePreset? beforePractice;
+    private string? retryBoss;
+    private bool retryFirstEncounter;
+    private long lastAutoConnect;
     private DiscordPresence? presence;
     private static TextBlock Label(string text)=>new(){Text=Translations.Source(text),Margin=new(0,6,0,2)};
     private static StackPanel Column()=>new(){Spacing=8,Margin=new(0,12,0,12)};
@@ -30,7 +34,7 @@ public partial class MainWindow
     private Button Button(string text,Func<Task> action,bool edits=true)
     {
         var button=new Button{Content=Translations.Source(text)};
-        if(edits)editingControls.Add(button);
+        if(edits){editingControls.Add(button);button.IsEnabled=false;}
         button.Click+=async(_,_)=>{if(busy)return;busy=true;try{await action();if(!preserveStatus)Status.Text=Translations.Source("Completed.");preserveStatus=false;}catch(Exception ex)when(Expected(ex)){Report(ex);}finally{busy=false;}};
         return button;
     }
@@ -56,7 +60,7 @@ public partial class MainWindow
         }
         var tabs=Sections.Items.Cast<TabItem>().ToList();
         var player=(StackPanel)((ScrollViewer)tabs[1].Content!).Content!;
-        var extras=Column();Add(player,extras);editingControls.Add(extras);
+        var extras=Column();extras.IsEnabled=false;Add(player,extras);editingControls.Add(extras);
         var insight=Value(extras,"insight","Insight",0,0,99);
         Add(extras,Button("Read Insight",()=>{insight.Value=Active().Session.ReadInsight();return Task.CompletedTask;}),Button("Set Insight",()=>NativeAction(_=>Active().Session.SetInsight((int)insight.Value!))));
         NgCycleState? ng=null;var cycle=Value(extras,"ng","NG cycle (0 = first playthrough)",0,0,999);
@@ -72,6 +76,9 @@ public partial class MainWindow
         var items=BuildItems();var travel=BuildTravel();var enemy=Column();BuildEnemies(enemy);
         var settings=(StackPanel)((ScrollViewer)tabs[3].Content!).Content!;
         BuildSettings(settings);
+        var about=Column();BuildAbout(about);
+        ((ScrollViewer)tabs[3].Content!).Content=null;
+        tabs[3].Content=new TabControl{ItemsSource=new[]{new TabItem{Header="Preferences",Content=Page(settings)},new TabItem{Header="About",Content=Page(about)}}};
         InitPlatform();
         Sections.Items.Clear();
         Sections.ItemsSource=new[]{tabs[0],tabs[1],tabs[2],new TabItem{Header="Items",Content=items},new TabItem{Header="Travel",Content=travel},new TabItem{Header="Camera",Content=Page(camera)},new TabItem{Header="Enemies",Content=Page(enemy)},tabs[3]};
@@ -83,7 +90,7 @@ public partial class MainWindow
         Switch(panel,"durability","Keep equipped weapons repaired");Switch(panel,"repair","Auto repair below threshold");Value(panel,"threshold","Repair threshold (%)",30,1,100);
         Switch(panel,"discovery","Discovery boost");Value(panel,"discoveryBonus","Discovery bonus",100,0,1000,10);Switch(panel,"drops","Guaranteed eligible drops (including chalice dungeons)");
         Switch(panel,"levels","Free level ups");Switch(panel,"upgrades","Free weapon upgrades");
-        Add(panel,Button("Apply tuning",ApplyTuning),Button("Repair equipped weapons now",()=>Native(f=>f.RunAsync(async a=>{await a.RepairWeaponsNativeAsync(100);}))),Button("Clear status buildup",()=>NativeAction(_=>Active().Session.ClearStatusBuildup())));
+        Add(panel,Button("Apply tuning",ApplyTuning),Button("Repair equipped weapons now",()=>Native(f=>f.RunAsync(async a=>{await a.RepairWeaponsNativeAsync(100);}))),Button("Cure active slow / rapid poison",()=>Native(f=>f.RunAsync(async a=>{await a.CureActivePoisonAsync();}))),Button("Clear status buildup",()=>NativeAction(_=>Active().Session.ClearStatusBuildup())));
     }
     private void BuildCamera(StackPanel panel)
     {
@@ -97,7 +104,7 @@ public partial class MainWindow
         Add(panel,Button("Save startup FOV",()=>{preferences=preferences with{StartupFovEnabled=start.IsChecked==true,StartupFov=V("fov")};SavePreferences();return Task.CompletedTask;},false));
         BuildExploration(panel);
     }
-    private PracticePreset Capture(string name)=>new(name,Active().KeepHealth,Active().InfiniteStamina,Active().Flags.Select(x=>x.ToString()).ToArray(),V("damage"),V("echoes"),V("fov"),On("fov"),KeepDurability:On("durability"),AutoRepair:On("repair"),RepairThreshold:(int)V("threshold"),TuneCamera:On("camera"),CameraDistance:V("distance"),CameraHeight:V("height"),KeepStatusEmpty:On("status"),Advanced:new(On("speed"),V("speed"),On("gravity"),V("gravity"),On("hud"),On("discovery"),V("discoveryBonus"),On("drops"),On("levels"),On("upgrades")),CameraHorizontal:V("shoulder"));
+    private PracticePreset Capture(string name)=>new(name,Active().KeepHealth,Active().InfiniteStamina,Active().Flags.Select(x=>x.ToString()).ToArray(),V("damage"),V("echoes"),V("fov"),On("fov"),Preferences:preferences,KeepDurability:On("durability"),AutoRepair:On("repair"),RepairThreshold:(int)V("threshold"),TuneCamera:On("camera"),CameraDistance:V("distance"),CameraHeight:V("height"),KeepStatusEmpty:On("status"),Advanced:new(On("speed"),V("speed"),On("gravity"),V("gravity"),On("hud"),On("discovery"),V("discoveryBonus"),On("drops"),On("levels"),On("upgrades")),CameraHorizontal:V("shoulder"));
     private Task ApplyTuning()=>Active().Features.ApplyPresetAsync(Capture("Current"));
     private void ShowPreset(PracticePreset p)
     {
@@ -109,7 +116,7 @@ public partial class MainWindow
     }
     private void BuildParry(StackPanel panel)
     {
-        Add(panel,Label("Parry practice"),Button("Enable practice setup",async()=>{await Active().Features.ApplyPresetAsync(new("Parry practice",false,true,["GodMode","InfiniteItems"],.1f,1));}),Button("Protect locked enemy from death",()=>NativeAction(f=>f.TargetProtection.ProtectLockedEnemy())),Button("Restore locked enemy health",()=>NativeAction(_=>Active().Session.RestoreLockedEnemyHealth())),Button("Release practice target",()=>NativeAction(f=>f.TargetProtection.Restore())));
+        Add(panel,Label("Parry practice"),Button("Enable practice setup",async()=>{beforePractice??=Capture("Before practice");var p=beforePractice with{Name="Parry practice",KeepHealth=true,Stamina=true,Flags=beforePractice.Flags.Where(x=>x is "NoFallDamage" or "NoEchoesLoss").Concat(new[]{"GodMode","InfiniteItems"}).ToArray(),Damage=.1f};await Active().Features.ApplyPresetAsync(p);ShowPreset(p);SyncCombat();}),Button("Restore previous practice setup",async()=>{var p=beforePractice??throw new IOException("No practice setup to restore.");await NativeAction(f=>f.TargetProtection.Restore());await Active().Features.ApplyPresetAsync(p);ShowPreset(p);SyncCombat();beforePractice=null;}),Button("Protect locked enemy from death",()=>NativeAction(f=>f.TargetProtection.ProtectLockedEnemy())),Button("Restore locked enemy health",()=>NativeAction(_=>Active().Session.RestoreLockedEnemyHealth())),Button("Release practice target",()=>NativeAction(f=>f.TargetProtection.Restore())));
     }
     private Control BuildItems()
     {
@@ -128,18 +135,32 @@ public partial class MainWindow
     }
     private void BuildGems(StackPanel panel)
     {
-        var recipes=Picker(GemGuide.Recipes);var shapes=Picker(Array.Empty<int>());var secondary=Picker(Array.Empty<int>());var curses=Picker(Array.Empty<int>());var summary=Label("");
+        var recipes=Picker(GemGuide.Recipes);var shapes=Picker(Array.Empty<int>());shapes.ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<int>((n,_)=>Label(n switch{1=>"Radial",2=>"Triangle",4=>"Waning",8=>"Circle",63=>"Droplet",_=>n.ToString()}));var secondary=Picker(Array.Empty<int>());var curses=Picker(Array.Empty<int>());var summary=Label("");
         void Refresh(){if(recipes.SelectedItem is NaturalGemRecipe r){shapes.ItemsSource=r.Shapes;shapes.SelectedIndex=0;secondary.ItemsSource=r.Secondaries;secondary.SelectedIndex=0;curses.ItemsSource=r.Curses;curses.SelectedIndex=0;summary.Text=GemGuide.Describe(r.Primary);}}
         recipes.SelectionChanged+=(_,_)=>Refresh();Refresh();
         Add(panel,Label("Normal gems · combinations obtainable in-game"),recipes,summary,Label("Shape"),shapes,Label("Secondary effect"),secondary,Label("Curse"),curses);
         secondary.ItemTemplate=new Avalonia.Controls.Templates.FuncDataTemplate<int>((n,_)=>Label(GemGuide.Describe(n)));curses.ItemTemplate=secondary.ItemTemplate;
         Add(panel,Button("Generate natural gem",()=>Native(f=>f.RunAsync(a=>a.SpawnGemAsync(Selected<NaturalGemRecipe>(recipes).Build(Selected<int>(shapes),Selected<int>(secondary),Selected<int>(curses)),true)))));
         var advanced=Switch(panel,"advancedGems","Advanced gem editing (custom combinations)");var advancedPanel=Column();advancedPanel.IsVisible=false;advanced.IsCheckedChanged+=(_,_)=>advancedPanel.IsVisible=advanced.IsChecked==true;
-        var source=Value(advancedPanel,"gemSource","Generator ID",1000000,0,int.MaxValue);var shape=Value(advancedPanel,"gemShape","Shape",1,1,5);
+        var source=Value(advancedPanel,"gemSource","Generator ID",1000000,0,int.MaxValue);var shape=Picker(new[]{1,2,4,8,63});shape.ItemTemplate=shapes.ItemTemplate;Add(advancedPanel,Label("Shape"),shape);
         var effectSearch=new TextBox{PlaceholderText="Find an effect"};var effects=Picker(GemGuide.Effects.Values.Take(100).Select(x=>x.Label));
         effectSearch.TextChanged+=(_,_)=>effects.ItemsSource=GemGuide.Effects.Values.Where(x=>x.Label.Contains(effectSearch.Text??"",StringComparison.OrdinalIgnoreCase)).Take(200).Select(x=>x.Label).ToArray();
         Add(advancedPanel,effectSearch,effects);var inputs=Enumerable.Range(0,6).Select(i=>Value(advancedPanel,"gemEffect"+i,"Effect "+(i+1),-1,-1,int.MaxValue)).ToArray();
-        Add(advancedPanel,Button("Use selected effect in first slot",()=>{var label=Selected<string>(effects);inputs[0].Value=GemGuide.Effects.Values.First(x=>x.Label==label).Id;return Task.CompletedTask;},false),Button("Generate custom gem",()=>Native(f=>f.RunAsync(a=>a.SpawnGemAsync(new((int)source.Value!,(int)shape.Value!,inputs.Select(x=>(int)x.Value!).ToArray()))))));Add(panel,advancedPanel);
+        Add(advancedPanel,Button("Use selected effect in first slot",()=>{var label=Selected<string>(effects);inputs[0].Value=GemGuide.Effects.Values.First(x=>x.Label==label).Id;return Task.CompletedTask;},false),Button("Generate custom gem",()=>Native(f=>f.RunAsync(a=>a.SpawnGemAsync(new((int)source.Value!,Selected<int>(shape),inputs.Select(x=>(int)x.Value!).ToArray()))))));Add(panel,advancedPanel);
+        Add(panel,Button("Copy normal recipe to advanced editor",()=>{var spec=Selected<NaturalGemRecipe>(recipes).Build(Selected<int>(shapes),Selected<int>(secondary),Selected<int>(curses));advanced.IsChecked=true;source.Value=spec.Source;shape.SelectedItem=spec.Shape;for(var i=0;i<6;i++)inputs[i].Value=spec.Effects[i];return Task.CompletedTask;},false));
+        GemSpec Current()=>advanced.IsChecked==true?new((int)source.Value!,Selected<int>(shape),inputs.Select(x=>(int)x.Value!).ToArray()):Selected<NaturalGemRecipe>(recipes).Build(Selected<int>(shapes),Selected<int>(secondary),Selected<int>(curses));
+        var buildName=new TextBox{PlaceholderText="Gem recipe name"};var builds=Picker(library?.GemBuilds()??[]);
+        void RefreshBuilds()=>builds.ItemsSource=library?.GemBuilds()??[];refreshLists.Add(RefreshBuilds);
+        Add(panel,buildName,Button("Save gem recipe",()=>{Library().Save(new SavedGemBuild(buildName.Text??"",Current()));RefreshBuilds();return Task.CompletedTask;},false),builds,Button("Load saved gem recipe",()=>
+        {
+            var spec=Selected<SavedGemBuild>(builds).Gem;var recipe=GemGuide.Match(spec);
+            advanced.IsChecked=recipe==null;
+            if(recipe!=null){recipes.SelectedItem=recipe;Refresh();shapes.SelectedItem=spec.Shape;secondary.SelectedItem=spec.Effects[2]==-1?-1:spec.Effects[1];curses.SelectedItem=spec.Effects[2]==-1?spec.Effects[1]:spec.Effects[2];}
+            else{source.Value=spec.Source;shape.SelectedItem=spec.Shape;for(var i=0;i<6;i++)inputs[i].Value=spec.Effects[i];}
+            return Task.CompletedTask;
+        },false),Button("Delete gem recipe",()=>{Library().Delete("gemBuild",Selected<SavedGemBuild>(builds).Name);RefreshBuilds();return Task.CompletedTask;},false));
+        var inventory=Picker(Array.Empty<InventoryGem>());
+        Add(panel,Button("Read inventory gems",()=>{inventory.ItemsSource=Active().Features.ReadInventoryGems();inventory.SelectedIndex=0;return Task.CompletedTask;}),inventory,Button("Copy inventory gem to advanced editor",()=>{var spec=Selected<InventoryGem>(inventory).Spec;advanced.IsChecked=true;source.Value=spec.Source;shape.SelectedItem=spec.Shape;for(var i=0;i<6;i++)inputs[i].Value=spec.Effects[i];return Task.CompletedTask;},false));
     }
     private Control BuildTravel()
     {
@@ -149,7 +170,7 @@ public partial class MainWindow
         var locations=Column();var name=new TextBox{PlaceholderText="Location name"};var saved=Picker(library?.Locations()??[]);
         void Refresh()=>saved.ItemsSource=library?.Locations()??[];refreshLists.Add(Refresh);
         Add(locations,name,Button("Save current location",()=>{Library().Save(Active().Session.ReadLocation(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Restore saved location",()=>Native(f=>f.RunAsync(a=>a.RestoreLocationAsync(Selected<SavedLocation>(saved))))),Button("Delete selected location",()=>{Library().Delete("location",Selected<SavedLocation>(saved).Name);Refresh();return Task.CompletedTask;},false));
-        var bosses=Column();var boss=Picker(BossRevivalCatalog.All.Select(x=>x.Name));var first=new CheckBox{Content="Revive as first encounter"};Add(bosses,boss,first,Label("Revival changes encounter flags in your save. Bosses may be revived during an encounter."),Button("Revive boss",()=>NativeAction(f=>{var result=f.Actions.ReviveBoss(Selected<string>(boss),firstEncounter:first.IsChecked==true);log?.Write("BOSS",result);})));
+        var bosses=Column();var boss=Picker(BossRevivalCatalog.All.Select(x=>x.Name));var first=new CheckBox{Content="Revive as first encounter"};retryBoss=boss.SelectedItem as string;boss.SelectionChanged+=(_,_)=>retryBoss=boss.SelectedItem as string;first.IsCheckedChanged+=(_,_)=>retryFirstEncounter=first.IsChecked==true;Add(bosses,boss,first,Label("Revival changes encounter flags in your save. Bosses may be revived during an encounter."),Button("Revive boss",()=>NativeAction(f=>{var result=f.Actions.ReviveBoss(Selected<string>(boss),firstEncounter:first.IsChecked==true);log?.Write("BOSS",result);})));
         var chalice=Column();var altar=Picker(Array.Empty<ChaliceAltar>());var destination=Picker(GameActions.ChaliceLamps);Add(chalice,Button("Read chalice altars",()=>{altar.ItemsSource=Active().Features.Actions.ReadChaliceAltars();altar.SelectedIndex=0;return Task.CompletedTask;}),altar,destination,Button("Warp in selected chalice",()=>Native(f=>f.RunAsync(a=>a.WarpChaliceAsync(Selected<ChaliceAltar>(altar).Bank,Selected<ChaliceLamp>(destination))))));
         return new TabControl{ItemsSource=new[]{new TabItem{Header="Destinations",Content=Page(lamps)},new TabItem{Header="Saved locations",Content=Page(locations)},new TabItem{Header="Boss revival",Content=Page(bosses)},new TabItem{Header="Chalices",Content=Page(chalice)}}};
     }
@@ -161,14 +182,43 @@ public partial class MainWindow
     private void BuildSettings(StackPanel panel)
     {
         var presets=Column();var name=new TextBox{PlaceholderText="Preset name"};var saved=Picker(library?.Presets()??[]);void Refresh()=>saved.ItemsSource=library?.Presets()??[];refreshLists.Add(Refresh);
-        Add(presets,Label("Saved presets"),name,Button("Save current settings",()=>{Library().Save(Capture(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Apply preset",async()=>{var p=Selected<PracticePreset>(saved);await Active().Features.ApplyPresetAsync(p);ShowPreset(p);}),Button("Set preset on startup",()=>{preferences=preferences with{StartupPresetName=Selected<PracticePreset>(saved).Name};SavePreferences();return Task.CompletedTask;},false),Button("Clear startup preset",()=>{preferences=preferences with{StartupPresetName=null};SavePreferences();return Task.CompletedTask;},false));
+        Add(presets,Label("Saved presets"),name,Button("Save current settings",()=>{Library().Save(Capture(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Apply preset",async()=>{var p=Selected<PracticePreset>(saved);await Active().Features.ApplyPresetAsync(p);ShowPreset(p);SyncCombat();}),Button("Set preset on startup",()=>{preferences=preferences with{StartupPresetName=Selected<PracticePreset>(saved).Name};SavePreferences();return Task.CompletedTask;},false),Button("Clear startup preset",()=>{preferences=preferences with{StartupPresetName=null};SavePreferences();return Task.CompletedTask;},false));
         Add(panel,presets);
         var menus=Picker(GameActions.Menus);Add(panel,Label("Open menu anywhere"),menus,Button("Open selected menu",()=>Native(f=>f.RunAsync(a=>a.OpenMenuAsync(Selected<MenuChoice>(menus))))));
+        var automatic=Switch(panel,"autoConnect","Automatically connect to the most likely Bloodborne runtime",preferences.AutoConnect);automatic.IsCheckedChanged+=(_,_)=>{preferences=preferences with{AutoConnect=automatic.IsChecked==true};SavePreferences();};
         var rpc=Switch(panel,"discord","Discord Rich Presence",preferences.DiscordRichPresence);var extra=Switch(panel,"discordDetails","Show area, level, deaths and character name",preferences.DiscordDetails?.Enabled==true);
         rpc.IsCheckedChanged+=(_,_)=>{preferences=preferences with{DiscordRichPresence=rpc.IsChecked==true};SavePreferences();presence?.Dispose();presence=rpc.IsChecked==true&&!preview?new():null;};extra.IsCheckedChanged+=(_,_)=>{preferences=preferences with{DiscordDetails=new(Enabled:extra.IsChecked==true)};SavePreferences();};
         Add(panel,Label("Library transfer"),Button("Export presets, favorites and locations",async()=>{var path=await SaveFile("bb-tools-library.json");if(path!=null)Library().Export(path);},false),Button("Import library",async()=>{var path=await PickFile();if(path!=null){Library().Import(path);foreach(var refresh in refreshLists)refresh();}},false));
         var saveFolder=new TextBox{PlaceholderText="Absolute path to your save folder"};Add(panel,Label("Save backup and restore · close the game first"),saveFolder,Button("Choose save folder",async()=>saveFolder.Text=await Folder()??saveFolder.Text,false),Button("Back up save folder",async()=>{if(LinuxProcessCatalog.List().Any(x=>LinuxProcessCatalog.Rank(x.Name)>0))throw new IOException("Close the game before backing up.");var destination=await Folder();if(destination!=null)SaveRestore.CreateBackup(saveFolder.Text??"",destination);},false),Button("Restore save backup",async()=>{var path=await PickFile();if(path!=null)SaveRestore.Restore(path,saveFolder.Text??"",()=>!LinuxProcessCatalog.List().Any(x=>LinuxProcessCatalog.Rank(x.Name)>0));},false));
+    }
+    private void BuildAbout(StackPanel panel)
+    {
         Add(panel,Label("About BB Tools · "+AppInfo.Version),Label("Made with 🖤 By James Cicada. BB Tools is developed by one person; contributions and support help keep it growing."),Button("Support on Ko-fi",()=>{OpenUrl("https://ko-fi.com/jcicada");return Task.CompletedTask;},false),Button("GitHub · contribute or report a bug",()=>{OpenUrl(AppInfo.RepositoryUrl);return Task.CompletedTask;},false),Button("Check for updates",async()=>{using var client=new HttpClient();var result=await UpdateChecker.CheckAsync(client,AppInfo.Version,lifetime.Token);preserveStatus=true;Status.Text=result.IsNewerThan(AppInfo.Version)?"Update available: "+result.LatestVersion:"You have the latest release.";},false));
+    }
+    private void SyncCombat()
+    {
+        changing=true;
+        try
+        {
+            KeepHealthToggle.IsChecked=connection?.KeepHealth==true;StaminaToggle.IsChecked=connection?.InfiniteStamina==true;
+            foreach(var toggle in NativeFlags.Children.OfType<CheckBox>())if(Enum.TryParse<PracticeFlag>(toggle.Tag?.ToString(),out var flag))toggle.IsChecked=connection?.Flags.Contains(flag)==true;
+        }
+        finally{changing=false;}
+    }
+    private async Task AutoConnectAsync()
+    {
+        if(preview||busy||!preferences.AutoConnect||Environment.TickCount64-lastAutoConnect<5000)return;
+        lastAutoConnect=Environment.TickCount64;busy=true;
+        try
+        {
+            var candidates=await Task.Run(LinuxProcessCatalog.List);
+            foreach(var candidate in candidates.Where(x=>LinuxProcessCatalog.Rank(x.Name)>=80&&x.Identity.Length>0).Take(4))
+            {
+                try{connection=await Task.Run(()=>new LinuxGameConnection(candidate,lifetime.Token),lifetime.Token);Status.Text="Connected read-only to "+candidate.Label;break;}
+                catch(Exception ex)when(Expected(ex)){log?.Write("CONNECT",ex.Message);}
+            }
+        }
+        finally{busy=false;}
     }
     private async Task<string?> Folder(){var files=await StorageProvider.OpenFolderPickerAsync(new(){AllowMultiple=false});return files.Count==1?files[0].TryGetLocalPath():null;}
     private async Task<string?> PickFile(){var files=await StorageProvider.OpenFilePickerAsync(new(){AllowMultiple=false});return files.Count==1?files[0].TryGetLocalPath():null;}

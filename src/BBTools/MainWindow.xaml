@@ -423,7 +423,7 @@
          </StackPanel>
         </Border>
        </TabItem>
-       <TabItem Header="{DynamicResource L.ui.Practice.d3857b1}" x:Name="ParryTab">
+       <TabItem Header="{DynamicResource L.parry.heading}" x:Name="ParryTab">
         <Border Style="{StaticResource Card}" IsEnabled="{Binding IsEnabled, ElementName=PracticeControls}">
          <StackPanel Margin="0">
           <WrapPanel>
