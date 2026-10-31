@@ -1,3 +1,5 @@
+> Historical preview upload notes. For the synchronized release, use [Linux v0.7.0 details](nexusmods-linux-0.7.0.md).
+
 # Nexus Mods Linux file — ready-to-upload details
 
 Destination: [BB TOOLS, Bloodborne mod 614](https://www.nexusmods.com/bloodborne/mods/614?tab=files).

@@ -73,3 +73,11 @@ test('Linux checksum manifest cannot add an unverified file', async t => {
   const f = fixture(t); fs.appendFileSync(path.join(f.root, 'linux-release-artifacts/SHA256SUMS-linux.txt'), 'unexpected\n');
   await assert.rejects(draft(f), /unexpected entries/); assert.deepEqual(f.calls, []);
 });
+
+test('stable Linux versions cannot create a separate prerelease tag',async t=>{
+ const f=fixture(t);
+ for(const project of ['LinuxDesktop','LinuxCore','LinuxProbe'])fs.writeFileSync(path.join(f.root,`src/BBTools.${project}/BBTools.${project}.csproj`),'<Version>0.7.0</Version>');
+ fs.writeFileSync(path.join(f.root,'src/BBTools/BBTools.csproj'),'<Version>0.7.0</Version>');
+ fs.writeFileSync(path.join(f.root,'docs/releases/v0.7.0.md'),'v0.7.0 unified desktop release');
+ await assert.rejects(draft(f),/unified desktop release/);assert.equal(f.calls.length,0);
+});

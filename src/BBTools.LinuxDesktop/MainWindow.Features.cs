@@ -17,7 +17,9 @@ public partial class MainWindow
     private readonly Dictionary<string,NumericUpDown> values=[];
     private readonly List<Control> editingControls=[];
     private readonly List<Action> refreshLists=[];
+    private readonly List<Action> refreshPreferences=[];
     private TextBlock enemyText=new();
+    private TextBlock timerText=new();
     private bool polling,startupApplied,preserveStatus;
     private PracticePreset? beforePractice;
     private string? retryBoss;
@@ -69,6 +71,7 @@ public partial class MainWindow
         var extras=Column();extras.IsEnabled=false;Add(player,extras);editingControls.Add(extras);
         var insight=Value(extras,"insight","Insight",0,0,99);
         Add(extras,Button("Read Insight",()=>{insight.Value=Active().Session.ReadInsight();return Task.CompletedTask;}),Button("Set Insight",()=>NativeAction(_=>Active().Session.SetInsight((int)insight.Value!))));
+        Add(extras,Label("NG cycle edits the playthrough counter without resetting quests or starting a new journey. Difficulty scaling caps at NG+6."));
         NgCycleState? ng=null;var cycle=Value(extras,"ng","NG cycle (0 = first playthrough)",0,0,999);
         Add(extras,Button("Read NG cycle",()=>{ng=Active().Session.ReadNgCycle();cycle.Value=ng.Value;return Task.CompletedTask;}),Button("Apply NG cycle",()=>NativeAction(_=>{Active().Session.SetNgCycle((int)cycle.Value!,ng??throw new IOException("Read the current NG cycle first."));ng=null;})));
         var combat=(StackPanel)((ScrollViewer)tabs[2].Content!).Content!;
@@ -110,7 +113,7 @@ public partial class MainWindow
         Add(panel,Button("Save startup FOV",()=>{preferences=preferences with{StartupFovEnabled=start.IsChecked==true,StartupFov=V("fov")};SavePreferences();return Task.CompletedTask;},false));
         BuildExploration(panel);
     }
-    private PracticePreset Capture(string name)=>new(name,Active().KeepHealth,Active().InfiniteStamina,Active().Flags.Select(x=>x.ToString()).ToArray(),V("damage"),V("echoes"),V("fov"),On("fov"),Preferences:preferences,KeepDurability:On("durability"),AutoRepair:On("repair"),RepairThreshold:(int)V("threshold"),TuneCamera:On("camera"),CameraDistance:V("distance"),CameraHeight:V("height"),KeepStatusEmpty:On("status"),Advanced:new(On("speed"),V("speed"),On("gravity"),V("gravity"),On("hud"),On("discovery"),V("discoveryBonus"),On("drops"),On("levels"),On("upgrades")),CameraHorizontal:V("shoulder"));
+    private PracticePreset Capture(string name)=>new(name,Active().KeepHealth,Active().InfiniteStamina,Active().Flags.Select(x=>x.ToString()).ToArray(),V("damage"),V("echoes"),V("fov"),On("fov"),Preferences:preferences with{StartupPresetName=null},KeepDurability:On("durability"),AutoRepair:On("repair"),RepairThreshold:(int)V("threshold"),TuneCamera:On("camera"),CameraDistance:V("distance"),CameraHeight:V("height"),KeepStatusEmpty:On("status"),Advanced:new(On("speed"),V("speed"),On("gravity"),V("gravity"),On("hud"),On("discovery"),V("discoveryBonus"),On("drops"),On("levels"),On("upgrades")),CameraHorizontal:V("shoulder"));
     private Task ApplyTuning()=>Active().Features.ApplyPresetAsync(Capture("Current"));
     private void ShowPreset(PracticePreset p)
     {
@@ -176,30 +179,59 @@ public partial class MainWindow
         var locations=Column();var name=new TextBox{PlaceholderText="Location name"};var saved=Picker(library?.Locations()??[]);
         void Refresh()=>saved.ItemsSource=library?.Locations()??[];refreshLists.Add(Refresh);
         Add(locations,name,Button("Save current location",()=>{Library().Save(Active().Session.ReadLocation(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Restore saved location",()=>Native(f=>f.RunAsync(a=>a.RestoreLocationAsync(Selected<SavedLocation>(saved))))),Button("Delete selected location",()=>{Library().Delete("location",Selected<SavedLocation>(saved).Name);Refresh();return Task.CompletedTask;},false));
-        var bosses=Column();var boss=Picker(BossRevivalCatalog.All.Select(x=>x.Name));var first=new CheckBox{Content="Revive as first encounter"};retryBoss=boss.SelectedItem as string;boss.SelectionChanged+=(_,_)=>retryBoss=boss.SelectedItem as string;first.IsCheckedChanged+=(_,_)=>retryFirstEncounter=first.IsChecked==true;Add(bosses,boss,first,Label("Revival changes encounter flags in your save. Bosses may be revived during an encounter."),Button("Revive boss",()=>NativeAction(f=>{var result=f.Actions.ReviveBoss(Selected<string>(boss),firstEncounter:first.IsChecked==true);log?.Write("BOSS",result);})));
+        var bosses=Column();var boss=Picker(BossRevivalCatalog.All.Select(x=>x.Name));var first=new CheckBox{Content="Revive as first encounter"};retryBoss=boss.SelectedItem as string;boss.SelectionChanged+=(_,_)=>retryBoss=boss.SelectedItem as string;first.IsCheckedChanged+=(_,_)=>retryFirstEncounter=first.IsChecked==true;Add(bosses,boss,first,Label("Revival changes encounter flags in your save. Bosses may be revived during an encounter."),Button("Revive boss",()=>Native(f=>f.RunAsync(_=>{var result=f.Actions.ReviveBoss(Selected<string>(boss),firstEncounter:first.IsChecked==true);log?.Write("BOSS",result);return Task.CompletedTask;}))));
+        Add(bosses,Button("Revive and travel to boss",RetryBossAsync));
         var chalice=Column();var altar=Picker(Array.Empty<ChaliceAltar>());var destination=Picker(GameActions.ChaliceLamps);Add(chalice,Button("Read chalice altars",()=>{altar.ItemsSource=Active().Features.Actions.ReadChaliceAltars();altar.SelectedIndex=0;return Task.CompletedTask;}),altar,destination,Button("Warp in selected chalice",()=>Native(f=>f.RunAsync(a=>a.WarpChaliceAsync(Selected<ChaliceAltar>(altar).Bank,Selected<ChaliceLamp>(destination))))));
         return new TabControl{ItemsSource=new[]{new TabItem{Header="Destinations",Content=Page(lamps)},new TabItem{Header="Saved locations",Content=Page(locations)},new TabItem{Header="Boss revival",Content=Page(bosses)},new TabItem{Header="Chalices",Content=Page(chalice)}}};
     }
     private void BuildEnemies(StackPanel panel)
     {
         Add(panel,Label("Target details remain visible until another enemy is targeted."),enemyText);
-        var timer=Label("Timer ready");Add(panel,Button("Start encounter timer",()=>{Active().Features.Timer.Start("Encounter");timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),Button("Pause / resume timer",()=>{Active().Features.Timer.TogglePause();timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),Button("Finish timer",()=>{Active().Features.Timer.Finish();timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),timer);
+        var timer=Label("Timer ready");timerText=timer;Add(panel,Button("Start encounter timer",()=>{Active().Features.Timer.Start("Encounter");timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),Button("Pause / resume timer",()=>{Active().Features.Timer.TogglePause();timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),Button("Finish timer",()=>{Active().Features.Timer.Finish();timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false),timer,Button("Reset encounter timer",()=>{Active().Features.Timer.Reset();timer.Text=Active().Features.Timer.Summary;return Task.CompletedTask;},false));
     }
     private void BuildSettings(StackPanel panel)
     {
         var presets=Column();var name=new TextBox{PlaceholderText="Preset name"};var saved=Picker(library?.Presets()??[]);void Refresh()=>saved.ItemsSource=library?.Presets()??[];refreshLists.Add(Refresh);
-        Add(presets,Label("Saved presets"),name,Button("Save current settings",()=>{Library().Save(Capture(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Apply preset",async()=>{var p=Selected<PracticePreset>(saved);await Active().Features.ApplyPresetAsync(p);ShowPreset(p);SyncCombat();}),Button("Set preset on startup",()=>{preferences=preferences with{StartupPresetName=Selected<PracticePreset>(saved).Name};SavePreferences();return Task.CompletedTask;},false),Button("Clear startup preset",()=>{preferences=preferences with{StartupPresetName=null};SavePreferences();return Task.CompletedTask;},false));
+        Add(presets,Label("Saved presets"),name,Button("Save current settings",()=>{Library().Save(Capture(name.Text??""));Refresh();return Task.CompletedTask;}),saved,Button("Apply preset",async()=>{var p=Selected<PracticePreset>(saved);await Active().Features.ApplyPresetAsync(p);ShowPreset(p);SyncCombat();ApplyPresetPreferences(p.Preferences);}),Button("Set preset on startup",()=>{preferences=preferences with{StartupPresetName=Selected<PracticePreset>(saved).Name};SavePreferences();return Task.CompletedTask;},false),Button("Clear startup preset",()=>{preferences=preferences with{StartupPresetName=null};SavePreferences();return Task.CompletedTask;},false));
+        Add(presets,Button("Delete preset",()=>{var old=Selected<PracticePreset>(saved).Name;Library().Delete("preset",old);if(old.Equals(preferences.StartupPresetName,StringComparison.OrdinalIgnoreCase)){preferences=preferences with{StartupPresetName=null};SavePreferences();}Refresh();return Task.CompletedTask;},false),Button("Rename preset",()=>{var old=Selected<PracticePreset>(saved).Name;Library().RenamePreset(old,name.Text??"");if(old.Equals(preferences.StartupPresetName,StringComparison.OrdinalIgnoreCase)){preferences=preferences with{StartupPresetName=name.Text};SavePreferences();}Refresh();return Task.CompletedTask;},false),Button("Duplicate preset",()=>{Library().Save(Selected<PracticePreset>(saved) with{Name=name.Text??""});Refresh();return Task.CompletedTask;},false));
         Add(panel,presets);
         var menus=Picker(GameActions.Menus);Add(panel,Label("Open menu anywhere"),menus,Button("Open selected menu",()=>Native(f=>f.RunAsync(a=>a.OpenMenuAsync(Selected<MenuChoice>(menus))))));
-        var automatic=Switch(panel,"autoConnect","Automatically connect to the most likely Bloodborne runtime",preferences.AutoConnect);automatic.IsCheckedChanged+=(_,_)=>{preferences=preferences with{AutoConnect=automatic.IsChecked==true};SavePreferences();};
+        var automatic=Switch(panel,"autoConnect","Automatically connect to the most likely Bloodborne runtime",preferences.AutoConnect);automatic.IsCheckedChanged+=(_,_)=>{if(changing)return;preferences=preferences with{AutoConnect=automatic.IsChecked==true};SavePreferences();};
         var rpc=Switch(panel,"discord","Discord Rich Presence",preferences.DiscordRichPresence);var extra=Switch(panel,"discordDetails","Show area, level, deaths and character name",preferences.DiscordDetails?.Enabled==true);
-        rpc.IsCheckedChanged+=(_,_)=>{preferences=preferences with{DiscordRichPresence=rpc.IsChecked==true};SavePreferences();presence?.Dispose();presence=rpc.IsChecked==true&&!preview?new():null;};extra.IsCheckedChanged+=(_,_)=>{preferences=preferences with{DiscordDetails=new(Enabled:extra.IsChecked==true)};SavePreferences();};
+        rpc.IsCheckedChanged+=(_,_)=>{if(changing)return;preferences=preferences with{DiscordRichPresence=rpc.IsChecked==true};SavePreferences();presence?.Dispose();presence=rpc.IsChecked==true&&!preview?new():null;};extra.IsCheckedChanged+=(_,_)=>{if(changing)return;preferences=preferences with{DiscordDetails=new(Enabled:extra.IsChecked==true)};SavePreferences();};
+        refreshPreferences.Add(()=>{automatic.IsChecked=preferences.AutoConnect;rpc.IsChecked=preferences.DiscordRichPresence;extra.IsChecked=preferences.DiscordDetails?.Enabled==true;switches["startupFov"].IsChecked=preferences.StartupFovEnabled;});
         Add(panel,Label("Library transfer"),Button("Export presets, favorites and locations",async()=>{var path=await SaveFile("bb-tools-library.json");if(path!=null)Library().Export(path);},false),Button("Import library",async()=>{var path=await PickFile();if(path!=null){Library().Import(path);foreach(var refresh in refreshLists)refresh();}},false));
+        Add(panel,Button("Back up library database",async()=>{var path=await SaveFile("bb-tools-library.db");if(path!=null)Library().Backup(path);},false));
         var saveFolder=new TextBox{PlaceholderText="Absolute path to your save folder"};Add(panel,Label("Save backup and restore · close the game first"),saveFolder,Button("Choose save folder",async()=>saveFolder.Text=await Folder()??saveFolder.Text,false),Button("Back up save folder",async()=>{if(LinuxProcessCatalog.List().Any(x=>LinuxProcessCatalog.Rank(x.Name)>0))throw new IOException("Close the game before backing up.");var destination=await Folder();if(destination!=null)SaveRestore.CreateBackup(saveFolder.Text??"",destination);},false),Button("Restore save backup",async()=>{var path=await PickFile();if(path!=null)SaveRestore.Restore(path,saveFolder.Text??"",()=>!LinuxProcessCatalog.List().Any(x=>LinuxProcessCatalog.Rank(x.Name)>0));},false));
     }
     private void BuildAbout(StackPanel panel)
     {
         Add(panel,Label("About BB Tools · "+AppInfo.Version),Label("Made with 🖤 By James Cicada. BB Tools is developed by one person; contributions and support help keep it growing."),Button("Support on Ko-fi",()=>{OpenUrl("https://ko-fi.com/jcicada");return Task.CompletedTask;},false),Button("GitHub · contribute or report a bug",()=>{OpenUrl(AppInfo.RepositoryUrl);return Task.CompletedTask;},false),Button("Check for updates",async()=>{using var client=new HttpClient();var result=await UpdateChecker.CheckAsync(client,AppInfo.Version,lifetime.Token);preserveStatus=true;Status.Text=result.IsNewerThan(AppInfo.Version)?"Update available: "+result.LatestVersion:"You have the latest release.";},false));
+    }
+    private void ApplyPresetPreferences(AppSettings? saved)
+    {
+        if(saved==null)return;
+        var next=saved with{Language=preferences.Language,StartupPresetName=preferences.StartupPresetName,ExperimentalExploration=preferences.ExperimentalExploration};next.Validate();
+        preferences=next;controls=next.Camera??new();hotkeys=next.Hotkeys??new();SavePreferences();
+        presence?.Dispose();presence=!preview&&next.DiscordRichPresence?new():null;
+        changing=true;try{foreach(var refresh in refreshPreferences)refresh();}finally{changing=false;}
+    }
+    private async Task RetryBossAsync()
+    {
+        var name=retryBoss??throw new IOException("Choose a boss in Travel first.");
+        var destination=BossDestinations.All.FirstOrDefault(x=>x.Name==name)??throw new IOException("This boss has no known practice entrance; use Revive boss and travel manually.");
+        await Native(f=>f.RunAsync(_=>{f.Actions.ReviveBoss(name,firstEncounter:retryFirstEncounter);return Task.CompletedTask;}));
+        await Native(f=>f.RunAsync(a=>a.WarpAsync(new(name,destination.EntryLamp))));
+        var deadline=Environment.TickCount64+30000;
+        while(Environment.TickCount64<deadline)
+        {
+            await Task.Delay(500,lifetime.Token);
+            bool ready=false;
+            try{ready=Active().Session.ReadPlayer().Health>0&&Active().Session.ReadLocation("Travel check").Block==destination.Position.Block;}
+            catch(IOException){}
+            if(ready){await Native(f=>f.RunAsync(a=>a.RestoreLocationAsync(destination.Position)));return;}
+        }
+        throw new IOException("Boss revived and lamp travel submitted; the destination did not finish loading. Use Move to destination after the map loads.");
     }
     private void SyncCombat()
     {

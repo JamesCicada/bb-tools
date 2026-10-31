@@ -70,7 +70,7 @@ public sealed class LinuxGameFeatures
         var session=connection.Session;var player=session.ReadPlayer();Timer.Context(true,player.Health>0);
         target.Poll(session);
         if(target.Snapshot is {} enemy)
-            EnemyDetails=$"{target.State}\n{enemy.Title}\nHP {enemy.Health:N0} / {enemy.Maximum:N0} · Stamina {enemy.Stamina:N0} / {enemy.MaxStamina:N0}\n"+
+            EnemyDetails=$"{target.State}\n{enemy.Title} · {enemy.Identity} · {(enemy.Distance is {} distance?$"{distance:0.0} m":"distance unavailable")}\nSampled {enemy.Sampled.ToLocalTime():HH:mm:ss} · observed armor breaks {target.ObservedBreaks}\nHP {enemy.Health:N0} / {enemy.Maximum:N0} · Stamina {enemy.Stamina:N0} / {enemy.MaxStamina:N0}\n"+
                 (enemy.Armor?.Summary??"Super armor unavailable")+"\n"+string.Join("\n",enemy.Effects.Select(x=>x.Summary))+"\n"+
                 string.Join(" · ",enemy.Gauges.Select(x=>$"{x.Name}: {x.Current}/{x.Limit}"));
         if(!connection.Editing||Paused||Photo.IsActive||!await gate.WaitAsync(0))return;

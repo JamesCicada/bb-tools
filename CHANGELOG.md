@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 — 2026-10-31
+
+- Share the gameplay backend and version between Windows and native Linux, with one release draft gated on both platforms and checksummed downloads.
+- Bring advanced player/combat tools, multipliers, discovery/free progression, items and gems, travel/boss revival, camera tuning, retained enemy details, presets, save tools and Discord presence to the Linux desktop.
+- Prioritize `bbprobe` / `bb-probe` and document the community-confirmed bbport 0.7 launch/connection path.
+- Expose parry practice on both platforms, with protection, infinite bullets/stamina and target health tools.
+- Add configurable X11/XWayland hotkeys and opt-in experimental photo/flight/noclip controls on Linux.
+
+**Testing:** the earlier Linux preview was reported working with bbport 0.7, but individual features were not specified. New Linux native actions are **not tested in-game**. Photo/flight remain experimental. Adjustable firearm-parry timing and auto-parry still need a verified timing path and are not included.
+
 ## 0.6.8 — 2026-10-27
 
 - **NG-cycle editor:** view and edit the current playthrough counter from the Player page, with guarded application and write verification. Not tested in-game; gameplay and save/reload feedback needed.

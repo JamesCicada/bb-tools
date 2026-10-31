@@ -12,7 +12,7 @@ public static class KeyCodes
     {
         if(key.Length==1 && key[0] is >= 'A' and <= 'Z')return key[0];
         if(key.Length==2 && key[0]=='D' && key[1] is >= '0' and <= '9')return key[1];
-        if(FunctionKeys.Contains(key))return 0x70+int.Parse(key[1..])-1;
+        if(FunctionKeys.Contains(key,StringComparer.OrdinalIgnoreCase))return 0x70+int.Parse(key[1..])-1;
         return named.TryGetValue(key,out var value)?value:throw new ArgumentException("Unsupported key binding.");
     }
 }

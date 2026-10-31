@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 
 module.exports = async ({ github, context, core, root = process.cwd() }) => {
   const metadata = require('./linux-release-metadata.cjs')(root);
+  if (!/-linux-beta\./.test(metadata.version)) throw new Error("Stable Linux packages use the unified desktop release workflow.");
   const { tag, notes, assets, checksum } = metadata;
   const directory = path.join(root, 'linux-release-artifacts');
   const sums = fs.readFileSync(path.join(directory, checksum), 'utf8').trim().split(/\r?\n/);

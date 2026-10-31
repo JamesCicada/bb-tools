@@ -37,6 +37,7 @@ public partial class MainWindow : Window
         ApplyLocale(locale);
         InitializeComponent();
         LoadLanguages(locale);
+        VersionBadge.Text=$"LINUX · {AppInfo.DisplayVersion} · NEW NATIVE FEATURES: NOT TESTED IN-GAME";
         if(!preview)
         {
             try{log=new SessionLog(AppContext.BaseDirectory);}
@@ -118,13 +119,17 @@ public partial class MainWindow : Window
         {
             snapshot=connection.ReadAndUpdate();
             try{await connection.Features.TickAsync();}catch(Exception ex)when(Expected(ex)){Report(ex);}
-            enemyText.Text=connection.Features.EnemyDetails;
-            if(connection.Editing&&!startupApplied)
+            enemyText.Text=connection.Features.EnemyDetails;timerText.Text=connection.Features.Timer.Summary;
+            if(connection.Editing&&!startupApplied&&snapshot.Player.Health>0)
             {
                 startupApplied=true;
-                var preset=library?.Presets().FirstOrDefault(x=>x.Name==preferences.StartupPresetName);
-                if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);SyncCombat();}
-                else if(preferences.StartupFovEnabled){values["fov"].Value=(decimal)preferences.StartupFov;switches["fov"].IsChecked=true;await connection.Features.ApplyPresetAsync(Capture("Startup FOV"));}
+                try
+                {
+                    var preset=library?.Presets().FirstOrDefault(x=>x.Name.Equals(preferences.StartupPresetName,StringComparison.OrdinalIgnoreCase));
+                    if(preset!=null){await connection.Features.ApplyPresetAsync(preset);ShowPreset(preset);SyncCombat();ApplyPresetPreferences(preset.Preferences);}
+                    else if(preferences.StartupFovEnabled){values["fov"].Value=(decimal)preferences.StartupFov;switches["fov"].IsChecked=true;await connection.Features.ApplyPresetAsync(Capture("Startup FOV"));}
+                }
+                catch(Exception ex)when(Expected(ex)){Report(ex);Status.Text+=" Startup settings did not apply; Resume paused features retries them.";}
             }
             DiscordGameDetails? details=null;
             if(presence!=null&&preferences.DiscordDetails?.Enabled==true)
@@ -164,7 +169,7 @@ public partial class MainWindow : Window
     }
     private void SyncToggles(){changing=true;foreach(var toggle in this.GetVisualDescendants().OfType<CheckBox>().Where(x=>x.Tag!=null))toggle.IsChecked=false;changing=false;}
     private void StopFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Stop();SyncToggles();},"Practice selections cleared; owned flags restored.");
-    private void ResumeFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Resume();if(!preview)inputTimer.Start();Poll();},"Feature retry requested.");
+    private void ResumeFeatures(object? sender,RoutedEventArgs e)=>Action(()=>{connection?.Resume();startupApplied=false;if(!preview)inputTimer.Start();Poll();},"Feature retry requested.");
     private static int Number(TextBox input)=>int.TryParse(input.Text,NumberStyles.None,CultureInfo.InvariantCulture,out var value)?value:throw new ArgumentException("Enter a whole non-negative number.");
     private LinuxGameConnection Active()=>connection??throw new InvalidOperationException("Connect to a loaded character first.");
     private void ApplyHealth(object? sender,RoutedEventArgs e)=>Action(()=>{Active().SetHealth(Number(HealthInput));Poll();},Translations.Source("Health updated."));

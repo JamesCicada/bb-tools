@@ -5,7 +5,7 @@ version=$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' "$project_root/src/B
 if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-linux-beta\.[1-9][0-9]*)?$ ]]; then
   echo 'Expected a three-part release or explicit Linux beta version.' >&2; exit 1
 fi
-node -e "require('$project_root/scripts/linux-release-metadata.cjs')('$project_root')"
+node -e 'const root=process.argv[1];require(require("node:path").join(root,"scripts/linux-release-metadata.cjs"))(root)' "$project_root"
 mkdir -p "$project_root/artifacts"
 package_stage=$(mktemp -d "$project_root/artifacts/linux-package.XXXXXX")
 cleanup() {

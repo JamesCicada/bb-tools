@@ -18,6 +18,7 @@ public partial class MainWindow
     private void InitPlatform()
     {
         controls=preferences.Camera??new();hotkeys=preferences.Hotkeys??new();
+        changing=true;try{foreach(var refresh in refreshPreferences)refresh();}finally{changing=false;}
         inputTimer.Tick+=(_,_)=>InputTick();if(!preview)inputTimer.Start();
     }
     private void RequireX11(){x11??=new();}
@@ -27,6 +28,7 @@ public partial class MainWindow
         explorationPanel=Column();explorationPanel.IsVisible=enable.IsChecked==true;
         enable.IsCheckedChanged+=async(_,_)=>
         {
+            if(changing)return;
             try
             {
                 if(enable.IsChecked!=true&&connection?.Editing==true)await Native(f=>f.RunAsync(_=>{f.Photo.Restore();f.Flight.Restore();return Task.CompletedTask;},true));
@@ -38,9 +40,10 @@ public partial class MainWindow
         var lockHunter=Switch(explorationPanel,"lockHunter","Lock player movement during photo mode",true);
         var hide=Switch(explorationPanel,"photoHud","Hide HUD during photo mode",true);
         Value(explorationPanel,"photoSpeed","Camera movement speed",1,.05m,10,.1m);
+        Value(explorationPanel,"photoFov","Photo camera field of view",43,10,120);
         Add(explorationPanel,Button("Enter photo mode",async()=>
         {
-            RequireX11();await Native(f=>f.RunAsync(async _=>{if(f.Flight.RestorationPending)throw new IOException("Disable flight first.");await f.Photo.PrepareAsync(lifetime.Token);f.Photo.Enable();if(Sections.SelectedIndex!=5){f.Photo.Restore();return;}f.Photo.LockHunter(lockHunter.IsChecked==true);if(hide.IsChecked==true)f.Hud.Apply();}));
+            RequireX11();await Native(f=>f.RunAsync(async _=>{if(f.Flight.RestorationPending)throw new IOException("Disable flight first.");await f.Photo.PrepareAsync(lifetime.Token);f.Photo.Enable();if(Sections.SelectedIndex!=5){f.Photo.Restore();return;}values["photoFov"].Value=(decimal)f.Photo.InitialFov;f.Photo.LockHunter(lockHunter.IsChecked==true);if(hide.IsChecked==true)f.Hud.Apply();}));
         }),Button("Exit photo mode and restore HUD",()=>Native(f=>f.RunAsync(_=>{f.Photo.Restore();if(!On("hud"))f.Hud.Restore();return Task.CompletedTask;},true))));
         var noClip=Switch(explorationPanel,"noclip","Disable world collision while flying");
         Add(explorationPanel,Button("Enable flight",()=>{RequireX11();return NativeAction(f=>{if(f.Photo.IsActive)throw new IOException("Exit photo mode first.");f.Flight.Apply(noClip.IsChecked==true);});}),Button("Disable flight",()=>NativeAction(f=>f.Flight.Restore())),Button("Return to flight start",()=>Native(f=>{var at=f.Flight.ReadReturnPoint();return f.RunAsync(async a=>{f.Flight.Restore();await a.RestoreLocationAsync(at);});})));
@@ -52,6 +55,7 @@ public partial class MainWindow
         Add(explorationPanel,Button("Save camera controls",()=>{var k=bindings.Select(Selected<string>).ToArray();var next=new CameraControls(k[0],k[1],k[2],k[3],k[4],k[5],k[6],k[7],k[8],k[9],k[10],k[11],k[12],k[13],k[14]);next.Validate();controls=next;preferences=preferences with{Camera=next};SavePreferences();return Task.CompletedTask;},false));
         var enabled=Switch(panel,"hotkeys","Enable game hotkeys (X11/XWayland)",preferences.Hotkeys?.Enabled==true);var modifiers=Picker(HotkeyPreferences.ModifierChoices);modifiers.SelectedItem=(preferences.Hotkeys??new()).Modifiers;
         var choices=new List<ComboBox>();foreach(var (name,index) in new[]{"Heal","Toggle God mode","Save location","Restore location","Retry boss"}.Select((x,i)=>(x,i))){var key=Picker(KeyCodes.FunctionKeys);key.SelectedItem=(preferences.Hotkeys??new()).Keys[index];Add(panel,Label(name),key);choices.Add(key);}
+        refreshPreferences.Add(()=>{enable.IsChecked=preferences.ExperimentalExploration;enabled.IsChecked=hotkeys.Enabled;modifiers.SelectedItem=hotkeys.Modifiers;for(var i=0;i<choices.Count;i++)choices[i].SelectedItem=hotkeys.Keys[i];for(var i=0;i<bindings.Count;i++)bindings[i].SelectedItem=controls.Keys[i];folder.Text=(preferences.Photos??new()).OutputFolder;var a=preferences.Photos?.Adjustments??new();filter.SelectedItem=a.Filter;values["exposure"].Value=(decimal)a.Exposure;values["contrast"].Value=(decimal)a.Contrast;values["saturation"].Value=(decimal)a.Saturation;values["vignette"].Value=(decimal)a.Vignette;});
         Add(panel,modifiers,Button("Save hotkeys",()=>{var k=choices.Select(Selected<string>).ToArray();var next=new HotkeyPreferences(enabled.IsChecked==true,k[0],k[1],k[2],k[3],k[4],Selected<string>(modifiers));next.Validate();if(next.Enabled)RequireX11();hotkeys=next;preferences=preferences with{Hotkeys=next};SavePreferences();return Task.CompletedTask;},false),explorationPanel);
     }
     private async void InputTick()
@@ -71,8 +75,8 @@ public partial class MainWindow
                 if(input.Exit){await features.RunAsync(_=>{features.Photo.Restore();features.Flight.Restore();if(!On("hud"))features.Hud.Restore();return Task.CompletedTask;},true);return;}
                 if(photo)
                 {
-                    if(Edge("reset",input.Reset))features.Photo.Reset();
-                    features.Photo.Step(input.Forward,input.Right,input.Up,input.Yaw,input.Pitch,dt*V("photoSpeed")*input.Speed,features.Photo.InitialFov,input.Roll,dt);
+                    if(Edge("reset",input.Reset)){features.Photo.Reset();values["photoFov"].Value=(decimal)features.Photo.InitialFov;}
+                    features.Photo.Step(input.Forward,input.Right,input.Up,input.Yaw,input.Pitch,dt*V("photoSpeed")*input.Speed,V("photoFov"),input.Roll,dt);
                     if(Edge("capture",input.Capture))
                     {
                         var original=x11.Capture(connection.Pid);var settings=preferences.Photos??new();
@@ -83,7 +87,7 @@ public partial class MainWindow
                 else features.Flight.Step(input.Forward,input.Right,input.Up,dt*V("photoSpeed")*input.Speed);
                 return;
             }
-            var modifiers=(!hotkeys.Modifiers.Contains("Ctrl")||x11.Down(0x11))&&(!hotkeys.Modifiers.Contains("Alt")||x11.Down(0x12));
+            var modifiers=x11.Down(0x11)==hotkeys.Modifiers.Contains("Ctrl")&&x11.Down(0x12)==hotkeys.Modifiers.Contains("Alt")&&!x11.Down(0x10);
             for(var i=0;i<hotkeys.Keys.Length;i++)if(Edge("hotkey"+i,modifiers&&x11.Down(KeyCodes.VirtualKey(hotkeys.Keys[i]))))
             {
                 switch(i)
@@ -92,7 +96,7 @@ public partial class MainWindow
                     case 1:if(!connection.Flags.Remove(PracticeFlag.GodMode))connection.Flags.Add(PracticeFlag.GodMode);break;
                     case 2:hotkeyLocation=connection.Session.ReadLocation("Hotkey return point");break;
                     case 3:await features.RunAsync(a=>a.RestoreLocationAsync(hotkeyLocation??throw new IOException("Save a location first.")));break;
-                    case 4:await features.MutateAsync(()=>features.Actions.ReviveBoss(retryBoss??throw new IOException("Select a boss in Travel first."),firstEncounter:retryFirstEncounter));break;
+                    case 4:busy=true;try{await RetryBossAsync();}finally{busy=false;}break;
                 }
             }
         }

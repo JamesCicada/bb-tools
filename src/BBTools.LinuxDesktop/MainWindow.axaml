@@ -13,7 +13,7 @@
   <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,18">
    <Image Source="avares://BBTools.LinuxDesktop/Assets/BBTools.png" Width="46" Height="46" Margin="0,0,14,0"/>
    <StackPanel Grid.Column="1"><TextBlock Text="BB TOOLS" FontSize="24" FontWeight="Bold" Foreground="#CBA96E"/>
-    <TextBlock Text="LINUX · 0.7.0 · NEW NATIVE FEATURES: NOT TESTED IN-GAME" Foreground="#ABB2BF"/>
+    <TextBlock x:Name="VersionBadge" Text="LINUX · 0.7.0 · NEW NATIVE FEATURES: NOT TESTED IN-GAME" Foreground="#ABB2BF"/>
    </StackPanel>
    <TextBlock x:Name="ConnectionBadge" Grid.Column="2" Text="READ-ONLY · DISCONNECTED" VerticalAlignment="Center"/>
   </Grid>

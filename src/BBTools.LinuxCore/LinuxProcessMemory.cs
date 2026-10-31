@@ -23,8 +23,9 @@ public sealed record LinuxMap(ulong Start, ulong End, string Permissions, string
     }
 }
 
-// Read-only unless the desktop explicitly enables experimental data editing.
-// No ptrace attach, signals, remote allocations or process permission changes.
+// Read-only unless the desktop explicitly enables editing. Data I/O stays
+// separate from the owned ptrace/native operations in LinuxNativeMemory.cs.
+// Neither path changes process permission policy or system tracing settings.
 public sealed partial class LinuxProcessMemory : IGameMemory
 {
     private readonly int pid;

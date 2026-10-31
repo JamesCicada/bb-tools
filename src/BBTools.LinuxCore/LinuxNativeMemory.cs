@@ -217,9 +217,15 @@ public sealed partial class LinuxProcessMemory
     {
         var area=Maps().SingleOrDefault(m=>m.Start<=owner&&owner<m.End)??throw new IOException("Camera allocation unavailable.");
         var needle=BitConverter.GetBytes(image+0x5330480);var watch=Stopwatch.StartNew();
-        for(var at=area.Start;at<area.End&&at-area.Start<256UL*1024*1024&&watch.Elapsed<TimeSpan.FromSeconds(15);)
+        // Prioritize the camera's neighborhood in a large coalesced heap instead
+        // of always exhausting the budget at the beginning of the mapping.
+        const ulong neighborhood=128UL*1024*1024;
+        var nearStart=Math.Max(area.Start,owner>neighborhood?(owner-neighborhood)&~7UL:area.Start);
+        var nearEnd=Math.Min(area.End,owner+neighborhood);ulong scanned=0;
+        foreach(var range in new[]{(nearStart,nearEnd),(area.Start,nearStart),(nearEnd,area.End)})
+        for(var at=range.Item1;at<range.Item2&&scanned<512UL*1024*1024&&watch.Elapsed<TimeSpan.FromSeconds(15);)
         {
-            cancellationToken.ThrowIfCancellationRequested();var size=(int)Math.Min(1024UL*1024,area.End-at);var bytes=Read(at,size);
+            cancellationToken.ThrowIfCancellationRequested();var size=(int)Math.Min(1024UL*1024,range.Item2-at);var bytes=Read(at,size);scanned+=(ulong)size;
             for(var i=0;i<=bytes.Length-8;i+=8)if(bytes.AsSpan(i,8).SequenceEqual(needle)&&FreeCamera.MatchesCameraStep(this,image,at+(ulong)i,owner))return at+(ulong)i;
             at+=(ulong)Math.Max(8,size-8);
         }
