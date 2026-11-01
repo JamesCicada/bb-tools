@@ -139,7 +139,7 @@ public partial class MainWindow : Window
             UpdateAvailability(true);
             if(connection.FeatureError!=null||connection.Features.Error!=null)Status.Text="Features paused: "+(connection.FeatureError??connection.Features.Error);
         }
-        catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;connection?.Features.PlayerUnavailable(ex.Message);enemyText.Text=connection?.Features.EnemyDetails;UpdateAvailability(false);Report(ex);}
+        catch(Exception ex)when(Expected(ex)){snapshot=null;draft=null;connection?.PlayerUnavailable();connection?.Features.PlayerUnavailable(ex.Message);enemyText.Text=connection?.Features.EnemyDetails;UpdateAvailability(false);Report(ex);}
         finally{polling=false;}
     }
     private void UpdateAvailability(bool ready)

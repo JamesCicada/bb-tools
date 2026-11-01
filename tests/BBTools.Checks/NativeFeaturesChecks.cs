@@ -9,6 +9,18 @@ internal static partial class Program
         public byte[] Read(ulong address,int size)=>source.Read(address,size);
         public void Write(ulong address,byte[] value){source.Write(address,value);Writes++;}
     }
+    private sealed class RebindingDeathManagerMemory(IMemory source,ulong managerSlot,ulong oldManager,ulong replacement):IMemory
+    {
+        private bool armed=true;
+        public int Writes{get;private set;}
+        public byte[] Read(ulong address,int size)
+        {
+            var result=source.Read(address,size);
+            if(armed&&address==oldManager+0xA8){armed=false;source.Write(managerSlot,BitConverter.GetBytes(replacement));}
+            return result;
+        }
+        public void Write(ulong address,byte[] value){Writes++;source.Write(address,value);}
+    }
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]private delegate float FloatGetter(nint component,nint other);
     private static void NativeFeatureChecks()
     {
@@ -24,7 +36,7 @@ internal static partial class Program
             Bytes(root+MovementSpeed.Offset,MovementSpeed.Original.Concat(new byte[]{0xC3}).ToArray());
             var wrapper=root+0x5760000;var code=Convert.FromHexString("5341554883EC084989CD4889D3B80000803F660F6EC848B8").Concat(BitConverter.GetBytes(root+MovementSpeed.Offset)).Concat(Convert.FromHexString("FFD04883C408415D5BC3")).ToArray();Bytes(wrapper,code);
             VirtualProtect((nint)(root+(MovementSpeed.Offset&~4095UL)),4096,0x20,out _);VirtualProtect((nint)wrapper,4096,0x20,out _);
-            using var memory=new ProcessMemory(Environment.ProcessId);var session=new PlayerSession(memory,root);var movement=new MovementSpeed(memory,session);var get=Marshal.GetDelegateForFunctionPointer<FloatGetter>((nint)wrapper);
+            using var memory=new ProcessMemory(Environment.ProcessId);var session=new PlayerSession(new CountingWritesMemory(memory),root);var movement=new MovementSpeed(memory,session);var get=Marshal.GetDelegateForFunctionPointer<FloatGetter>((nint)wrapper);
             Check(get((nint)motion,(nint)argument)==3,"unpatched movement fixture returns native movement result");
             var factor=memory.AllocateData(8);memory.Write(factor,BitConverter.GetBytes(2f));var trampoline=memory.AllocateCode(MovementSpeed.Build(root,factor));
             var patch=Convert.FromHexString("FF2500000000").Concat(BitConverter.GetBytes(trampoline)).ToArray();memory.ReplaceMovementCode(root,MovementSpeed.Original,patch);Check(get((nint)motion,(nint)argument)==6,"movement trampoline scales only the transient local player result");
@@ -77,6 +89,25 @@ internal static partial class Program
             Check(memory.Read(gameData+0xA8,1)[0]==1&&memory.Read(replacementData+0xA8,1)[0]==0,"Echoes cleanup never writes a retired or replacement game-data manager");
             session.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);session.RestorePracticeFlag(PracticeFlag.NoEchoesLoss);
             Check((byte)penaltySkip(0)==0,"Echoes protection captures and restores a newly loaded manager independently");
+            var stable=new CountingWritesMemory(memory);var protection=new PlayerSession(stable,root);
+            protection.SetPracticeFlag(PracticeFlag.InfiniteItems,true);protection.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);var written=stable.Writes;
+            for(var i=0;i<30;i++)protection.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);
+            Check(stable.Writes==written,"stable death protection performs no repeated flag writes");
+            memory.Write(replacementData+0xA8,[0]);protection.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);
+            Check(stable.Writes==written+1&&(byte)penaltySkip(0)==1&&(memory.Read(stats+0x201,1)[0]&2)!=0,"death protection reapplies an engine-cleared flag without disturbing infinite consumables");
+            protection.RestorePracticeFlag(PracticeFlag.NoEchoesLoss);protection.RestorePracticeFlag(PracticeFlag.InfiniteItems);
+            var nextManager=memory.AllocateData(0x200);var racing=new RebindingDeathManagerMemory(memory,root+0x553B130,replacementData,nextManager);
+            Reject<IOException>(()=>new PlayerSession(racing,root).SetPracticeFlag(PracticeFlag.NoEchoesLoss,true),"death protection rejects a manager replaced between flag read and write");
+            Check(racing.Writes==0&&memory.Read(replacementData+0xA8,1)[0]==0&&memory.Read(nextManager+0xA8,1)[0]==0,"manager replacement cannot redirect Echoes protection into a retired or new manager");
+            var observations=new EchoesProtectionDiagnostics();
+            Check(observations.Observe(1,2,true,200,true)==null&&observations.Observe(1,2,true,150,true)==null,"Echoes diagnostics do not mistake ordinary spending for death loss");
+            Check(observations.Observe(1,2,false,0,true) is {Kind:EchoesObservationKind.Death,LastLivingEchoes:150,CurrentEchoes:0},"death diagnostics retain the last observed living balance");
+            observations.PlayerUnavailable();
+            Check(observations.Observe(3,4,true,0,true) is {Kind:EchoesObservationKind.Returned,DeathObserved:true,LoadedAgain:true},"respawn diagnostics distinguish a sampled death from a new player allocation");
+            observations.Observe(3,4,true,500,true);observations.PlayerUnavailable();
+            Check(observations.Observe(5,6,true,500,true) is {Kind:EchoesObservationKind.Returned,DeathObserved:false},"loading diagnostics never invent a death when only a warp/reload was observed");
+            observations.Observe(5,6,true,500,false);observations.PlayerUnavailable();
+            Check(observations.Observe(7,8,true,50,true)==null,"disabling Echoes protection clears retained diagnostic observations without refunding a balance");
             // Execute native poison filtering with a mock native unlink routine.
             var container=root+0x57A0000;var payload=root+0x57B0000;var node=root+0x57C0000;var row=root+0x57D0000;var helper=root+0x57E0000;var bridge=root+0x57F0000;
             Ptr(actor+0x1C8,container);Ptr(container+0x18,actor);Ptr(container+8,node);Ptr(payload,actor);Ptr(payload+8,container);

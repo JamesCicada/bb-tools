@@ -203,6 +203,7 @@ public partial class MainWindow : Window
         await TryAutoConnect();
     }
     private static bool IsExpected(Exception ex) => ex is JsonException or Microsoft.Data.Sqlite.SqliteException or IOException or ArgumentException or System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException or OperationCanceledException;
+    private readonly EchoesProtectionDiagnostics echoDeathDiagnostics=new();
     private void Poll(object? sender, EventArgs e)
     {
         UpdateDiscordPresence();
@@ -287,6 +288,8 @@ public partial class MainWindow : Window
                 multiplierFailedActor != state.Actor && !actions.MaintainMultipliers())
                 _ = ResumeMultipliers(state.Actor);
             var character = session.ReadCharacter();
+            if(echoDeathDiagnostics.Observe(state.Actor,character.Address,state.Health>0,character.Values.Echoes,KeepEchoesOnDeath.IsChecked==true) is {} echoObservation)
+                App.Log?.Write("ECHOES",echoObservation.Summary);
             EchoValue.Text = character.Values.Echoes.ToString("N0");
             EchoControls.IsEnabled = StatControls.IsEnabled = true;
             if (statDraft == null) PopulateStats(character);
@@ -295,6 +298,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (IsExpected(ex))
         { App.LogError(ex);
+            echoDeathDiagnostics.PlayerUnavailable();
             try { shoulderCamera?.Pause(); } catch (Exception pause) when (IsExpected(pause)) { App.LogError(pause); }
             try { lootOverrides?.Pause(); } catch (Exception pause) when (IsExpected(pause)) { App.LogError(pause); }
             try{StopEnemyPractice();}catch(Exception cleanup)when(IsExpected(cleanup)){App.LogError(cleanup);}
@@ -311,6 +315,7 @@ public partial class MainWindow : Window
     }
     private string? StopFeatures()
     {
+        echoDeathDiagnostics.Reset();
         updating = true;
         KeepHealth.IsChecked = InfiniteStamina.IsChecked = KeepDurability.IsChecked = AutoRepair.IsChecked = KeepStatusEmpty.IsChecked = false;
         durabilityPaused=statusPaused=false;

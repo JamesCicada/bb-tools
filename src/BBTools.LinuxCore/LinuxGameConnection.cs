@@ -31,6 +31,7 @@ public sealed class LinuxGameConnection : IDisposable
         try{CombatFlagsAvailable=PlayerSession.FeatureFingerprints.All(f=>memory.Read(image+f.Offset,f.Bytes.Length).SequenceEqual(f.Bytes));}
         catch(IOException){CombatFlagsAvailable=false;}
     }
+    private readonly EchoesProtectionDiagnostics echoDeathDiagnostics=new();
     public LinuxSnapshot ReadAndUpdate()
     {
         Session.ValidateImage();var player=Session.ReadPlayer();var character=Session.ReadCharacter();
@@ -46,8 +47,11 @@ public sealed class LinuxGameConnection : IDisposable
             catch(Exception ex)when(ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
             {FeaturesPaused=true;FeatureError=ex.Message;}
         }
+        if(echoDeathDiagnostics.Observe(player.Actor,character.Address,player.Health>0,character.Values.Echoes,Editing&&Flags.Contains(PracticeFlag.NoEchoesLoss)) is {} observation)
+            GameDiagnostics.Log?.Invoke("ECHOES",observation.Summary);
         return new(player,character);
     }
+    public void PlayerUnavailable(){echoDeathDiagnostics.PlayerUnavailable();}
     public void SetEditing(bool enabled)
     {
         if(!enabled){Stop();memory.WritesEnabled=false;editLease?.Dispose();editLease=null;return;}
@@ -56,7 +60,7 @@ public sealed class LinuxGameConnection : IDisposable
     public void Resume(){FeaturesPaused=false;FeatureError=null;Features.Resume();}
     public void Stop()
     {
-        KeepHealth=InfiniteStamina=false;Flags.Clear();
+        KeepHealth=InfiniteStamina=false;Flags.Clear();echoDeathDiagnostics.Reset();
         if(!Editing)return;
         if(memory.HasExited())return;
         Features.Stop();

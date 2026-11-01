@@ -22,6 +22,21 @@ public sealed partial class PlayerSession
         (0x18CBFC7, Convert.FromHexString("8BB7E1010000F7C600400004")),
         (0x13389B0, Convert.FromHexString("488D0579272004488B004885C0740B80B8A8000000000F95C0C3"))
     ];
+    private void WriteDeathPenaltyFlag(ulong owner,byte value)
+    {
+        void Apply()
+        {
+            if(memory.Pointer(imageBase+0x553B130)!=owner)throw new IOException("Death-penalty manager changed before protection update. Wait until loading finishes.");
+            var current=memory.Read(owner+0xA8,1)[0];
+            if(current>1)throw new IOException("Native death-penalty flag differs from the supported layout.");
+            if(current!=value)memory.Write(owner+0xA8,[value]);
+            if(memory.Pointer(imageBase+0x553B130)!=owner||memory.Read(owner+0xA8,1)[0]!=value)
+                throw new IOException("Death-penalty protection did not remain set. Another runtime component may be changing it.");
+        }
+        // Pause only when a byte actually needs changing. Stable protection
+        // remains read-only while polling, like the other practice selections.
+        if(memory is IGameMemory process)process.Suspended(Apply);else Apply();
+    }
     public void SetPracticeFlag(PracticeFlag flag, bool enabled)
     {
         ValidateImage();
@@ -42,11 +57,19 @@ public sealed partial class PlayerSession
         if(flag==PracticeFlag.NoEchoesLoss&&current>1)throw new IOException("Native death-penalty flag differs from the supported layout.");
         EnsureSamePlayer(player);
         if(LocalFlag(flag)&&unchecked((uint)memory.Int32(player.Actor+8))!=handle)throw new IOException("Practice flag owner changed.");
-        if (!ownedFlags.ContainsKey(flag)) ownedFlags[flag] = (owner, (byte)(current & mask),handle);
+        if(flag==PracticeFlag.NoEchoesLoss&&memory.Pointer(imageBase+0x553B130)!=owner)
+            throw new IOException("Death-penalty manager changed before protection update. Wait until loading finishes.");
+        var acquired=!ownedFlags.ContainsKey(flag);
+        if (acquired) ownedFlags[flag] = (owner, (byte)(current & mask),handle);
         // Polling keeps selections across loading, but a stable engine flag needs
         // no write. Preserve ownership even if the original bit was already on.
         var desired=(byte)(current|mask);
-        if(current!=desired)memory.Write(address,[desired]);
+        if(current!=desired)
+        {
+            if(flag==PracticeFlag.NoEchoesLoss)WriteDeathPenaltyFlag(owner,desired);else memory.Write(address,[desired]);
+        }
+        if(flag==PracticeFlag.NoEchoesLoss&&(acquired||current!=desired))
+            GameDiagnostics.Log?.Invoke("ECHOES",$"Death-penalty skip {(acquired?"enabled":"reapplied after reset")}: manager 0x{owner:X}, actor 0x{player.Actor:X}, observed {current}, requested {desired}, original {ownedFlags[flag].Original}.");
     }
     public void RestorePracticeFlag(PracticeFlag flag)
     {
@@ -61,7 +84,11 @@ public sealed partial class PlayerSession
         var mask = FlagMask(flag);
         var current = memory.Read(address, 1)[0];
         var desired=(byte)((current&~mask)|previous.Original);
-        if(current!=desired)memory.Write(address,[desired]);
+        if(current!=desired)
+        {
+            if(flag==PracticeFlag.NoEchoesLoss)WriteDeathPenaltyFlag(previous.Owner,desired);else memory.Write(address,[desired]);
+        }
+        if(flag==PracticeFlag.NoEchoesLoss)GameDiagnostics.Log?.Invoke("ECHOES",$"Death-penalty skip released: manager 0x{previous.Owner:X}, restored {desired}.");
         ownedFlags.Remove(flag);
     }
     public void RestorePracticeFlags()

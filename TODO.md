@@ -16,6 +16,14 @@ lists remain useful for regression testing. It does not mark future/unimplemente
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
 
+## Reported Echoes loss — yharnam-pc, 2026-11-01
+
+| Work | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Death-protection manager ownership/readback hardening | ✔️ | ⌛ | Deterministic manager-swap regression; pause only for actual flag changes. Not proof of the reported loss's cause. |
+| Protection reset and death/respawn balance diagnostics | ✔️ | ⌛ | Observation only; no refunds or bloodstain duplication. Shared Windows/Linux path. |
+| Reproduce Echoes loss on the reporter's yharnam-pc build | ⌛ | ➖ | Exact build/mods and new trace needed. See [investigation](docs/echoes-on-death-investigation.md). |
+
 ## Shared desktop release — v0.7.0
 
 | Work | Implemented | Tested and confirmed | Notes |

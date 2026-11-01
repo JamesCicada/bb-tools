@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.7.0 — 2026-10-31
+## 0.7.0 — 2026-11-01
 
 - Share the gameplay backend and version between Windows and native Linux, with one release draft gated on both platforms and checksummed downloads.
 - Bring advanced player/combat tools, multipliers, discovery/free progression, items and gems, travel/boss revival, camera tuning, retained enemy details, presets, save tools and Discord presence to the Linux desktop.
+- Harden Echoes-protection ownership across manager changes and add reset/death/respawn diagnostics for an unconfirmed yharnam-pc loss report. Live feedback is still needed.
 - Prioritize `bbprobe` / `bb-probe` and document the community-confirmed bbport 0.7 launch/connection path.
 - Expose parry practice on both platforms, with protection, infinite bullets/stamina and target health tools.
 - Add configurable X11/XWayland hotkeys and opt-in experimental photo/flight/noclip controls on Linux.
