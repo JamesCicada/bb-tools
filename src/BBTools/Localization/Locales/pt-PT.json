@@ -703,5 +703,6 @@
   "gem.recipe.heavy": "Cursed Heavy Abyssal — Strength +65, physical +15",
   "gem.recipe.tempering": "Cursed Tempering — Physical +27.2%",
   "gem.recipe.blunt": "Cursed Adept — Blunt +32.6%",
-  "gem.recipe.thrust": "Cursed Adept — Thrust +32.6%"
+  "gem.recipe.thrust": "Cursed Adept — Thrust +32.6%",
+  "parry.heading": "Parry practice"
 }
