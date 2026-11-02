@@ -42,14 +42,16 @@ jobs:
         uses: actions/github-script@v7
         env:
           NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUS_LINUX_ZIP_FILE_VERSION_ID: ${{ vars.NEXUS_LINUX_ZIP_FILE_VERSION_ID }}
+          NEXUS_LINUX_TARGZ_FILE_VERSION_ID: ${{ vars.NEXUS_LINUX_TARGZ_FILE_VERSION_ID }}
         with:
           script: |
             const result = await require('./automation/scripts/nexus-release.cjs')({ github, context, core, root: require('node:path').resolve('release-source') });
             for (const [key, value] of Object.entries(result)) core.setOutput(key, value);
-      - name: Verify archive contents
-        if: steps.prepare.outputs.assets_verified == 'true'
+      - name: Verify Windows archive contents
+        if: steps.prepare.outputs.windows_upload == 'true'
         env:
-          ARCHIVE_PATH: ${{ steps.prepare.outputs.filename }}
+          ARCHIVE_PATH: ${{ steps.prepare.outputs.windows_filename }}
         run: |
           python3 - <<'PY'
           import os, zipfile
@@ -59,21 +61,70 @@ jobs:
               if archive.testzip() is not None:
                   raise SystemExit('The release ZIP contains a corrupt entry.')
           PY
-      - name: Upload verified release and changelog
-        if: steps.prepare.outputs.upload == 'true'
+      - name: Verify Linux ZIP contents
+        if: steps.prepare.outputs.linux_zip_upload == 'true'
+        env:
+          ARCHIVE_PATH: ${{ steps.prepare.outputs.linux_zip_filename }}
+        run: |
+          python3 - <<'PY'
+          import os, zipfile
+          with zipfile.ZipFile(os.environ['ARCHIVE_PATH']) as archive:
+              if sorted(archive.namelist()) != ['BBTools.LinuxDesktop', 'README.md']:
+                  raise SystemExit('The Linux ZIP must contain only BBTools.LinuxDesktop and README.md.')
+              if archive.testzip() is not None:
+                  raise SystemExit('The Linux ZIP contains a corrupt entry.')
+          PY
+      - name: Verify Linux tar.gz contents
+        if: steps.prepare.outputs.linux_tar_gz_upload == 'true'
+        env:
+          ARCHIVE_PATH: ${{ steps.prepare.outputs.linux_tar_gz_filename }}
+        run: |
+          test "$(tar -tzf "$ARCHIVE_PATH" | sort)" = $'BBTools.LinuxDesktop\nREADME.md'
+      - name: Upload Windows release and changelog
+        if: steps.prepare.outputs.windows_upload == 'true'
         # Official v3 action v1.0.0-beta.11; includes the current non-deprecated endpoint.
         uses: Nexus-Mods/upload-action@98532f7670c27cbecc78fae03fa3e278147827e2
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
-          file_id: ${{ steps.prepare.outputs.file_id }}
-          mod_id: ${{ steps.prepare.outputs.mod_id }}
-          filename: ${{ steps.prepare.outputs.filename }}
-          version: ${{ steps.prepare.outputs.version }}
-          display_name: BB Tools v${{ steps.prepare.outputs.version }} Win x64
-          description: Standalone Windows x64 build. Extract and run BBTools.exe.
+          file_id: ${{ steps.prepare.outputs.windows_file_id }}
+          mod_id: ${{ steps.prepare.outputs.windows_mod_id }}
+          filename: ${{ steps.prepare.outputs.windows_filename }}
+          version: ${{ steps.prepare.outputs.windows_version }}
+          display_name: ${{ steps.prepare.outputs.windows_display_name }}
+          description: ${{ steps.prepare.outputs.windows_description }}
           category: main
           archive_existing_version: 'false'
           primary_mod_manager_download: 'false'
           allow_mod_manager_download: 'false'
           update_mod_version: 'true'
-          changelog: ${{ steps.prepare.outputs.changelog }}
+          changelog: ${{ steps.prepare.outputs.windows_changelog }}
+      - name: Upload Linux ZIP
+        if: steps.prepare.outputs.linux_zip_upload == 'true'
+        uses: Nexus-Mods/upload-action@98532f7670c27cbecc78fae03fa3e278147827e2
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ steps.prepare.outputs.linux_zip_file_id }}
+          filename: ${{ steps.prepare.outputs.linux_zip_filename }}
+          version: ${{ steps.prepare.outputs.linux_zip_version }}
+          display_name: ${{ steps.prepare.outputs.linux_zip_display_name }}
+          description: ${{ steps.prepare.outputs.linux_zip_description }}
+          category: optional
+          archive_existing_version: 'false'
+          primary_mod_manager_download: 'false'
+          allow_mod_manager_download: 'false'
+          update_mod_version: 'false'
+      - name: Upload Linux tar.gz
+        if: steps.prepare.outputs.linux_tar_gz_upload == 'true'
+        uses: Nexus-Mods/upload-action@98532f7670c27cbecc78fae03fa3e278147827e2
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_id: ${{ steps.prepare.outputs.linux_tar_gz_file_id }}
+          filename: ${{ steps.prepare.outputs.linux_tar_gz_filename }}
+          version: ${{ steps.prepare.outputs.linux_tar_gz_version }}
+          display_name: ${{ steps.prepare.outputs.linux_tar_gz_display_name }}
+          description: ${{ steps.prepare.outputs.linux_tar_gz_description }}
+          category: optional
+          archive_existing_version: 'false'
+          primary_mod_manager_download: 'false'
+          allow_mod_manager_download: 'false'
+          update_mod_version: 'false'

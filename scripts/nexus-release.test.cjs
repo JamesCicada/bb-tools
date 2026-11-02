@@ -116,3 +116,53 @@ test('malformed tag input is rejected', async t => {
   const f = fixture(t); f.context.payload.release.tag_name = '../main';
   await assert.rejects(prepare(f), /version tag/);
 });
+test('shared releases verify and prepare three distinct Nexus file lineages', async t => {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.root, 'src/BBTools/BBTools.csproj'), '<Version>0.7.0</Version>');
+  fs.writeFileSync(path.join(f.root, 'docs/releases/v0.7.0.md'), '# BB Tools v0.7.0\n\n- Shared release.');
+  f.context.payload.release.tag_name = 'v0.7.0';
+  f.env = { NEXUSMODS_API_KEY: 'test-secret-not-real', NEXUS_LINUX_ZIP_FILE_VERSION_ID: '7101', NEXUS_LINUX_TARGZ_FILE_VERSION_ID: '7102' };
+  const archives = {
+    1: Buffer.from('windows'), 2: Buffer.from('linux-zip'), 3: Buffer.from('linux-tar'),
+  };
+  const sums = Object.entries(archives).map(([id, data]) => {
+    const names = { 1: 'BBTools-v0.7.0-win-x64.zip', 2: 'BBTools-v0.7.0-linux-x64.zip', 3: 'BBTools-v0.7.0-linux-x64.tar.gz' };
+    return `${crypto.createHash('sha256').update(data).digest('hex')}  ${names[id]}`;
+  });
+  f.github.rest.repos.getReleaseByTag = async () => ({ data: { draft: false, prerelease: false, assets: [
+    { id: 1, name: 'BBTools-v0.7.0-win-x64.zip', state: 'uploaded' },
+    { id: 2, name: 'BBTools-v0.7.0-linux-x64.zip', state: 'uploaded' },
+    { id: 3, name: 'BBTools-v0.7.0-linux-x64.tar.gz', state: 'uploaded' },
+    { id: 4, name: 'SHA256SUMS.txt', state: 'uploaded' },
+    { id: 5, name: 'SHA256SUMS-linux.txt', state: 'uploaded' },
+  ] } });
+  f.github.rest.repos.getReleaseAsset = async ({ asset_id }) => ({ data: archives[asset_id] || Buffer.from(asset_id === 4 ? sums[0] + '\n' : sums.slice(1).join('\n') + '\n') });
+  f.fetcher = async url => {
+    const endpoint = url.replace('https://api.nexusmods.com/v3', '');
+    const responses = {
+      '/games/bloodborne/mods/614': { id: 'bbtools-mod' },
+      '/mods/bbtools-mod/files': { mod_files: [{ id: 'windows' }, { id: 'linux-zip' }, { id: 'linux-tar' }] },
+      '/games/bloodborne/mod-file-versions/3154': { file: { id: 'windows' } },
+      '/games/bloodborne/mod-file-versions/7101': { file: { id: 'linux-zip' } },
+      '/games/bloodborne/mod-file-versions/7102': { file: { id: 'linux-tar' } },
+      '/mod-files/windows/versions': { versions: [] },
+      '/mod-files/linux-zip/versions': { versions: [] },
+      '/mod-files/linux-tar/versions': { versions: [] },
+    };
+    return { ok: true, json: async () => ({ data: responses[endpoint] }) };
+  };
+  const result = await prepare(f);
+  assert.equal(result.targets.length, 3);
+  assert.deepEqual(result.targets.map(target => target.key), ['windows', 'linux_zip', 'linux_tar_gz']);
+  assert.ok(result.targets.every(target => target.upload === 'true'));
+  assert.equal(result.linux_zip_category, 'optional');
+  assert.equal(result.linux_tar_gz_update_mod_version, 'false');
+});
+test('shared releases require both pre-existing Linux file lineages', async t => {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.root, 'src/BBTools/BBTools.csproj'), '<Version>0.7.0</Version>');
+  fs.writeFileSync(path.join(f.root, 'docs/releases/v0.7.0.md'), '# BB Tools v0.7.0');
+  f.context.payload.release.tag_name = 'v0.7.0';
+  await assert.rejects(prepare(f), /NEXUS_LINUX_ZIP_FILE_VERSION_ID/);
+  assert.equal(f.calls.length, 0);
+});

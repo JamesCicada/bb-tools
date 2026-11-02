@@ -11,11 +11,21 @@ to upload to [BB TOOLS, Bloodborne mod 614](https://www.nexusmods.com/bloodborne
 No key belongs in source files, workflow inputs or release notes.
 
 The preflight resolves the mod's global ID from `bloodborne/mods/614`, then resolves
-its existing main file from public version-history ID `3154` (v0.5.0). It verifies
-that the file belongs to this mod before uploading. The seed identifies the
-persistent file; it does not restrict uploads to version 0.5.0. If that Nexus file
-is deleted or you intentionally change file groups, update the seed in
-`scripts/nexus-release.cjs` to the intended file's version-history ID.
+each persistent Nexus file group from a known version ID and verifies ownership
+before uploading. Version IDs identify a file lineage; they do not lock uploads to
+that particular release number.
+
+For the synchronized Windows/Linux releases, add these **repository variables**
+(not secrets) in GitHub → Settings → Secrets and variables → Actions → Variables:
+
+- `NEXUS_LINUX_ZIP_FILE_VERSION_ID` — the existing Linux ZIP file's version ID.
+- `NEXUS_LINUX_TARGZ_FILE_VERSION_ID` — the existing Linux tar.gz file's version ID.
+
+On Nexus, open each existing Linux file, choose **Advanced → API Info**, and copy
+its **version ID**. The Windows lineage defaults to version ID `3154`; set
+`NEXUS_WINDOWS_FILE_VERSION_ID` only if that lineage is intentionally replaced.
+Missing Linux variables stop a shared release before any file is uploaded, so a
+future release cannot silently update Windows alone.
 
 ## Release flow
 
@@ -23,11 +33,14 @@ is deleted or you intentionally change file groups, update the seed in
 2. Windows CI builds/checks Debug and Release, creates the tag and GitHub draft,
    and attaches the ZIP and SHA256SUMS.txt.
 3. Publish the stable GitHub release when it is ready. This triggers
-   **Publish to Nexus Mods**, reusing the exact ZIP and verifying its checksum
-   and its two entries (BBTools.exe and README.md).
-4. The official action adds a new main-file version and the version-specific
-   changelog, and updates the Nexus mod version. Mod-manager installation is
-   disabled because this is a standalone tool. Existing files are not deleted.
+   **Publish to Nexus Mods**, reusing and checksum-verifying each release asset.
+4. The workflow uploads three separate file lineages: **Windows x64 (ZIP)** as
+   the main download, plus **Linux x64 (ZIP)** and **Linux x64 (tar.gz)** as
+   clearly labelled optional downloads. The two Linux archives contain the same
+   desktop app; users should download one, not both. The diagnostic probe remains
+   GitHub-only. Only the Windows upload updates the Nexus mod's headline version
+   and changelog. Mod-manager installation is disabled because this is a
+   standalone tool. Existing files are not deleted.
 
 Drafts, prereleases and ordinary pushes do not publish anything to Nexus.
 If credentials are missing, the Nexus workflow posts a setup notice and skips.
