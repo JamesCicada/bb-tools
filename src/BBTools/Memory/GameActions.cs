@@ -123,7 +123,7 @@ public sealed partial class GameActions(IGameMemory memory, PlayerSession sessio
             new(session.ImageBase + 0x156D110, (ulong)lamp.Entity),
             new(session.ImageBase + 0x156D0E0, 1),
             new(session.ImageBase + 0x132E050, 0, (ulong)lamp.Entity)
-        ]);
+        ],validate:()=>ValidateActionInstructions(memory,session.ImageBase,GameActionKind.Warp));
     }
     public Task RestoreLocationAsync(SavedLocation location)
     {
@@ -132,7 +132,12 @@ public sealed partial class GameActions(IGameMemory memory, PlayerSession sessio
         session.ValidateLocationContext(location,current);
         var dispatcher = Ready(GameActionKind.RestoreLocation);
         var world = memory.Pointer(session.ImageBase + 0x553B148);
-        return dispatcher.ExecuteAsync([new(session.ImageBase + 0x154B110, world, dispatcher.Payload, dispatcher.Payload + 16, dispatcher.Payload + 32)], payload);
+        return dispatcher.ExecuteAsync([new(session.ImageBase + 0x154B110, world, dispatcher.Payload, dispatcher.Payload + 16, dispatcher.Payload + 32)], payload,validate:()=>
+        {
+            ValidateActionInstructions(memory,session.ImageBase,GameActionKind.RestoreLocation);
+            session.ValidateLocationContext(location,session.ReadLocation("Current"));
+            if(memory.Pointer(session.ImageBase+0x553B148)!=world)throw new IOException("World resource manager changed before location publication.");
+        });
     }
     public void Dispose() { try { ResetMultipliers(); } finally { queue?.Dispose(); queue = null; } }
 }

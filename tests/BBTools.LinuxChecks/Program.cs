@@ -52,6 +52,7 @@ internal static class Program
                 Check(!launch.UseShellExecute&&launch.ArgumentList.Count==3&&launch.ArgumentList[1]=="a path with spaces"&&launch.ArgumentList[2]=="$(not-a-command)","launcher arguments are separate literal values and never interpreted as shell code");
                 Reject<ArgumentException>(()=>LinuxProcessCatalog.CreateStartInfo("relative-file","[]"),"launcher rejects relative executable paths");
             }finally{File.Delete(launchFile);}
+            BbportCompatibilityChecks.Run(Check);
             var fixture=new SparseMemory();const ulong image=0x40000000;
             foreach(var f in PlayerSession.Fingerprints)fixture.Store(image+f.Offset,f.Bytes);
             var anchor=PlayerSession.Fingerprints[0];
@@ -102,6 +103,12 @@ internal static class Program
             Check(memory.IsExecutable(remoteCode,1)&&memory.Read(remoteCode,1)[0]==0xC3,"remote mmap/mprotect finalizes a read/execute dispatcher page");
             Reject<IOException>(()=>memory.Write(remoteCode,[0xCC]),"ordinary writes cannot alter finalized native code pages");
             var guest=ulong.Parse(locations[1],NumberStyles.HexNumber,CultureInfo.InvariantCulture);
+            using(var queue=new GameThreadQueue(memory,new PlayerSession(memory,guest)))
+            {
+                var validations=0;
+                Reject<IOException>(()=>queue.ExecuteAsync([new NativeCall(guest+0x132E050)],validate:()=>{validations++;throw new IOException("Changed observer fixture.");}).GetAwaiter().GetResult(),"native publication rejects changed travel instructions while suspended");
+                Check(validations==1&&memory.Int32(queue.Payload-GameThreadQueue.PayloadOffset)==0,"failed travel validation cannot publish a ready request");
+            }
             var original=MovementSpeed.Original;var changed=Enumerable.Repeat((byte)0x90,original.Length).ToArray();
             memory.ReplaceMovementCode(guest,original,changed);
             Check(memory.IsExecutable(guest+MovementSpeed.Offset,original.Length)&&memory.Read(guest+MovementSpeed.Offset,original.Length).SequenceEqual(changed),"guarded Linux patch writes across native words without changing executable protection");
@@ -180,7 +187,9 @@ internal static class Program
         Ptr(PlayerSession.WorldPointer,world);Ptr(world+0x60,actor);Ptr(actor+0x3B0,modules);Ptr(modules+0x20,stats);Ptr(stats+8,actor);Ptr(actor+0x3C0,data);Ptr(0x553B130,manager);Ptr(manager+8,data);
         Int(actor+8,123);Int(stats+0xF8,100);Int(stats+0xFC,200);Int(stats+0x134,70);Int(stats+0x138,100);Put(stats+0x200,[0x10]);
         foreach(var offset in new ulong[]{0x40,0x48,0x58,0x60,0x68,0x70})Int(data+offset,10);Int(data+0x90,10);Int(data+0x94,1200);
-        var instructions=PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Append((Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)).ToArray();
+        Ptr(actor,0x5760000);
+        for(ulong slot=0;slot<0x1D0;slot+=8)Ptr(0x5760000+slot,0x18FD960);
+        var instructions=PlayerSession.Fingerprints.Concat(PlayerSession.FeatureFingerprints).Concat(GameActions.Fingerprints).Append((Offset:MovementSpeed.Offset,Bytes:MovementSpeed.Original)).ToArray();
         foreach(var f in instructions)Put(f.Offset,f.Bytes);
         foreach(var page in instructions.Select(f=>f.Offset&~4095UL).Distinct())
             if(mprotect(root+(nint)page,4096,5)!=0)throw new IOException("Synthetic code protection failed");
