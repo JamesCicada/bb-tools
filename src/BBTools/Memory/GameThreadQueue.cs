@@ -52,7 +52,7 @@ public sealed class GameThreadQueue : IDisposable
             memory.Write(actor, BitConverter.GetBytes(table));
         });
     }
-    public async Task ExecuteAsync(NativeCall[] calls, byte[]? payload = null, Func<byte[]>? preparePayload = null)
+    public async Task ExecuteAsync(NativeCall[] calls, byte[]? payload = null, Func<byte[]>? preparePayload = null, Action? validate = null)
     {
         if (disposed || busy) throw new IOException("A game request is already active or the dispatcher is closed.");
         if (calls.Length is < 1 or > 3 || calls.Any(x => x.Arguments.Length > 6) || payload?.Length > 512)
@@ -66,6 +66,7 @@ public sealed class GameThreadQueue : IDisposable
                 if (session.ReadPlayer().Actor != actor || session.ReadCharacter().Address != data || memory.Pointer(actor) != table)
                     throw new IOException("Player changed. Reconnect before submitting a game request.");
                 if (memory.Int32(workspace) is 1 or 2) throw new IOException("The previous game request has not finished. It will not be repeated.");
+                validate?.Invoke();
                 // Resolve pointer-bearing payloads only after the current actor
                 // is checked and game threads are paused, immediately before publish.
                 var prepared = preparePayload?.Invoke() ?? payload;

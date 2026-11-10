@@ -2,7 +2,7 @@ using System.IO;
 
 namespace BBTools.Memory;
 
-// Read-only recognition of the documented Nightwatch/visy observer ABI.
+// Read-only recognition of audited bbport BBSC and Nightwatch/visy observer ABIs.
 // No detour is removed, rewritten, skipped or cached. This verifies a wrapper
 // shape, not the identity or correctness of the native callback's publisher.
 public static class NativeCodeCompatibility
@@ -20,6 +20,7 @@ public static class NativeCodeCompatibility
     {
         var actual = memory.Read(image + offset, expected.Length);
         if (actual.SequenceEqual(expected)) return true;
+        if(BbportObserverCompatibility.Matches(memory,image,offset,expected,actual))return true;
         // Exact audited entry sites only. Replacement wrappers and other entry
         // points are deliberately excluded even if they begin with E9.
         if (offset is not (0x17D89F0 or 0x1BB7F60) || memory is not IExecutableMemory code || expected.Length < 13) return false;

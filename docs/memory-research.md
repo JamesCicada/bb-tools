@@ -698,3 +698,21 @@ no serialized save offset is used as a runtime pointer.
 - This is an explicit persistent counter edit, excluded from presets and trainer
   cleanup. It does not call the next-journey routine or reset the world. Gameplay
   effects, existing-enemy refresh and persistence need live tests on both runtimes.
+
+
+## BBSC travel observers
+
+BBSC installs register-snapshot observers at `WarpNextStage_Bonfire`
+(`image+0x132E050`, tag 124, seven relocated bytes) and `PlayerWarp.LocalApply`
+(`image+0x154B110`, tag 149, six relocated bytes). The hook table and trampoline
+generator are shared by official bbport 0.6 and 0.7:
+[entry definitions](https://github.com/deadinside28/bloodborne_pc/blob/0.7/gpu/bbnet20/bbsc/core/bloodborne_re.cpp#L682),
+[trampoline generator](https://github.com/deadinside28/bloodborne_pc/blob/0.7/gpu/shim/bbport_guest_code_hooks.cpp#L128).
+
+The adapter verifies the complete wrapper, site tag, executable callback,
+relocated instructions and exact resume target, then rereads the entry and
+wrapper to detect changes during inspection. Travel keeps the BBSC observer
+in the call path and repeats validation while game threads are paused before
+publishing a request. Coordinate restoration also rechecks map context and the
+world-resource manager. Lamp travel and coordinate restoration have been
+confirmed working in-game.
