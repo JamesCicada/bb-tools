@@ -83,7 +83,7 @@ chmod +x BBTools.LinuxProbe
 This executable never enables writes. It reports platform/access-policy metadata or
 health, stamina, level, Echoes and attributes as JSON, without character names,
 saves, environment values or credentials. It rejects ambiguous images and caps
-scanning at 20 seconds/512 MiB. Image discovery uses a guest instruction anchor and
+scanning at 20 seconds/1024 MiB. Image discovery uses a guest instruction anchor and
 all seven core fingerprints; it does not assume the launcher ELF is the game image.
 Different builds/hooks remain subject to strict validation.
 

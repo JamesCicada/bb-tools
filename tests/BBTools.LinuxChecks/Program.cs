@@ -69,6 +69,20 @@ internal static class Program
             Reject<IOException>(()=>LinuxImageLocator.Find(fixture,maps.Append(second),TimeSpan.FromSeconds(5)),"ambiguous supported images are rejected");
             Reject<IOException>(()=>LinuxImageLocator.Find(fixture,maps,TimeSpan.FromTicks(-1)),"image scan respects its deadline");
             using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();Reject<OperationCanceledException>(()=>LinuxImageLocator.Find(fixture,maps,TimeSpan.FromSeconds(5),cancelled.Token),"guest-image discovery is cancellable before a window closes");}
+            // A loaded bbport process with NVIDIA/LLVM/DLSS libraries exceeds
+            // 512 MiB of executable mappings even when its guest validates.
+            var large=new SparseMemory();
+            foreach(var f in PlayerSession.Fingerprints)large.Store(image+f.Offset,f.Bytes);
+            var largeMaps=new[]{new LinuxMap(image,image+600UL*1024*1024,"rwxp","")};
+            Check(LinuxImageLocator.Find(large,largeMaps,TimeSpan.FromSeconds(20))==image,"validate a supported image when executable mappings exceed 512 MiB");
+            const ulong lateImage=image+550UL*1024*1024;
+            foreach(var f in PlayerSession.Fingerprints)large.Store(lateImage+f.Offset,f.Bytes);
+            try{LinuxImageLocator.Find(large,largeMaps,TimeSpan.FromSeconds(20));throw new Exception("ambiguous large scan accepted");}
+            catch(IOException ex){Check(ex.Message.Contains("No unique supported"),"reject a second valid image beyond the former 512 MiB limit");}
+            var bounded=new SparseMemory();
+            foreach(var f in PlayerSession.Fingerprints)bounded.Store(image+f.Offset,f.Bytes);
+            try{LinuxImageLocator.Find(bounded,[new LinuxMap(image,image+1100UL*1024*1024,"rwxp","")],TimeSpan.FromSeconds(20));throw new Exception("incomplete size-limited scan accepted");}
+            catch(IOException ex){Check(ex.Message.Contains("size limit"),"a size limit inside the last mapping cannot accept an incompletely scanned image");}
             if(OperatingSystem.IsLinux()&&RuntimeInformation.ProcessArchitecture==Architecture.X64){await NativeChecks();await DiscordChecks();}
             else Console.WriteLine("SKIP Linux syscall checks: this host is not Linux x64.");
             Console.WriteLine($"PASS: {count} Linux-port foundation checks.");return 0;
@@ -199,7 +213,7 @@ internal static class Program
     {
         private readonly Dictionary<ulong,byte> bytes=new();
         public void Store(ulong at,byte[] value){for(var i=0;i<value.Length;i++)bytes[at+(ulong)i]=value[i];}
-        public byte[] Read(ulong at,int size){var result=new byte[size];for(var i=0;i<size;i++)result[i]=bytes.GetValueOrDefault(at+(ulong)i);return result;}
+        public byte[] Read(ulong at,int size){var result=new byte[size];foreach(var pair in bytes)if(pair.Key>=at&&pair.Key-at<(ulong)size)result[(int)(pair.Key-at)]=pair.Value;return result;}
         public void Write(ulong at,byte[] value)=>throw new Exception("Read-only inspection attempted a write.");
     }
 }
