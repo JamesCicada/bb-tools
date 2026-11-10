@@ -157,6 +157,16 @@ public sealed class ProcessMemory : IGameMemory
         try{if(!WriteProcessMemory(handle,(nuint)at,replacement,14,out var count)||count!=14)throw new IOException("Movement patch write failed.");}
         finally{var flushed=FlushInstructionCache(handle,(nuint)at,14);var restored=VirtualProtectEx(handle,(nuint)at,14,protection,out _);if(!flushed||!restored)throw new IOException("Movement protection/cache restoration failed.");}
     }
+    public void ReplaceDeathPenaltyCode(ulong imageBase,byte[] expected,byte[] replacement)
+    {
+        if(!DeathPenaltyOverride.IsSupportedPair(expected,replacement))throw new ArgumentException("Unsupported death-penalty patch.");
+        var at=imageBase+DeathPenaltyOverride.Offset;
+        if(!Read(at,expected.Length).SequenceEqual(expected))throw new IOException("Death-penalty instructions changed externally; no patch was applied.");
+        if(!VirtualProtectEx(handle,(nuint)at,(nuint)expected.Length,0x40,out var protection))throw new IOException("Death-penalty code is unavailable.");
+        try{if(!WriteProcessMemory(handle,(nuint)at,replacement,(nuint)replacement.Length,out var count)||count!=(nuint)replacement.Length)throw new IOException("Death-penalty patch write failed.");}
+        finally{var flushed=FlushInstructionCache(handle,(nuint)at,(nuint)expected.Length);var restored=VirtualProtectEx(handle,(nuint)at,(nuint)expected.Length,protection,out _);if(!flushed||!restored)throw new IOException("Death-penalty protection/cache restoration failed.");}
+        if(!Read(at,replacement.Length).SequenceEqual(replacement))throw new IOException("Death-penalty patch readback failed.");
+    }
     public void ReplacePhotoOutputCode(ulong imageBase, byte[] expected, byte[] replacement)
     {
         if(expected.Length!=PhotoCameraOutput.Original.Length||replacement.Length!=expected.Length)throw new ArgumentException("Invalid photo output patch size.");

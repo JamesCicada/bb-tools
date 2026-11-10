@@ -3,11 +3,13 @@ namespace BBTools.Memory;
 public enum EchoesObservationKind { Death, Returned }
 public sealed record EchoesProtectionObservation(EchoesObservationKind Kind,int LastLivingEchoes,int CurrentEchoes,bool DeathObserved,bool LoadedAgain)
 {
-    public string Summary=>$"{Kind}: last living Echoes {LastLivingEchoes}, current {CurrentEchoes}, death observed {DeathObserved}, loading observed {LoadedAgain}. Protection selected; observation only, no balance refund.";
+    public bool RequiresRecovery=>Kind==EchoesObservationKind.Returned&&DeathObserved&&CurrentEchoes<LastLivingEchoes;
+    public string Summary=>$"{Kind}: last living Echoes {LastLivingEchoes}, current {CurrentEchoes}, death observed {DeathObserved}, loading observed {LoadedAgain}.";
 }
 
-// Observe only. Spending, warp/reload and deaths are never turned into automatic
-// refunds. Retained numbers are diagnostics, never addresses for later writes.
+// Spending and ordinary warp/reload transitions never cause a refund. A retained
+// balance is used only after the caller has observed both a death and a lower
+// balance on the subsequent living-player snapshot.
 public sealed class EchoesProtectionDiagnostics
 {
     private bool tracking,wasAlive,unavailable,death;

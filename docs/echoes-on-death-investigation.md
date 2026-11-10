@@ -2,9 +2,9 @@
 
 2026-11-01. Reported with BB Tools 0.6.10 and
 [Jgamrot/yharnam-pc](https://github.com/Jgamrot/yharnam-pc), a Supermedo fork.
-Exact runtime build, mods/patches, first-versus-subsequent-death behavior and the
-Echoes balances were not supplied. This investigation does not establish the
-reported loss's root cause or confirm a gameplay fix.
+Exact runtime build, mods/patches and first-versus-subsequent-death behavior were
+not supplied. The later 0.7.0 trace confirms the loss but cannot itself confirm a
+gameplay fix.
 
 ## What the submitted log establishes
 
@@ -24,7 +24,7 @@ reported loss's root cause or confirm a gameplay fix.
 
 ## Code review
 
-Existing protection maintains the game's script-visible death-penalty skip flag,
+Existing protection originally maintained the game's script-visible death-penalty skip flag,
 GameDataMan+0xA8, read by the verified IsDeathPenaltySkip getter. It is not an
 interception of every native Blood Echo deduction and does not refund a remembered
 balance. Infinite consumables owns a resource-module bit; reward multipliers own a
@@ -42,7 +42,7 @@ before writing. Manager replacement could therefore direct a write into a retire
 allocation. A synthetic regression reproduces that sequence. This is a verified
 code defect, not proof it caused this user's report.
 
-## Hardening and diagnostics in the pending 0.7.0 build
+## Hardening and diagnostics in 0.7.0
 
 - Recheck manager identity before acquiring flag ownership and immediately before
   changing its byte. Pause game threads only for an actual change; verify readback
@@ -52,8 +52,7 @@ code defect, not proof it caused this user's report.
 - Log initial protection ownership and any observed flag reset/reapplication.
 - Record observed deaths and the first return after death/loading, including last
   observed living and current Echoes balances. Ordinary spending is not a death;
-  loading without a sampled death is labeled separately. Never automatically refund
-  a balance or duplicate Echoes held by a bloodstain.
+  loading without a sampled death is labeled separately.
 - Shared code covers Windows and Linux. Automated checks verify ownership/reset
   behavior and the diagnostic state machine; **yharnam-pc gameplay remains untested**.
 
@@ -61,5 +60,11 @@ code defect, not proof it caused this user's report.
 
 A new session log with the exact yharnam-pc build and a death/respawn reproduction
 will distinguish a cleared flag, a manager transition, and loss despite a set flag.
-Only the latter would justify investigating a separate native bloodstain/deduction
-hook. Keep multiplier/durability interactions as hypotheses until reproduced.
+The submitted 0.7.0 session establishes the latter: the flag was reset and
+reapplied during death, then a confirmed return reported `79,540 → 0` Echoes.
+The pending follow-up holds the verified `IsDeathPenaltySkip` native reader true
+for the selection lifetime, rather than relying solely on the transient manager
+byte. It also restores the remembered balance only after a confirmed death return
+with a lower value. Ordinary spending and a warp/reload cannot qualify for that
+recovery. Keep multiplier/durability interactions as hypotheses until reproduced;
+live feedback is still required before calling the fix confirmed.

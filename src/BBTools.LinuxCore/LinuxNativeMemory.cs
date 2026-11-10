@@ -198,6 +198,8 @@ public sealed partial class LinuxProcessMemory
     }
     public void ReplaceMovementCode(ulong image,byte[] expected,byte[] replacement)
     {if(expected.Length!=14||replacement.Length!=14)throw new ArgumentException("Invalid movement patch.");ReplaceCode(image,MovementSpeed.Offset,expected,replacement);}
+    public void ReplaceDeathPenaltyCode(ulong image,byte[] expected,byte[] replacement)
+    {if(!DeathPenaltyOverride.IsSupportedPair(expected,replacement))throw new ArgumentException("Unsupported death-penalty patch.");ReplaceCode(image,DeathPenaltyOverride.Offset,expected,replacement);}
     public void ReplacePhotoOutputCode(ulong image,byte[] expected,byte[] replacement)
     {if(expected.Length!=PhotoCameraOutput.Original.Length)throw new ArgumentException("Invalid photo patch.");ReplaceCode(image,PhotoCameraOutput.Offset,expected,replacement);}
     public void ReplaceShoulderCode(ulong image,byte[] expected,byte[] replacement)

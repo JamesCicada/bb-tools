@@ -7,6 +7,7 @@ public enum PracticeFlag { GodMode, OneShot, Stealth, Silence, NoAi, NoFallDamag
 public sealed partial class PlayerSession
 {
     private readonly Dictionary<PracticeFlag, (ulong Owner, byte Original,uint Handle)> ownedFlags = [];
+    private bool deathPenaltyOverrideInstalled;
     public static readonly (ulong Offset, byte[] Bytes)[] FeatureFingerprints =
     [
         (0x1A2FD81, Convert.FromHexString("F6800002000002")),
@@ -20,8 +21,41 @@ public sealed partial class PlayerSession
         (0x1A35B75, Convert.FromHexString("F6800002000008")),
         (0x1332F13, Convert.FromHexString("0FB6CB8B90E10100000FB6B0E5010000")),
         (0x18CBFC7, Convert.FromHexString("8BB7E1010000F7C600400004")),
-        (0x13389B0, Convert.FromHexString("488D0579272004488B004885C0740B80B8A8000000000F95C0C3"))
+        (DeathPenaltyOverride.Offset, DeathPenaltyOverride.Original)
     ];
+    private void EnableDeathPenaltyOverride()
+    {
+        if(deathPenaltyOverrideInstalled||memory is not IGameMemory process)return;
+        try
+        {
+            process.ReplaceDeathPenaltyCode(imageBase,DeathPenaltyOverride.Original,DeathPenaltyOverride.Forced);
+            deathPenaltyOverrideInstalled=true;
+            GameDiagnostics.Log?.Invoke("ECHOES","Death-penalty reader override enabled; the native query will remain enabled through the death transition.");
+        }
+        catch(IOException ex)
+        {
+            // Retain the supported data-flag fallback for runtimes where the
+            // executable page cannot be safely patched.
+            GameDiagnostics.Log?.Invoke("ECHOES",$"Death-penalty reader override unavailable; using the data flag fallback. {ex.Message}");
+        }
+    }
+    private void DisableDeathPenaltyOverride()
+    {
+        if(!deathPenaltyOverrideInstalled)return;
+        if(memory is not IGameMemory process)throw new IOException("Death-penalty override ownership is invalid.");
+        process.ReplaceDeathPenaltyCode(imageBase,DeathPenaltyOverride.Forced,DeathPenaltyOverride.Original);
+        deathPenaltyOverrideInstalled=false;
+        GameDiagnostics.Log?.Invoke("ECHOES","Death-penalty reader override released.");
+    }
+    private void ValidatePracticeInstructions()
+    {
+        foreach (var f in FeatureFingerprints)
+        {
+            var actual=memory.Read(imageBase+f.Offset,f.Bytes.Length);
+            if(f.Offset==DeathPenaltyOverride.Offset&&deathPenaltyOverrideInstalled&&actual.SequenceEqual(DeathPenaltyOverride.Forced))continue;
+            if(!actual.SequenceEqual(f.Bytes))throw new IOException("Practice flag instructions differ from the supported build.");
+        }
+    }
     private void WriteDeathPenaltyFlag(ulong owner,byte value)
     {
         void Apply()
@@ -40,8 +74,7 @@ public sealed partial class PlayerSession
     public void SetPracticeFlag(PracticeFlag flag, bool enabled)
     {
         ValidateImage();
-        foreach (var f in FeatureFingerprints)
-            if (!memory.Read(imageBase + f.Offset, f.Bytes.Length).SequenceEqual(f.Bytes)) throw new IOException("Practice flag instructions differ from the supported build.");
+        ValidatePracticeInstructions();
         if (!enabled) { RestorePracticeFlag(flag); return; }
         var player = ReadPlayer();
         var owner = FlagOwner(flag,player);
@@ -68,12 +101,14 @@ public sealed partial class PlayerSession
         {
             if(flag==PracticeFlag.NoEchoesLoss)WriteDeathPenaltyFlag(owner,desired);else memory.Write(address,[desired]);
         }
+        if(flag==PracticeFlag.NoEchoesLoss)EnableDeathPenaltyOverride();
         if(flag==PracticeFlag.NoEchoesLoss&&(acquired||current!=desired))
             GameDiagnostics.Log?.Invoke("ECHOES",$"Death-penalty skip {(acquired?"enabled":"reapplied after reset")}: manager 0x{owner:X}, actor 0x{player.Actor:X}, observed {current}, requested {desired}, original {ownedFlags[flag].Original}.");
     }
     public void RestorePracticeFlag(PracticeFlag flag)
     {
         if (!ownedFlags.TryGetValue(flag, out var previous)) return;
+        if(flag==PracticeFlag.NoEchoesLoss)DisableDeathPenaltyOverride();
         if(flag==PracticeFlag.NoEchoesLoss&&memory.Pointer(imageBase+0x553B130)!=previous.Owner){ownedFlags.Remove(flag);return;}
         if (LocalFlag(flag))
         {

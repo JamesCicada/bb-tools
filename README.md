@@ -1,4 +1,4 @@
-> **Version 0.7.0:** Windows and Linux share gameplay features and release numbering. New Linux native actions are **NOT TESTED IN-GAME**. A community tester confirmed the previous Linux preview connected and worked with **bbport 0.7 / bbprobe**; individual feature coverage was not specified.
+> **Version 0.7.1:** Windows and Linux share gameplay features and release numbering. **Keep Blood Echoes on death** now holds the native death-penalty reader through the death transition and recovers the last living balance only after a confirmed death loss; live feedback is still needed. New Linux native actions are **NOT TESTED IN-GAME**. A community tester confirmed the previous Linux preview connected and worked with **bbport 0.7 / bbprobe**; individual feature coverage was not specified.
 > Nightwatch, the gem-editor overhaul, NG editing, shoulder camera and experimental photo/flight/noclip keep their existing pending live-test status.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
@@ -12,6 +12,15 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
 
+## v0.7.1: Echoes protection through the death transition
+
+- **Keep Blood Echoes on death** keeps the verified native death-penalty reader enabled for the full death transition, rather than relying only on the manager byte that some bbport-derived runtimes reset before committing the bloodstain.
+- If a confirmed death still returns a lower balance, the last observed living balance is restored once. Ordinary spending, warps and normal reloads never qualify for that recovery.
+- Disabling the option restores the exact supported instructions and the captured flag state. Shared Windows/Linux behavior.
+- **Needs live feedback** on yharnam-pc and other runtimes before this is marked confirmed. See the [investigation](docs/echoes-on-death-investigation.md) and [release notes](docs/releases/v0.7.1.md).
+
+### Earlier releases
+
 ## v0.7.0: Linux desktop and shared gameplay
 
 - Native Linux now exposes player/Insight/NG edits, combat and parry practice, multipliers, discovery/free progression, durability, items/gems, lamps and boss revival, camera/movement tuning, retained enemy details, presets, library/save tools and Discord presence.
@@ -19,8 +28,6 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 - Configurable hotkeys, opt-in photo/flight/noclip and lossless photo filters use X11/XWayland on Linux. Native Wayland game input/capture is not supported.
 - Windows and Linux downloads use **0.7.0**, with both platforms checked before one draft release is prepared. Each archive contains its executable and README.md.
 - **New Linux native features need live testing.** See the [Linux guide](docs/linux-support.md) and [release notes](docs/releases/v0.7.0.md). Adjustable firearm-parry timing/auto-parry remain research tasks; parry practice is available.
-
-### Earlier releases
 
 ## v0.6.10: Nightwatch interoperability — not tested in-game
 
@@ -148,9 +155,11 @@ encounter revival is tested and confirmed on Bloodborne PC. Multi-phase and endi
 boss profiles retain their individual test status.
 
 **Combat → Controls → Keep Blood Echoes on death** enables the game's native
-death-penalty skip flag. It does not refill the balance or change spending. The
-selection survives loading and is included in presets; disabling restores the
-captured flag. Death/respawn and bloodstain recovery still need live confirmation.
+death-penalty reader for the full death transition. If a supported runtime still
+returns with a lower balance after a confirmed death, BB Tools restores the last
+living balance. Ordinary spending and normal reloads never trigger that recovery.
+The selection survives loading and is included in presets; disabling restores the
+captured state. Death/respawn and bloodstain recovery still need live confirmation.
 
 **Settings → Preferences → Discord Rich Presence** is on by default and can be
 turned off. With Discord desktop running and a connected game, it shows Bloodborne,

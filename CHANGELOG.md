@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 — 2026-11-10
+
+- Keep the verified native death-penalty reader enabled for the whole death transition when **Keep Blood Echoes on death** is selected, instead of relying only on the manager byte that some bbport-derived runtimes reset.
+- Restore the last observed living balance only after a confirmed death returns a lower value. Ordinary spending, warps and normal reloads never trigger the recovery, and disabling the option restores the exact supported instructions and captured flag state.
+- Shared Windows/Linux behavior with logged death and return balances. Automated checks cover the override, restoration and recovery state machine; the yharnam-pc report still needs live feedback.
+
 ## 0.7.0 — 2026-11-01
 
 - Share the gameplay backend and version between Windows and native Linux, with one release draft gated on both platforms and checksummed downloads.

@@ -31,6 +31,7 @@ public interface IGameMemory : IExecutableMemory, IDisposable
     ulong FindActiveCameraStep(ulong owner, ulong imageBase, CancellationToken cancellationToken = default);
     void WriteCameraFovClamp(ulong imageBase, bool enable);
     void ReplaceMovementCode(ulong imageBase, byte[] expected, byte[] replacement);
+    void ReplaceDeathPenaltyCode(ulong imageBase, byte[] expected, byte[] replacement);
     void ReplacePhotoOutputCode(ulong imageBase, byte[] expected, byte[] replacement);
     void ReplaceShoulderCode(ulong imageBase, byte[] expected, byte[] replacement);
     void ReplaceLootCode(ulong imageBase, ulong offset, byte[] expected, byte[] replacement);

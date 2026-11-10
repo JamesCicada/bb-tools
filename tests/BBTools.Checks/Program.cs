@@ -496,6 +496,8 @@ internal static partial class Program
             Check(presenceSession.ReadPresenceDetails(new(true,false,false,false,false,false))==new DiscordGameDetails(),"deselected Discord fields are omitted from the snapshot");
             memory.SetInt32(player.Actor+0x3F8,oldPresenceMap);
             session.SetEchoes(987654); Check(session.ReadCharacter().Values.Echoes == 987654, "set echoes");
+            session.SetEchoes(0);Check(session.RestoreEchoesAfterConfirmedDeath(987654)&&session.ReadCharacter().Values.Echoes==987654,"restore Echoes only after a confirmed death-loss request");
+            Check(!session.RestoreEchoesAfterConfirmedDeath(1000)&&session.ReadCharacter().Values.Echoes==987654,"protected Echoes recovery never lowers a current balance");
             Reject<ArgumentException>(() => session.SetEchoes(-1), "reject negative echoes");
             Reject<ArgumentException>(() => session.SetEchoes(1000000000), "reject excessive echoes");
             session.SetAttributes([11,12,13,14,15,16], character);

@@ -79,7 +79,12 @@ internal static partial class Program
             VirtualProtect((nint)(root+0x1338000),4096,0x20,out _);
             var penaltySkip=Marshal.GetDelegateForFunctionPointer<Getter>((nint)(root+0x13389B0));
             Check((byte)penaltySkip(0)==0,"native IsDeathPenaltySkip initially reports ordinary death penalties");
-            session.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);Check((byte)penaltySkip(0)==1&&memory.Read(gameData+0xA8,1)[0]==1,"Echoes protection activates the native death-penalty gate without balance/refund writes");
+            memory.ReplaceDeathPenaltyCode(root,DeathPenaltyOverride.Original,DeathPenaltyOverride.Forced);
+            Check((byte)penaltySkip(0)==1&&memory.Read(root+DeathPenaltyOverride.Offset,DeathPenaltyOverride.Forced.Length).SequenceEqual(DeathPenaltyOverride.Forced),"death-penalty override keeps the native reader enabled even when GameDataMan resets its flag");
+            memory.ReplaceDeathPenaltyCode(root,DeathPenaltyOverride.Forced,DeathPenaltyOverride.Original);
+            Check((byte)penaltySkip(0)==0,"death-penalty override restores the exact supported reader instructions");
+            session.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);
+            Check((byte)penaltySkip(0)==1&&memory.Read(gameData+0xA8,1)[0]==1,"Echoes protection activates the native death-penalty gate without balance/refund writes");
             session.RestorePracticeFlag(PracticeFlag.NoEchoesLoss);Check((byte)penaltySkip(0)==0,"turning Echoes protection off restores its original native death-penalty flag");
             memory.Write(gameData+0xA8,[1]);session.SetPracticeFlag(PracticeFlag.NoEchoesLoss,true);session.RestorePracticeFlag(PracticeFlag.NoEchoesLoss);
             Check((byte)penaltySkip(0)==1,"Echoes protection preserves a preexisting death-penalty skip flag");
@@ -103,7 +108,7 @@ internal static partial class Program
             Check(observations.Observe(1,2,true,200,true)==null&&observations.Observe(1,2,true,150,true)==null,"Echoes diagnostics do not mistake ordinary spending for death loss");
             Check(observations.Observe(1,2,false,0,true) is {Kind:EchoesObservationKind.Death,LastLivingEchoes:150,CurrentEchoes:0},"death diagnostics retain the last observed living balance");
             observations.PlayerUnavailable();
-            Check(observations.Observe(3,4,true,0,true) is {Kind:EchoesObservationKind.Returned,DeathObserved:true,LoadedAgain:true},"respawn diagnostics distinguish a sampled death from a new player allocation");
+            Check(observations.Observe(3,4,true,0,true) is {Kind:EchoesObservationKind.Returned,DeathObserved:true,LoadedAgain:true,RequiresRecovery:true},"respawn diagnostics distinguish a sampled death from a new player allocation and request guarded recovery");
             observations.Observe(3,4,true,500,true);observations.PlayerUnavailable();
             Check(observations.Observe(5,6,true,500,true) is {Kind:EchoesObservationKind.Returned,DeathObserved:false},"loading diagnostics never invent a death when only a warp/reload was observed");
             observations.Observe(5,6,true,500,false);observations.PlayerUnavailable();

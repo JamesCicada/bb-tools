@@ -1,4 +1,4 @@
-> Historical preview upload notes. For the synchronized release, use [Linux v0.7.0 details](nexusmods-linux-0.7.0.md).
+> Historical preview upload notes. For the synchronized release, use [Linux v0.7.1 details](nexusmods-linux-0.7.1.md).
 
 # Nexus Mods Linux file — ready-to-upload details
 

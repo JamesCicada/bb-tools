@@ -48,7 +48,14 @@ public sealed class LinuxGameConnection : IDisposable
             {FeaturesPaused=true;FeatureError=ex.Message;}
         }
         if(echoDeathDiagnostics.Observe(player.Actor,character.Address,player.Health>0,character.Values.Echoes,Editing&&Flags.Contains(PracticeFlag.NoEchoesLoss)) is {} observation)
+        {
             GameDiagnostics.Log?.Invoke("ECHOES",observation.Summary);
+            if(observation.RequiresRecovery&&Session.RestoreEchoesAfterConfirmedDeath(observation.LastLivingEchoes))
+            {
+                character=Session.ReadCharacter();
+                GameDiagnostics.Log?.Invoke("ECHOES",$"Restored {observation.LastLivingEchoes:N0} Blood Echoes after confirmed death loss ({observation.CurrentEchoes:N0} on return).");
+            }
+        }
         return new(player,character);
     }
     public void PlayerUnavailable(){echoDeathDiagnostics.PlayerUnavailable();}

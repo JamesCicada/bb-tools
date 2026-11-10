@@ -48,6 +48,17 @@ public sealed partial class PlayerSession(IMemory memory, ulong imageBase)
         memory.SetInt32(character.Address + 0x94, value);
         if (memory.Int32(character.Address + 0x94) != value) throw new IOException("Echoes changed during the write. Check the game before retrying.");
     }
+    public bool RestoreEchoesAfterConfirmedDeath(int preservedBalance)
+    {
+        if (preservedBalance is < 0 or > 999999999) throw new ArgumentOutOfRangeException(nameof(preservedBalance));
+        ValidateImage();
+        var character=ReadCharacter();
+        if(character.Values.Echoes>=preservedBalance)return false;
+        EnsureSameCharacter(character);
+        memory.SetInt32(character.Address+0x94,preservedBalance);
+        if(memory.Int32(character.Address+0x94)!=preservedBalance)throw new IOException("Echoes changed during protected-death restoration. Check the game before retrying.");
+        return true;
+    }
     public void SetAttributes(int[] attributes, CharacterState expected)
     {
         if (attributes.Length != 6 || attributes.Any(x => x is < 1 or > 99)) throw new ArgumentException("Every attribute must be between 1 and 99.");

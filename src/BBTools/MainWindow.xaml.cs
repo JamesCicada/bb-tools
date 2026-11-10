@@ -289,7 +289,15 @@ public partial class MainWindow : Window
                 _ = ResumeMultipliers(state.Actor);
             var character = session.ReadCharacter();
             if(echoDeathDiagnostics.Observe(state.Actor,character.Address,state.Health>0,character.Values.Echoes,KeepEchoesOnDeath.IsChecked==true) is {} echoObservation)
+            {
                 App.Log?.Write("ECHOES",echoObservation.Summary);
+                if(echoObservation.RequiresRecovery&&session.RestoreEchoesAfterConfirmedDeath(echoObservation.LastLivingEchoes))
+                {
+                    character=session.ReadCharacter();
+                    App.Log?.Write("ECHOES",$"Restored {echoObservation.LastLivingEchoes:N0} Blood Echoes after confirmed death loss ({echoObservation.CurrentEchoes:N0} on return).");
+                    Status.Text=Translations.T("message.BloodEchoesupdated.a23b0e1");
+                }
+            }
             EchoValue.Text = character.Values.Echoes.ToString("N0");
             EchoControls.IsEnabled = StatControls.IsEnabled = true;
             if (statDraft == null) PopulateStats(character);

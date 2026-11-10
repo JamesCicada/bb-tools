@@ -21,17 +21,17 @@ any Linux game feature as confirmed.
 | Work | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | Death-protection manager ownership/readback hardening | ✔️ | ⌛ | Deterministic manager-swap regression; pause only for actual flag changes. Not proof of the reported loss's cause. |
-| Protection reset and death/respawn balance diagnostics | ✔️ | ⌛ | Observation only; no refunds or bloodstain duplication. Shared Windows/Linux path. |
-| Reproduce Echoes loss on the reporter's yharnam-pc build | ⌛ | ➖ | Exact build/mods and new trace needed. See [investigation](docs/echoes-on-death-investigation.md). |
+| Protection reset and death/respawn balance diagnostics | ✔️ | ⌛ | Shared Windows/Linux native-reader override plus guarded confirmed-death balance recovery. Needs live feedback. |
+| Reproduce Echoes loss on the reporter's yharnam-pc build | ✔️ | ⌛ | New trace confirmed the script flag reset and `79,540 → 0` return. Fix needs player feedback. See [investigation](docs/echoes-on-death-investigation.md). |
 
-## Shared desktop release — v0.7.0
+## Shared desktop release — v0.7.1
 
 | Work | Implemented | Tested and confirmed | Notes |
 | --- | :---: | :---: | --- |
 | Shared Windows/Linux gameplay backend and version | ✔️ | ⌛ | Native Linux memory/thread layer; shared feature algorithms, catalogs and data formats. Automated coverage is not live confirmation. |
 | Linux advanced feature pages | ✔️ | ⌛ | Player, combat/parry practice, items/gems, travel/bosses/chalices, camera/movement, target details, libraries, save tools and Discord. New native actions NOT TESTED IN-GAME. |
 | Linux configurable input and experimental camera/capture | ✔️ | ⌛ | X11/XWayland; hidden until explicitly enabled. Native Wayland window input/capture remains pending. |
-| Unified v0.7.0 draft and checksummed platform packages | ✔️ | ⌛ | Windows and Linux checks must pass before a single draft. Each archive has its executable and README.md. |
+| Unified v0.7.1 draft and checksummed platform packages | ✔️ | ⌛ | Windows and Linux checks must pass before a single draft. Each archive has its executable and README.md. |
 | bbport 0.7 / bbprobe process guidance | ✔️ | ✔️ | Community reported the previous preview working with this launch/attach path. No individual feature list or distro supplied. |
 | Adjustable firearm-parry window / automatic parrying | ⌛ | ➖ | Existing practice setup is exposed on both platforms. A reliable native timing/eligibility path is still needed; do not replace it with generic counter/stagger flags. |
 
@@ -307,6 +307,12 @@ These need verified engine paths. They are not represented by placeholder contro
 - ⌛ Cover consumables, weapons and variants, armor, Caryll/oath runes, blood gems, key items and chalice items; include common aliases and category filters.
 - ⌛ Distinguish spawnable item IDs from rune/gem effect IDs and generated instance handles. Use the appropriate grant path for each category; do not treat effect IDs as ordinary Goods IDs.
 - ⌛ Verify mappings, search results and actual grants in game before marking tested and confirmed. Keep manual ID entry available as an advanced option.
+
+### Rank-aware Caryll rune grants
+
+- ⌛ Add a dedicated Caryll-rune picker that lists the actual rank/effect, including Clockwise Metamorphosis +15% HP and Anti-Clockwise Metamorphosis +20% stamina.
+- ⌛ Resolve and construct the game-owned rune instance through the native item path. Base catalog IDs identify a rune family only; do not present them as a reliable way to choose a rank.
+- ⌛ Verify creation, storage behavior and Memory Altar equipping on Bloodborne PC, shadPS4 and Linux before marking the feature tested and confirmed.
 
 This roadmap includes implemented foundations and future proposals. Implementation
 and tested-and-confirmed status are tracked separately; pending live checks remain ⌛.
