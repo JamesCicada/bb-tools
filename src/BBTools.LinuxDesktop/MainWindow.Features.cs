@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using BBTools.LinuxCore;
 using BBTools.Memory;
 
@@ -32,6 +33,7 @@ public partial class MainWindow
         if(key!=null)control.Bind(property,control.GetResourceObservable("L."+key));
         return control;
     }
+    private static string E(string key)=>Translations.English[key];
     private static TextBlock Label(string text)=>Localize(new TextBlock{Text=Translations.Source(text),Margin=new(0,6,0,2)},TextBlock.TextProperty,text);
     private static StackPanel Column()=>new(){Spacing=8,Margin=new(0,12,0,12)};
     private static ScrollViewer Page(Control content)=>new(){Content=content};
@@ -150,7 +152,71 @@ public partial class MainWindow
         var favoriteName=new TextBox{PlaceholderText="Favorite name"};var favorites=Picker(library?.Favorites()??[]);
         void Favorites()=>favorites.ItemsSource=library?.Favorites()??[];refreshLists.Add(Favorites);
         Add(panel,favoriteName,Button("Save item favorite",()=>{Library().Save(new FavoriteItem(favoriteName.Text??"",(int)id.Value!,Category(),(int)count.Value!));Favorites();return Task.CompletedTask;},false),favorites,Button("Load favorite",()=>{var f=Selected<FavoriteItem>(favorites);id.Value=f.Id;count.Value=f.Quantity;category.SelectedIndex=f.Category switch{0=>1,0x10000000=>2,0x20000000=>3,_=>0};return Task.CompletedTask;},false));
+        BuildLoadouts(panel,picker,()=>(int)id.Value!,Category,()=>(int)count.Value!,gemSlots);
         var gems=Column();BuildGems(gems);return new TabControl{ItemsSource=new[]{new TabItem{Header="Item spawn",Content=Page(panel)},new TabItem{Header="Blood gems",Content=Page(gems)}}};
+    }
+    // Named item sets: edits save immediately and work offline; spawning needs editing enabled.
+    private void BuildLoadouts(StackPanel panel,ComboBox catalog,Func<int> itemId,Func<uint> category,Func<int> quantity,CheckBox gemSlots)
+    {
+        var name=new TextBox{PlaceholderText=Translations.T("loadouts.name"),Text="Practice kit"};
+        var saved=Picker(library?.Loadouts()??[]);var items=new ListBox{MaxHeight=180};
+        ItemLoadout? Current()=>saved.SelectedItem as ItemLoadout;
+        void Show(){items.ItemsSource=Current()?.Items??[];if(Current() is {} l)name.Text=l.Name;}
+        void Reload(string? select)
+        {
+            var all=library?.Loadouts()??[];saved.ItemsSource=all;
+            saved.SelectedItem=all.FirstOrDefault(x=>x.Name.Equals(select,StringComparison.OrdinalIgnoreCase));Show();
+        }
+        saved.SelectionChanged+=(_,_)=>Show();refreshLists.Add(()=>Reload(Current()?.Name));
+        void Done(string key){preserveStatus=true;Status.Text=Translations.T(key);}
+        Add(panel,Label(E("loadouts.heading")),new TextBlock{Text=Translations.T("loadouts.help"),TextWrapping=Avalonia.Media.TextWrapping.Wrap},saved,name,items);
+        Add(panel,Button(E("loadouts.add"),()=>
+        {
+            var loadoutName=(name.Text??"").Trim();UserLibrary.ValidateName(loadoutName);
+            var id=itemId();var kind=category();
+            var label=catalog.SelectedItem is ItemChoice c&&c.Id==id&&c.Category==kind?c.Name:$"Item {id}";
+            var item=new LoadoutItem(label,id,kind,quantity());
+            var existing=Library().Loadouts().FirstOrDefault(x=>x.Name.Equals(loadoutName,StringComparison.OrdinalIgnoreCase));
+            Library().Save(existing?.With(item)??new ItemLoadout(loadoutName,[item]));Reload(loadoutName);Done("loadouts.added");return Task.CompletedTask;
+        },false),Button(E("loadouts.remove"),()=>
+        {
+            var loadout=Current()??throw new ArgumentException(Translations.T("loadouts.choose"));
+            var updated=loadout.Without(items.SelectedIndex);
+            if(updated.Items.Length==0){Library().Delete("loadout",updated.Name);Reload(null);}else{Library().Save(updated);Reload(updated.Name);}
+            Done("loadouts.removed");return Task.CompletedTask;
+        },false),Button(E("loadouts.spawn"),async()=>
+        {
+            var loadout=Current()??throw new ArgumentException(Translations.T("loadouts.choose"));
+            var openSlots=gemSlots.IsChecked==true;var adjusted=false;
+            await Native(f=>f.RunAsync(a=>LoadoutSpawner.SpawnAsync(loadout,item=>
+            {
+                var spawn=item.Id;
+                if(openSlots&&WeaponGemSlots.NeedsWorkshopUpgrade(item.Id,item.Category)){spawn=WeaponGemSlots.SpawnId(item.Id,item.Category);adjusted=true;}
+                log?.Write("ITEM",$"Loadout {loadout.Name}: ID {spawn} (requested {item.Id}), category {item.Category:X8}, quantity {item.Quantity}");
+                return a.SpawnAsync(spawn,item.Category,item.Quantity);
+            },(index,total,item)=>Dispatcher.UIThread.Post(()=>Status.Text=Translations.Format("loadouts.progress",index+1,total,item.Name)))));
+            preserveStatus=true;Status.Text=Translations.Format("loadouts.spawned",loadout.Items.Length,loadout.Name)+(adjusted?" "+Translations.T("loadouts.gemSlots"):"");
+        }),Button(E("loadouts.delete"),()=>
+        {
+            var loadout=Current()??throw new ArgumentException(Translations.T("loadouts.choose"));
+            Library().Delete("loadout",loadout.Name);Reload(null);Done("loadouts.deleted");return Task.CompletedTask;
+        },false));
+    }
+    private async Task ExportBugReport()
+    {
+        var path=await SaveFile(BugReport.DefaultFileName(DateTime.Now));if(path==null)return;
+        var details=new Dictionary<string,string>
+        {
+            ["PtraceScope"]=OperatingSystem.IsLinux()?LinuxPermissions.Scope():"n/a",
+            ["SessionType"]=Environment.GetEnvironmentVariable("XDG_SESSION_TYPE")??"unknown",
+            ["Desktop"]=Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")??"unknown",
+            ["FeaturesPaused"]=(connection?.FeaturesPaused==true).ToString(),
+        };
+        var context=new BugReportContext("Linux",log?.FilePath,connection!=null,connection?.Editing==true,
+            connection!=null?(Candidates.SelectedItem as LinuxCandidate)?.Name:null,Status.Text,Translations.CurrentLanguage,details);
+        log?.Write("INFO","Bug report exported");
+        var logs=await Task.Run(()=>BugReport.Create(path,context));
+        preserveStatus=true;Status.Text=Translations.Format("support.bugReportSaved",logs);
     }
     private void BuildGems(StackPanel panel)
     {
@@ -216,7 +282,7 @@ public partial class MainWindow
     }
     private void BuildAbout(StackPanel panel)
     {
-        Add(panel,Label("About BB Tools · "+AppInfo.Version),Label("Made with 🖤 By James Cicada. BB Tools is developed by one person; contributions and support help keep it growing."),Button("Support on Ko-fi",()=>{OpenUrl("https://ko-fi.com/jcicada");return Task.CompletedTask;},false),Button("GitHub · contribute or report a bug",()=>{OpenUrl(AppInfo.RepositoryUrl);return Task.CompletedTask;},false),Button("Check for updates",async()=>{using var client=new HttpClient();var result=await UpdateChecker.CheckAsync(client,AppInfo.Version,lifetime.Token);preserveStatus=true;Status.Text=result.IsNewerThan(AppInfo.Version)?"Update available: "+result.LatestVersion:"You have the latest release.";},false));
+        Add(panel,Label("About BB Tools · "+AppInfo.Version),Label("Made with 🖤 By James Cicada. BB Tools is developed by one person; contributions and support help keep it growing."),Button("Support on Ko-fi",()=>{OpenUrl("https://ko-fi.com/jcicada");return Task.CompletedTask;},false),Button("GitHub · contribute or report a bug",()=>{OpenUrl(AppInfo.RepositoryUrl);return Task.CompletedTask;},false),Button("Export bug report (ZIP)",ExportBugReport,false),Button("Check for updates",async()=>{using var client=new HttpClient();var result=await UpdateChecker.CheckAsync(client,AppInfo.Version,lifetime.Token);preserveStatus=true;Status.Text=result.IsNewerThan(AppInfo.Version)?"Update available: "+result.LatestVersion:"You have the latest release.";},false));
     }
     private void ApplyPresetPreferences(AppSettings? saved)
     {

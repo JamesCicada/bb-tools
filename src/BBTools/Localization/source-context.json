@@ -1935,5 +1935,62 @@
   ],
   "items.gemSlotsSpawned": [
     "MainWindow.xaml.cs:SpawnItem"
+  ],
+  "loadouts.heading": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.help": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.saved": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.name": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.items": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.add": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.remove": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.spawn": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.delete": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.added": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.removed": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.deleted": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.choose": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.spawned": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.progress": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "loadouts.gemSlots": [
+    "MainWindow.Loadouts.cs"
+  ],
+  "support.bugReport": [
+    "MainWindow.Loadouts.cs:ExportDiagnostics"
+  ],
+  "support.bugReportHelp": [
+    "MainWindow.Loadouts.cs:ExportDiagnostics"
+  ],
+  "support.bugReportSaved": [
+    "MainWindow.Loadouts.cs:ExportDiagnostics"
   ]
 }

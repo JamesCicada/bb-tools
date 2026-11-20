@@ -25,6 +25,8 @@
     <Compile Include="../BBTools/GemGuide.cs" Link="Shared/GemGuide.cs" />
     <Compile Include="../BBTools/ItemSearchIndex.cs" Link="Shared/ItemSearchIndex.cs" />
     <Compile Include="../BBTools/SaveRestore.cs" Link="Shared/SaveRestore.cs" />
+    <Compile Include="../BBTools/ItemLoadouts.cs" Link="Shared/ItemLoadouts.cs" />
+    <Compile Include="../BBTools/BugReport.cs" Link="Shared/BugReport.cs" />
     <Compile Include="../BBTools/TargetMonitor.cs" Link="Shared/TargetMonitor.cs" />
     <Compile Include="../BBTools/Diagnostics.cs" Link="Shared/Diagnostics.cs" />
     <Compile Include="../BBTools/UpdateChecker.cs" Link="Shared/UpdateChecker.cs" />

@@ -16,6 +16,13 @@ lists remain useful for regression testing. It does not mark future/unimplemente
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
 
+## Player tools — unreleased
+
+| Feature | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Item loadouts | ✔️ | ⌛ | Named sets of up to 50 validated item grants, spawned sequentially through the existing dispatcher; stops at first failure without retrying. Library storage and export/import covered by automated checks. Test full inventory, storage overflow and mixed goods/equipment in-game. |
+| Bug report export | ✔️ | ✔️ | Pure file export with automated checks for log selection, size cap, redaction and ZIP contents. No game interaction. |
+
 ## Nexus bug reports — 2026-11-20
 
 | Work | Implemented | Tested and confirmed | Notes |

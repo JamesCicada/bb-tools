@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Items → **Item loadouts**: save a named set of up to 50 items and spawn them all with one click, on Windows and Linux. Loadouts live in the library and travel with library export/import. Spawning stops at the first failure and never repeats items already granted; the gem-slot option applies to upgraded weapons. **Not tested in-game.**
+- Settings → About → **Export bug report (ZIP)** replaces the diagnostics JSON. One ZIP holds app, system and connection details plus the current and two previous session logs (newest 2 MB each). Your account name and home folder are replaced; saves, game files and libraries are never included. Linux reports also record the display session type, desktop and ptrace scope.
+- Linux: a fully exited game process now reports "process exited" rather than a missing `/proc` file error.
+- Draft Simplified Chinese, French and Arabic strings for the new features and the gem-slot option.
 - Linux: fewer filesystem reads while polling. Reads re-check the game process identity at most every 50 ms (writes and native actions still check every time), and write validation reuses the process memory map for up to 1 s, re-reading it on any miss and after every native action.
 
 ## 0.7.2 — 2026-11-20

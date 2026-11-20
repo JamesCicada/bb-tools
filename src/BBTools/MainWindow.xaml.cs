@@ -720,7 +720,7 @@ public partial class MainWindow : Window
         LocationPicker.ItemsSource = Library.Locations().Where(x => x.Label.Contains(LocationSearch.Text.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();
         LocationPicker.SelectedItem = selected;
         if (LocationPicker.SelectedIndex < 0) LocationPicker.SelectedIndex = 0;
-        FavoritePicker.ItemsSource=Library.Favorites();FavoritePicker.SelectedIndex=0;
+        FavoritePicker.ItemsSource=Library.Favorites();FavoritePicker.SelectedIndex=0;RefreshLoadouts();
         var preset = PresetPicker.SelectedItem as PracticePreset;
         var presets=Library.Presets().Where(x=>x.ToString().Contains(PresetSearch.Text.Trim(),StringComparison.OrdinalIgnoreCase)).ToArray();
         PresetPicker.ItemsSource=presets;PresetPicker.SelectedItem=presets.FirstOrDefault(x=>x.Name.Equals(preset?.Name,StringComparison.OrdinalIgnoreCase));
@@ -789,16 +789,6 @@ public partial class MainWindow : Window
             Library.Delete("preset",preset.Name); RefreshLibrary(); Status.Text = Translations.T("message.Presetdeletedactivecombatsettingsareunchanged.d723239");
         }
         catch (Exception ex) when (IsExpected(ex) || ex is JsonException) { App.LogError(ex); Status.Text = ex.Message; }
-    }
-    private void ExportDiagnostics(object sender,RoutedEventArgs e)
-    {
-        var picker=new SaveFileDialog{Filter="Diagnostics (*.json)|*.json",FileName=$"BBTools-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.json"};if(picker.ShowDialog()!=true)return;
-        try
-        {
-            var status=Diagnostics.RedactPaths(Status.Text);
-            var snapshot=new{AppVersion=AppInfo.DisplayVersion,CreatedUtc=DateTime.UtcNow,OS=Environment.OSVersion.ToString(),Runtime=Environment.Version.ToString(),Connected=session!=null,GameVersion="CUSA03173 1.09",AutoConnect=settings.AutoConnect,Fov=FovSlider.Value,FovOverride=FovEnabled.IsChecked==true,LastStatus=status};
-            File.WriteAllText(picker.FileName,JsonSerializer.Serialize(snapshot,new JsonSerializerOptions{WriteIndented=true}));Status.Text=Translations.T("message.Diagnosticsexportedwithoutsavedataorpersonalpaths.93aae61");
-        }catch(Exception ex)when(IsExpected(ex)){App.LogError(ex);Status.Text=ex.Message;}
     }
     private ComboBox[] HotkeyControls=>[HotkeyHeal,HotkeyGod,HotkeySave,HotkeyRestore,HotkeyRetry];
     private void LoadHotkeyControls()
