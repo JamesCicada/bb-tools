@@ -55,7 +55,11 @@ public sealed partial class LinuxProcessMemory : IGameMemory
     }
     private string Identity()
     {
-        var stat = File.ReadAllText($"/proc/{pid}/stat");
+        string stat;
+        // A reaped process has no /proc entry; report that as an exit, not a missing file.
+        try { stat = File.ReadAllText($"/proc/{pid}/stat"); }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        { throw new IOException("The selected process exited or its PID was reused. Select it again.", ex); }
         return ParseIdentity(stat);
     }
     internal static string ParseIdentity(string stat)
