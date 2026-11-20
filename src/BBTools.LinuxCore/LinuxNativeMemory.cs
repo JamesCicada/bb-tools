@@ -29,6 +29,8 @@ public sealed partial class LinuxProcessMemory
             RequireNative();
             if(nativeDepth>0){nativeDepth++;try{operation();}finally{nativeDepth--;}return;}
             var watch=Stopwatch.StartNew();
+            // Remote mmap/mprotect can change mappings; never reuse a snapshot across this.
+            InvalidateMaps();
             try
             {
                 // Stop every thread, including those created during enumeration.
@@ -61,6 +63,7 @@ public sealed partial class LinuxProcessMemory
             }
             finally
             {
+                InvalidateMaps();
                 nativeDepth=0;var failures=new List<int>();
                 foreach(var (tid,signal) in stoppedThreads.Reverse())
                 {

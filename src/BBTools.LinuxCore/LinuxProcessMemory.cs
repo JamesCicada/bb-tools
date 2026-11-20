@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using BBTools.Memory;
@@ -67,23 +68,49 @@ public sealed partial class LinuxProcessMemory : IGameMemory
             throw new IOException("Linux process exited or its identity is unavailable.");
         return fields[19];
     }
+    // Reads re-check identity at most this often. A Linux PID cannot be released
+    // and reused by a new process within this window, and every write, map read
+    // and native operation still validates identity unconditionally.
+    internal static readonly TimeSpan ReadIdentityInterval = TimeSpan.FromMilliseconds(50);
+    // Write validation reuses a recent map snapshot. Misses always re-read the
+    // maps, and native operations (remote mmap/mprotect) invalidate it.
+    internal static readonly TimeSpan MapCacheLifetime = TimeSpan.FromSeconds(1);
+    private long identityValidatedAt;
+    // A reference type, so readers on other threads (target monitor) swap it atomically.
+    private sealed record MapSnapshot(LinuxMap[] Maps, long At);
+    private volatile MapSnapshot? mapCache;
     public void ValidateIdentity()
     {
         ObjectDisposedException.ThrowIf(disposed,this);
         if (Identity() != identity) throw new IOException("The selected process exited or its PID was reused. Select it again.");
+        Volatile.Write(ref identityValidatedAt, Stopwatch.GetTimestamp());
+    }
+    private void ValidateIdentityForRead()
+    {
+        ObjectDisposedException.ThrowIf(disposed,this);
+        if (Stopwatch.GetElapsedTime(Volatile.Read(ref identityValidatedAt)) >= ReadIdentityInterval) ValidateIdentity();
     }
     public LinuxMap[] Maps()
     {
         ValidateIdentity();
         var result = File.ReadLines($"/proc/{pid}/maps").Select(LinuxMap.Parse).ToArray();
         ValidateIdentity();
+        mapCache = new(result, Stopwatch.GetTimestamp());
         return result;
+    }
+    internal void InvalidateMaps() => mapCache = null;
+    internal static bool CoversWritableData(IEnumerable<LinuxMap> maps, ulong address, ulong end) =>
+        maps.Any(m => m.Start <= address && end <= m.End && m.Permissions[0] == 'r' && m.Permissions[1] == 'w' && m.Permissions[2] != 'x');
+    private bool IsWritableData(ulong address, ulong end)
+    {
+        if (mapCache is { } cached && Stopwatch.GetElapsedTime(cached.At) < MapCacheLifetime && CoversWritableData(cached.Maps, address, end)) return true;
+        return CoversWritableData(Maps(), address, end);
     }
     public byte[] Read(ulong address, int size)
     {
         if (size is < 1 or > 1024 * 1024 || address >= 0x800000000000 || (ulong)size > 0x800000000000 - address)
             throw new ArgumentOutOfRangeException(nameof(size), "Invalid Linux read range.");
-        ValidateIdentity();
+        ValidateIdentityForRead();
         var bytes = new byte[size];
         var pinned = GCHandle.Alloc(bytes, GCHandleType.Pinned);
         try
@@ -97,6 +124,8 @@ public sealed partial class LinuxProcessMemory : IGameMemory
             if (count != size)
             {
                 var error = count == -1 ? Marshal.GetLastPInvokeError() : 0;
+                // An exited or replaced process must report that, not a mapping error.
+                ValidateIdentity();
                 if (error is 1 or 13)
                     throw new UnauthorizedAccessException(LinuxPermissions.Explain());
                 // EFAULT and short reads mean the address is not (fully) mapped in
@@ -109,7 +138,7 @@ public sealed partial class LinuxProcessMemory : IGameMemory
             }
         }
         finally { pinned.Free(); }
-        ValidateIdentity();
+        ValidateIdentityForRead();
         return bytes;
     }
     public void Write(ulong address, byte[] value)
@@ -118,7 +147,7 @@ public sealed partial class LinuxProcessMemory : IGameMemory
         if (value.Length is < 1 or > 1024 * 1024 || address >= 0x800000000000 || (ulong)value.Length > 0x800000000000 - address)
             throw new ArgumentOutOfRangeException(nameof(value));
         var end = address + (ulong)value.Length;
-        if (!Maps().Any(m => m.Start <= address && end <= m.End && m.Permissions[0] == 'r' && m.Permissions[1] == 'w' && m.Permissions[2] != 'x'))
+        if (!IsWritableData(address, end))
             throw new IOException("Target is not one readable, writable, non-executable Linux data mapping. No write was performed.");
         ValidateIdentity();
         var pinned = GCHandle.Alloc(value, GCHandleType.Pinned);

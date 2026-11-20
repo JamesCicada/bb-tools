@@ -38,6 +38,11 @@ internal static class Program
             Check(!LinuxMap.Parse("10000-20000 rw-s 0000 00:00 0").ScanCode,"data maps are excluded from code scanning");
             foreach(var invalid in new[]{"","100-80 r-xp 0 00:00 0","x-200 r-xp 0 00:00 0","100-200 abcq 0 00:00 0"})
                 Reject<IOException>(()=>LinuxMap.Parse(invalid),"reject malformed process map");
+            var writeMaps=new[]{new LinuxMap(0x10000,0x20000,"rw-p",""),new LinuxMap(0x20000,0x30000,"r-xp",""),new LinuxMap(0x30000,0x40000,"rwxp",""),new LinuxMap(0x40000,0x50000,"r--p","")};
+            Check(LinuxProcessMemory.CoversWritableData(writeMaps,0x10000,0x20000),"cached write validation accepts a whole readable/writable data mapping");
+            Check(!LinuxProcessMemory.CoversWritableData(writeMaps,0x1FFFF,0x20001),"cached write validation rejects a transfer crossing into code");
+            Check(!LinuxProcessMemory.CoversWritableData(writeMaps,0x30000,0x30004)&&!LinuxProcessMemory.CoversWritableData(writeMaps,0x40000,0x40004)&&!LinuxProcessMemory.CoversWritableData(writeMaps,0x60000,0x60004),"cached write validation rejects executable, read-only and unmapped targets");
+            Check(LinuxProcessMemory.ReadIdentityInterval<=TimeSpan.FromMilliseconds(100)&&LinuxProcessMemory.MapCacheLifetime<=TimeSpan.FromSeconds(1),"read identity throttling and write map caching stay short-lived");
             var stat="42 (a tricky ) process) S "+string.Join(' ',Enumerable.Range(4,18))+" 987654 0 0";
             Check(LinuxProcessMemory.ParseIdentity(stat)=="987654","process identity reads field 22 despite spaces and parentheses in comm");
             Reject<IOException>(()=>LinuxProcessMemory.ParseIdentity(stat.Replace(") S ",") Z ")),"zombie processes cannot be inspected");
@@ -158,6 +163,8 @@ internal static class Program
             Check(child.ExitCode==0&&completion.Contains("FIXTURE RESTORED"),$"native child verifies its original bytes were restored before exit (exit {child.ExitCode}, output {completion.Trim()})");
             Check(memory.HasExited(),"an exited game can release cleanup ownership without writing through its stale PID");
             Reject<IOException>(()=>memory.Read(address,64),"exited child process cannot be read through a stale PID");
+            try{memory.Read(address,64);throw new Exception("stale read succeeded");}
+            catch(IOException ex){Check(ex.Message.Contains("exited"),"a failed read inside the identity throttle still reports the exited process, not a mapping error");}
         }
         finally{if(!child.HasExited){child.Kill();await child.WaitForExitAsync();}}
     }

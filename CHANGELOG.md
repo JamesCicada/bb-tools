@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Linux: fewer filesystem reads while polling. Reads re-check the game process identity at most every 50 ms (writes and native actions still check every time), and write validation reuses the process memory map for up to 1 s, re-reading it on any miss and after every native action.
+
 ## 0.7.2 — 2026-11-20
 
 - Items: new **Open gem slots on upgraded weapons** option (on by default). Weapons spawned directly at an upgrade level keep closed gem slots, which is native game behavior also seen with other item-grant mods. The tool now spawns them one level lower so one workshop upgrade opens every slot. **Not tested in-game.**
