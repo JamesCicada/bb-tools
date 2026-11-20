@@ -546,14 +546,26 @@ public partial class MainWindow : Window
         if (MenuPicker.SelectedItem is not MenuChoice menu) throw new ArgumentException(Translations.T("message.Chooseaworkshopmenu.c3d4087"));
         return engine.OpenMenuAsync(menu);
     }, Translations.T("message.MenuopenedCompleteorcloseitnormallyinthegame.a8d87e3"));
-    private async void SpawnItem(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
+    private async void SpawnItem(object sender, RoutedEventArgs e)
     {
-        if (ItemCategory.SelectedItem is not ComboBoxItem category) throw new ArgumentException(Translations.T("message.Chooseanitemcategory.47eb33d"));
-        var item = ItemInput.Parse(ItemId.Text, uint.Parse((string)category.Tag), WikiHexId.IsChecked == true);
-        var quantity = Number(ItemQuantity, "Quantity");
-        App.Log?.Write("ACTION", $"Spawn item: ID {item.Id}, category 0x{item.Category:X8}, quantity {quantity}");
-        return engine.SpawnAsync(item.Id, item.Category, quantity);
-    }, Translations.T("message.ItemgrantcompletedonthegamethreadCheckinventoryandst.be4825f"));
+        var success = Translations.T("message.ItemgrantcompletedonthegamethreadCheckinventoryandst.be4825f");
+        string? gemSlotNote = null;
+        await RunGameAction(engine =>
+        {
+            if (ItemCategory.SelectedItem is not ComboBoxItem category) throw new ArgumentException(Translations.T("message.Chooseanitemcategory.47eb33d"));
+            var item = ItemInput.Parse(ItemId.Text, uint.Parse((string)category.Tag), WikiHexId.IsChecked == true);
+            var quantity = Number(ItemQuantity, "Quantity");
+            var id = item.Id;
+            if (OpenGemSlots.IsChecked == true && WeaponGemSlots.NeedsWorkshopUpgrade(item.Id, item.Category))
+            {
+                id = WeaponGemSlots.SpawnId(item.Id, item.Category);
+                gemSlotNote = Translations.Format("items.gemSlotsSpawned", WeaponGemSlots.UpgradeLevel(id, item.Category), WeaponGemSlots.UpgradeLevel(item.Id, item.Category));
+            }
+            App.Log?.Write("ACTION", $"Spawn item: ID {id} (requested {item.Id}), category 0x{item.Category:X8}, quantity {quantity}");
+            return engine.SpawnAsync(id, item.Category, quantity);
+        }, success);
+        if (gemSlotNote != null && Status.Text == success) Status.Text = gemSlotNote;
+    }
     private async void Warp(object sender, RoutedEventArgs e) => await RunGameAction(engine =>
     {
         if (LampPicker.SelectedItem is not LampChoice lamp) throw new ArgumentException(Translations.T("message.Choosealamp.076c529"));

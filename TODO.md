@@ -16,6 +16,13 @@ lists remain useful for regression testing. It does not mark future/unimplemente
 features, hidden photo/freecam/flight/noclip, native-speaker review, Nexus uploads or
 any Linux game feature as confirmed.
 
+## Nexus bug reports — 2026-11-20
+
+| Work | Implemented | Tested and confirmed | Notes |
+| --- | :---: | :---: | --- |
+| Spawned upgraded weapons have closed gem slots | ✔️ | ⌛ | Reporter confirmed that acquiring at +9 and upgrading to +10 opens all slots, and that other item-grant mods behave the same. Items now spawn upgraded weapons one level lower by default and tell the player to upgrade once. A native slot initializer (to skip the manual upgrade) needs research with the 1.09 ELF, which is not available right now. |
+| Steam Deck: `memory read failed bad address` after Connect | ⌛ | ⌛ | Connect succeeded (the image matched); the first player read hit unmapped memory. The message now matches Windows ("player may be loading"). The root cause is unconfirmed until the reporter sends a session log taken with a character loaded. |
+
 ## Reported Echoes loss — yharnam-pc, 2026-11-01
 
 | Work | Implemented | Tested and confirmed | Notes |

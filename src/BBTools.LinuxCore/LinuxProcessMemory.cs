@@ -99,7 +99,13 @@ public sealed partial class LinuxProcessMemory : IGameMemory
                 var error = count == -1 ? Marshal.GetLastPInvokeError() : 0;
                 if (error is 1 or 13)
                     throw new UnauthorizedAccessException(LinuxPermissions.Explain());
-                throw new IOException($"Linux memory read failed at 0x{address:X}: {(count == -1 ? new Win32Exception(error).Message : $"short read ({count}/{size})")}.");
+                // EFAULT and short reads mean the address is not (fully) mapped in
+                // the game right now, e.g. at the title screen or while loading.
+                // Match the Windows wording instead of surfacing a raw errno; keep
+                // the native error as the inner exception for session logs.
+                var detail = count == -1 ? new Win32Exception(error).Message : $"short read ({count}/{size})";
+                throw new IOException($"Cannot read game memory at 0x{address:X} ({detail}). The player may be loading. Load a character and wait; if this persists in-game, attach the session log to a bug report.",
+                    count == -1 ? new Win32Exception(error) : null);
             }
         }
         finally { pinned.Free(); }

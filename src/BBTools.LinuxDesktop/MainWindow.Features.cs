@@ -135,7 +135,17 @@ public partial class MainWindow
         var id=Value(panel,"itemId","Item ID",7100000,0,int.MaxValue);var category=Picker(new[]{"Goods","Weapon","Armor","Rune / accessory"});var count=Value(panel,"itemCount","Quantity",1,1,600);
         uint Category()=>category.SelectedIndex switch{1=>0,2=>0x10000000,3=>0x20000000,_=>0x40000000};
         picker.SelectionChanged+=(_,_)=>{if(picker.SelectedItem is ItemChoice item){id.Value=item.Id;category.SelectedIndex=item.Category switch{0=>1,0x10000000=>2,0x20000000=>3,_=>0};}};
-        Add(panel,search,picker,category,Button("Spawn item",()=>{log?.Write("ITEM",$"ID {(int)id.Value!}, category {Category():X8}, quantity {(int)count.Value!}");return Native(f=>f.RunAsync(a=>a.SpawnAsync((int)id.Value!,Category(),(int)count.Value!)));}));
+        Add(panel,search,picker,category);
+        var gemSlots=Switch(panel,"gemSlots","Open gem slots on upgraded weapons",true);
+        Add(panel,new TextBlock{Text=Translations.T("items.gemSlotsHelp"),TextWrapping=Avalonia.Media.TextWrapping.Wrap,Margin=new(0,0,0,4)},Button("Spawn item",async()=>
+        {
+            var requested=(int)id.Value!;var spawn=requested;var kind=Category();
+            var adjust=gemSlots.IsChecked==true&&WeaponGemSlots.NeedsWorkshopUpgrade(requested,kind);
+            if(adjust)spawn=WeaponGemSlots.SpawnId(requested,kind);
+            log?.Write("ITEM",$"ID {spawn} (requested {requested}), category {kind:X8}, quantity {(int)count.Value!}");
+            await Native(f=>f.RunAsync(a=>a.SpawnAsync(spawn,kind,(int)count.Value!)));
+            if(adjust){preserveStatus=true;Status.Text=Translations.Format("items.gemSlotsSpawned",WeaponGemSlots.UpgradeLevel(spawn,kind),WeaponGemSlots.UpgradeLevel(requested,kind));}
+        }));
         Add(panel,Button("Import item names from game files",async()=>{var folder=await Folder();if(folder==null)return;var loaded=await Task.Run(()=>GameItemCatalog.Load(folder));Library().SaveCatalog(loaded);all=loaded.Concat(GameActions.CommonItems).DistinctBy(x=>(x.Id,x.Category)).ToArray();Filter();},false));
         var favoriteName=new TextBox{PlaceholderText="Favorite name"};var favorites=Picker(library?.Favorites()??[]);
         void Favorites()=>favorites.ItemsSource=library?.Favorites()??[];refreshLists.Add(Favorites);

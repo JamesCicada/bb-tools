@@ -1926,5 +1926,14 @@
   ],
   "experimental.key14": [
     "MainWindow.Exploration.cs:LoadCameraControls"
+  ],
+  "items.gemSlots": [
+    "MainWindow.xaml:SpawnItem"
+  ],
+  "items.gemSlotsHelp": [
+    "MainWindow.xaml:SpawnItem"
+  ],
+  "items.gemSlotsSpawned": [
+    "MainWindow.xaml.cs:SpawnItem"
   ]
 }

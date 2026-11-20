@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Items: new **Open gem slots on upgraded weapons** option (on by default). Weapons spawned directly at an upgrade level keep closed gem slots, which is native game behavior also seen with other item-grant mods. The tool now spawns them one level lower so one workshop upgrade opens every slot. **Not tested in-game.**
+- Linux: unmapped-memory reads (`Bad address` / short reads) now say the player may still be loading, matching Windows, instead of showing a raw read error after connecting. Reported on Steam Deck. The cause still needs a session log if it persists in-game.
+
 ## 0.7.1 — 2026-11-10
 
 - Keep the verified native death-penalty reader enabled for the whole death transition when **Keep Blood Echoes on death** is selected, instead of relying only on the manager byte that some bbport-derived runtimes reset.
