@@ -704,5 +704,8 @@
   "gem.recipe.tempering": "تقوية ملعونة — جسدي +27.2%",
   "gem.recipe.blunt": "مهارة ملعونة — ضرب +32.6%",
   "gem.recipe.thrust": "مهارة ملعونة — طعن +32.6%",
-  "parry.heading": "التدرب على الصد"
+  "parry.heading": "التدرب على الصد",
+  "items.gemSlots": "Open gem slots on upgraded weapons",
+  "items.gemSlotsHelp": "Weapons spawned directly at an upgrade level keep closed gem slots. When checked, an upgraded weapon is spawned one level lower; upgrade it once in the workshop to open its slots (Workshop → Free weapon upgrades removes the cost).",
+  "items.gemSlotsSpawned": "Weapon spawned at +{0}. Upgrade it once in the workshop to reach +{1} and open its gem slots."
 }
