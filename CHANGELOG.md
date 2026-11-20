@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.7.2 — 2026-11-20
 
 - Items: new **Open gem slots on upgraded weapons** option (on by default). Weapons spawned directly at an upgrade level keep closed gem slots, which is native game behavior also seen with other item-grant mods. The tool now spawns them one level lower so one workshop upgrade opens every slot. **Not tested in-game.**
 - Linux: unmapped-memory reads (`Bad address` / short reads) now say the player may still be loading, matching Windows, instead of showing a raw read error after connecting. Reported on Steam Deck. The cause still needs a session log if it persists in-game.
+- Nexus CI: each Linux file lineage is optional on its own, and an existing Linux-named Nexus file is adopted when no repository variable is set. A shared release still refuses to update Windows alone, so v0.7.1's failed run (no Linux variables) cannot recur silently.
 
 ## 0.7.1 — 2026-11-10
 

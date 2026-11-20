@@ -1,7 +1,7 @@
-# BB Tools for Linux · v0.7.1
+# BB Tools for Linux · v0.7.2
 
 Native **Linux x86-64/glibc**, Bloodborne 1.09. Windows and Linux use the same
-version and gameplay backend. The Linux download is part of the shared v0.7.1
+version and gameplay backend. The Linux download is part of the shared v0.7.2
 release rather than a separately versioned preview.
 
 **Community feedback:** the previous experimental desktop worked when launched
@@ -35,7 +35,7 @@ connection available so it can be retried after loading.
 
 ## Run the desktop
 
-Extract `BBTools-v0.7.1-linux-x64.tar.gz` and run:
+Extract `BBTools-v0.7.2-linux-x64.tar.gz` and run:
 
 ```sh
 chmod +x BBTools.LinuxDesktop
@@ -132,7 +132,7 @@ Source research is recorded in `docs/linux-compatibility-research.md`.
 
 ## Downloads and feedback
 
-Use the v0.7.1 Linux desktop `.tar.gz` or Nexus-friendly `.zip`; each contains only
+Use the v0.7.2 Linux desktop `.tar.gz` or Nexus-friendly `.zip`; each contains only
 `BBTools.LinuxDesktop` and `README.md`. The read-only probe has a separate archive.
 Windows and Linux have one version and release draft. **New Linux native actions
 are not tested in-game**, even when CI succeeds. Report distro, display server,

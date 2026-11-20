@@ -23,8 +23,6 @@ module.exports = async function prepare({ github, context, core, root = process.
   const unifiedRelease = major > 0 || minor >= 7;
   const linuxZipSeed = env.NEXUS_LINUX_ZIP_FILE_VERSION_ID;
   const linuxTarSeed = env.NEXUS_LINUX_TARGZ_FILE_VERSION_ID;
-  if (unifiedRelease && (!linuxZipSeed || !linuxTarSeed))
-    throw new Error('Configure repository variables NEXUS_LINUX_ZIP_FILE_VERSION_ID and NEXUS_LINUX_TARGZ_FILE_VERSION_ID before publishing a shared Windows/Linux release.');
   const targets = [
     {
       key: 'windows', archiveName: `BBTools-${tag}-win-x64.zip`, checksumName: 'SHA256SUMS.txt', seed: env.NEXUS_WINDOWS_FILE_VERSION_ID || '3154',
@@ -70,9 +68,27 @@ module.exports = async function prepare({ github, context, core, root = process.
   const modId = id(mod.id);
   const files = await get(`/mods/${modId}/files`);
   if (!Array.isArray(files.mod_files)) throw new Error('Nexus file list is unavailable. No upload was attempted.');
+  // Each Linux lineage is optional on its own: a repository variable selects it
+  // explicitly, otherwise exactly one existing Linux-named Nexus file of that
+  // format is adopted. At least one Linux lineage must resolve so a shared
+  // release never silently updates Windows alone.
+  const linuxFormat = target => file => typeof file.name === 'string' && /linux/i.test(file.name) &&
+    (target.key === 'linux_tar_gz') === /tar\.?gz/i.test(file.name);
+  for (const target of targets.filter(target => target.key !== 'windows' && !target.seed)) {
+    const found = files.mod_files.filter(linuxFormat(target));
+    if (found.length === 1) {
+      target.file_id = id(found[0].id);
+      core.notice(`Using existing Nexus file "${found[0].name}" for ${target.key}. Set its repository variable to pin a different file lineage.`);
+    } else {
+      target.skip = true;
+      core.notice(`No unique ${target.key} Nexus file was configured or found by name; that format is not uploaded.`);
+    }
+  }
+  for (let i = targets.length - 1; i >= 0; i--) if (targets[i].skip) targets.splice(i, 1);
+  if (unifiedRelease && !targets.some(target => target.key !== 'windows'))
+    throw new Error('No Linux Nexus file lineage is available. Set the repository variable NEXUS_LINUX_ZIP_FILE_VERSION_ID (or NEXUS_LINUX_TARGZ_FILE_VERSION_ID) to an existing Linux file\'s version ID before publishing a shared Windows/Linux release. No upload was attempted.');
   for (const target of targets) {
-    const seed = await get(`/games/bloodborne/mod-file-versions/${seedId(target.seed)}`);
-    target.file_id = id(seed.file?.id);
+    if (!target.file_id) target.file_id = id((await get(`/games/bloodborne/mod-file-versions/${seedId(target.seed)}`)).file?.id);
     if (!files.mod_files.some(file => file.id === target.file_id)) throw new Error(`The selected ${target.key} Nexus file does not belong to Bloodborne mod 614.`);
     const versions = await get(`/mod-files/${target.file_id}/versions`);
     if (!Array.isArray(versions.versions)) throw new Error(`Nexus version history is unavailable for ${target.key}. No upload was attempted.`);

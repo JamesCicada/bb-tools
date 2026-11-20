@@ -1,4 +1,4 @@
-> **Version 0.7.1:** Windows and Linux share gameplay features and release numbering. **Keep Blood Echoes on death** now holds the native death-penalty reader through the death transition and recovers the last living balance only after a confirmed death loss; live feedback is still needed. New Linux native actions are **NOT TESTED IN-GAME**. A community tester confirmed the previous Linux preview connected and worked with **bbport 0.7 / bbprobe**; individual feature coverage was not specified.
+> **Version 0.7.2:** Spawned upgraded weapons can now open their gem slots with one workshop upgrade. Windows and Linux share gameplay features and release numbering. **Keep Blood Echoes on death** now holds the native death-penalty reader through the death transition and recovers the last living balance only after a confirmed death loss; live feedback is still needed. New Linux native actions are **NOT TESTED IN-GAME**. A community tester confirmed the previous Linux preview connected and worked with **bbport 0.7 / bbprobe**; individual feature coverage was not specified.
 > Nightwatch, the gem-editor overhaul, NG editing, shoulder camera and experimental photo/flight/noclip keep their existing pending live-test status.
 > Bloodborne PC and shadPS4 remain officially supported for game 1.09. Experimental photo/flight/noclip remain hidden until explicitly enabled in Settings.
 
@@ -11,6 +11,13 @@ Inspired by [ERTool](https://github.com/kh0nsu/EldenRingTool).
 [Download latest release](https://github.com/JamesCicada/bb-tools/releases/latest) ·
 [Report a bug](https://github.com/JamesCicada/bb-tools/issues) ·
 [Contribute](CONTRIBUTING.md) · [Roadmap and test checklist](TODO.md) · [Launcher/emulator compatibility](docs/COMPATIBILITY.md)
+
+## v0.7.2: gem slots on spawned weapons and a clearer Linux connection message
+
+- Items → **Open gem slots on upgraded weapons** (on by default) spawns upgraded weapons one level lower. Upgrade once in the workshop to open every gem slot; weapons spawned directly at an upgrade level keep closed slots in the game itself.
+- Linux reports that the player may still be loading instead of a raw `Bad address` error when connecting before a character is loaded (Steam Deck report).
+- Linux builds are now published to Nexus Mods automatically with each release.
+- **NOT TESTED IN-GAME.** See the [release notes](docs/releases/v0.7.2.md).
 
 ## v0.7.1: Echoes protection through the death transition
 

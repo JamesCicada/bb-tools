@@ -15,17 +15,27 @@ each persistent Nexus file group from a known version ID and verifies ownership
 before uploading. Version IDs identify a file lineage; they do not lock uploads to
 that particular release number.
 
-For the synchronized Windows/Linux releases, add these **repository variables**
+For the synchronized Windows/Linux releases, each Linux format is uploaded to its
+own existing Nexus file lineage. Pin a lineage with these **repository variables**
 (not secrets) in GitHub → Settings → Secrets and variables → Actions → Variables:
 
 - `NEXUS_LINUX_ZIP_FILE_VERSION_ID` — the existing Linux ZIP file's version ID.
 - `NEXUS_LINUX_TARGZ_FILE_VERSION_ID` — the existing Linux tar.gz file's version ID.
 
 On Nexus, open each existing Linux file, choose **Advanced → API Info**, and copy
-its **version ID**. The Windows lineage defaults to version ID `3154`; set
+its **version ID**. Each variable is optional on its own:
+
+- If a variable is unset, the preflight adopts the **single** existing Nexus file whose
+  name contains "Linux" (and "tar.gz" for the tar.gz lineage, or not for ZIP). Zero or
+  several matches mean that format is skipped with a notice. It is never guessed.
+- A format with no lineage is not uploaded. To publish the tar.gz too, upload it once
+  manually as a new optional file, then set its variable.
+- At least one Linux lineage must resolve, or the release stops before any upload,
+  so a shared release cannot silently update Windows alone. (v0.7.1's automatic run
+  failed this way because neither variable was set.)
+
+The Windows lineage defaults to version ID `3154`; set
 `NEXUS_WINDOWS_FILE_VERSION_ID` only if that lineage is intentionally replaced.
-Missing Linux variables stop a shared release before any file is uploaded, so a
-future release cannot silently update Windows alone.
 
 ## Release flow
 

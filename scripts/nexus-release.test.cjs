@@ -158,11 +158,58 @@ test('shared releases verify and prepare three distinct Nexus file lineages', as
   assert.equal(result.linux_zip_category, 'optional');
   assert.equal(result.linux_tar_gz_update_mod_version, 'false');
 });
-test('shared releases require both pre-existing Linux file lineages', async t => {
+test('shared releases refuse to update Windows alone when no Linux lineage exists', async t => {
   const f = fixture(t);
   fs.writeFileSync(path.join(f.root, 'src/BBTools/BBTools.csproj'), '<Version>0.7.0</Version>');
   fs.writeFileSync(path.join(f.root, 'docs/releases/v0.7.0.md'), '# BB Tools v0.7.0');
   f.context.payload.release.tag_name = 'v0.7.0';
   await assert.rejects(prepare(f), /NEXUS_LINUX_ZIP_FILE_VERSION_ID/);
-  assert.equal(f.calls.length, 0);
+  assert.ok(!f.calls.some(url => url.includes('/mod-file-versions/')), 'no file lineage is resolved before the Linux check');
+});
+function singleLinuxFixture(t, modFiles, env = {}) {
+  const f = fixture(t);
+  fs.writeFileSync(path.join(f.root, 'src/BBTools/BBTools.csproj'), '<Version>0.7.2</Version>');
+  fs.writeFileSync(path.join(f.root, 'docs/releases/v0.7.2.md'), '# BB Tools v0.7.2\n\n- Fixes.');
+  f.context.payload.release.tag_name = 'v0.7.2';
+  f.env = { NEXUSMODS_API_KEY: 'test-secret-not-real', ...env };
+  const archives = { 1: Buffer.from('windows'), 2: Buffer.from('linux-zip'), 3: Buffer.from('linux-tar') };
+  const names = { 1: 'BBTools-v0.7.2-win-x64.zip', 2: 'BBTools-v0.7.2-linux-x64.zip', 3: 'BBTools-v0.7.2-linux-x64.tar.gz' };
+  const sum = id => `${crypto.createHash('sha256').update(archives[id]).digest('hex')}  ${names[id]}`;
+  f.github.rest.repos.getReleaseByTag = async () => ({ data: { draft: false, prerelease: false, assets: [
+    ...Object.entries(names).map(([id, name]) => ({ id: Number(id), name, state: 'uploaded' })),
+    { id: 4, name: 'SHA256SUMS.txt', state: 'uploaded' }, { id: 5, name: 'SHA256SUMS-linux.txt', state: 'uploaded' },
+  ] } });
+  f.github.rest.repos.getReleaseAsset = async ({ asset_id }) => ({ data: archives[asset_id] || Buffer.from(asset_id === 4 ? sum(1) + '\n' : sum(2) + '\n' + sum(3) + '\n') });
+  f.fetcher = async url => {
+    const endpoint = url.replace('https://api.nexusmods.com/v3', '');
+    const responses = {
+      '/games/bloodborne/mods/614': { id: 'bbtools-mod' },
+      '/mods/bbtools-mod/files': { mod_files: modFiles },
+      '/games/bloodborne/mod-file-versions/3154': { file: { id: 'windows' } },
+      '/games/bloodborne/mod-file-versions/7101': { file: { id: 'linux-zip' } },
+      '/mod-files/windows/versions': { versions: [] },
+      '/mod-files/linux-zip/versions': { versions: [] },
+    };
+    assert.ok(responses[endpoint], `Unexpected endpoint ${endpoint}`);
+    return { ok: true, json: async () => ({ data: responses[endpoint] }) };
+  };
+  return f;
+}
+test('a single configured Linux lineage uploads without a tar.gz file', async t => {
+  const f = singleLinuxFixture(t, [{ id: 'windows', name: 'BB Tools' }, { id: 'linux-zip', name: 'BB Tools Linux x64' }], { NEXUS_LINUX_ZIP_FILE_VERSION_ID: '7101' });
+  const result = await prepare(f);
+  assert.deepEqual(result.targets.map(target => target.key), ['windows', 'linux_zip']);
+  assert.equal(result.linux_zip_upload, 'true');
+  assert.equal(result.linux_tar_gz_upload, undefined);
+  assert.ok(f.notices.some(text => /linux_tar_gz/.test(text)));
+});
+test('an existing Linux-named Nexus file is adopted when no variable is set', async t => {
+  const f = singleLinuxFixture(t, [{ id: 'windows', name: 'BB Tools' }, { id: 'linux-zip', name: 'BB Tools v0.7.1 Linux x64' }]);
+  const result = await prepare(f);
+  assert.equal(result.linux_zip_file_id, 'linux-zip');
+  assert.equal(result.linux_zip_upload, 'true');
+});
+test('ambiguous Linux-named files are never guessed', async t => {
+  const f = singleLinuxFixture(t, [{ id: 'windows', name: 'BB Tools' }, { id: 'linux-zip', name: 'Linux x64' }, { id: 'linux-old', name: 'Linux beta' }]);
+  await assert.rejects(prepare(f), /No Linux Nexus file lineage/);
 });
