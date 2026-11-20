@@ -704,5 +704,8 @@
   "gem.recipe.tempering": "Cursed Tempering — Physical +27.2%",
   "gem.recipe.blunt": "Cursed Adept — Blunt +32.6%",
   "gem.recipe.thrust": "Cursed Adept — Thrust +32.6%",
-  "parry.heading": "Parry practice"
+  "parry.heading": "Parry practice",
+  "items.gemSlots": "Open gem slots on upgraded weapons",
+  "items.gemSlotsHelp": "Weapons spawned directly at an upgrade level keep closed gem slots. When checked, an upgraded weapon is spawned one level lower; upgrade it once in the workshop to open its slots (Workshop → Free weapon upgrades removes the cost).",
+  "items.gemSlotsSpawned": "Weapon spawned at +{0}. Upgrade it once in the workshop to reach +{1} and open its gem slots."
 }
